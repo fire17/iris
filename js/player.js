@@ -286,6 +286,7 @@
     '.plr-pv-b:hover{background:var(--acc);color:#20040e;border-color:transparent;transform:translateY(-1px)}',
     '.plr-pv-b:active{transform:scale(.92)}',
     '.plr-pv-b svg{width:16px;height:16px;fill:currentColor;display:block;pointer-events:none}',
+    '.plr-pv-wrap.plr-pv-audible .plr-pv-mute{background:var(--acc);color:#20040e;border-color:transparent}',
     '.plr-pv-hint{position:absolute;bottom:9px;left:10px;padding:4px 9px;border-radius:8px;background:rgba(8,9,11,.72);',
     'font-size:10.5px;color:#c2ccd6;pointer-events:none;z-index:2;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}',
     '.plr-pv-scrim{position:fixed;inset:0;z-index:99989;background:rgba(4,5,7,.55);opacity:0;',
@@ -725,7 +726,7 @@
       /* first real frame: undo the muted-autoplay guard and honour the user's saved
          volume/mute. Unmuting a playing element is allowed even outside a gesture,
          so this is where silent-live-autoplay actually gets its sound. */
-      if (S && !S.audioRestored) { S.audioRestored = true; v.muted = !!S.wantMuted; paintVol(); }
+      if (S && !S.audioRestored) { S.audioRestored = true; v.muted = !!S.wantMuted; if (!v.muted && v.volume === 0) v.volume = 0.5; paintVol(); }
     });
     on(v, 'canplay', function () { spin(false); });
     on(v, 'stalled', function () { spin(true); });
@@ -757,7 +758,7 @@
     on(v, 'click', function () { toggle(true); });
     on(v, 'dblclick', function () { toggleFs(); });
 
-    on(el.mute, 'click', function () { v.muted = !v.muted; if (!v.muted && v.volume === 0) v.volume = 0.5; if (S) S.audioRestored = true; lsSet(MUTE_KEY, v.muted ? '1' : '0'); });
+    on(el.mute, 'click', toggleMute);
     on(el.vin, 'input', function () {
       var x = parseFloat(el.vin.value);
       v.volume = x; v.muted = x === 0; lsSet(VOL_KEY, String(x));
@@ -924,10 +925,24 @@
     }
     S.el.buf.innerHTML = out;
   }
+  /* The button and the `m` key act on the EFFECTIVE state (muted OR volume 0),
+     never on v.muted alone: with a persisted volume of 0 the old toggle flipped
+     v.muted to TRUE on the first click — the icon stayed muted and the stream stayed
+     silent "even after unmuting". Unmute now always ends audible. */
+  function toggleMute() {
+    if (!S) return;
+    var v = S.el.video, eff = v.muted || v.volume === 0;
+    if (eff) { v.muted = false; if (v.volume === 0) v.volume = 0.5; lsSet(VOL_KEY, String(v.volume)); }
+    else v.muted = true;
+    S.audioRestored = true;
+    lsSet(MUTE_KEY, v.muted ? '1' : '0');
+    paintVol();
+  }
   function paintVol() {
     if (!S) return;
     var v = S.el.video, muted = v.muted || v.volume === 0;
     S.el.mute.innerHTML = muted ? ICON.mute : ICON.vol;
+    S.el.mute.title = muted ? 'Unmute (m)' : 'Mute (m)';
     S.el.mute.classList[muted ? 'add' : 'remove']('plr-on');
     var x = muted ? 0 : v.volume;
     S.el.vin.value = String(x);
@@ -971,7 +986,7 @@
     else if (k === 'ArrowUp') { setVol(v.volume + 0.1); e.preventDefault(); }
     else if (k === 'ArrowDown') { setVol(v.volume - 0.1); e.preventDefault(); }
     else if (k === 'f' || k === 'F') { toggleFs(); e.preventDefault(); }
-    else if (k === 'm' || k === 'M') { v.muted = !v.muted; if (S) S.audioRestored = true; lsSet(MUTE_KEY, v.muted ? '1' : '0'); e.preventDefault(); }
+    else if (k === 'm' || k === 'M') { toggleMute(); e.preventDefault(); }
     kick();
   }
   function setVol(x) {
@@ -2211,6 +2226,19 @@
   function glanceStopFn() { if (GL) { var g = GL; GL = null; destroyEntry(g); } }
   /* stop everything: pool + glance (a full open supersedes both) */
   function pvStopAll() { poolClear(); glanceStopFn(); }
+  /* the canvas sound toggle: paint one entry's 🔊 state; mute every entry */
+  function paintPvMute(p) {
+    if (!p || !p.muteBtn || !p.video) return;
+    var m = p.video.muted;
+    p.muteBtn.innerHTML = m ? ICON.mute : ICON.vol;
+    p.muteBtn.title = m ? 'Unmute here' : 'Mute';
+    p.muteBtn.setAttribute('aria-label', m ? 'Unmute preview' : 'Mute preview');
+    if (p.wrap) p.wrap.classList[m ? 'remove' : 'add']('plr-pv-audible');
+  }
+  function pvMuteAll() {
+    var all = POOL.slice(); if (GL) all.push(GL);
+    for (var i = 0; i < all.length; i++) { var q = all[i]; if (q.video && !q.video.muted) { q.video.muted = true; paintPvMute(q); } }
+  }
 
   function positionPv(wrap, mode, rect) {
     var vw = window.innerWidth || document.documentElement.clientWidth;
@@ -2281,6 +2309,9 @@
       glanceBtn.setAttribute('aria-label', 'Glance');
       btns.appendChild(glanceBtn);
     }
+    var muteBtn = h('button', 'plr-pv-b plr-pv-mute', ICON.mute);
+    muteBtn.title = 'Unmute here'; muteBtn.setAttribute('aria-label', 'Unmute preview');
+    btns.appendChild(muteBtn);
     var watchBtn = h('button', 'plr-pv-b plr-pv-watch', ICON.play);
     watchBtn.title = 'Watch — full screen with sound';
     watchBtn.setAttribute('aria-label', 'Watch');
@@ -2288,13 +2319,14 @@
     wrap.appendChild(btns);
 
     if (mode === 'glance') {
-      wrap.appendChild(h('div', 'plr-pv-hint', 'Muted preview · ▶ for sound · Esc to close'));
+      wrap.appendChild(h('div', 'plr-pv-hint', 'Muted preview · 🔊 sound here · ▶ full screen · Esc to close'));
     }
 
     var p = { key: (opts.key != null ? opts.key : null), mode: mode, wrap: wrap, scrim: scrim,
               video: null, hls: null, timers: [], destroyed: false, stream: stream,
               poster: opts.poster || '', live: live, reduced: reduced, rect: opts.rect || null,
-              onWatch: (typeof opts.onWatch === 'function' ? opts.onWatch : null), keyH: null };
+              onWatch: (typeof opts.onWatch === 'function' ? opts.onWatch : null), keyH: null,
+              muteBtn: muteBtn };
 
     document.body.appendChild(wrap);
     positionPv(wrap, mode, opts.rect);
@@ -2306,6 +2338,13 @@
       e.preventDefault(); e.stopPropagation();
       openGlance({ stream: stream, poster: opts.poster, live: live,
                    onWatch: opts.onWatch, reduced: reduced, rect: opts.rect });
+    });
+    muteBtn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var vv = p.video; if (!vv) return;
+      if (vv.muted) { pvMuteAll(); vv.muted = false; }   /* one audible preview at a time */
+      else vv.muted = true;
+      paintPvMute(p);
     });
     watchBtn.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
