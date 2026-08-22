@@ -1232,9 +1232,24 @@
       '<button class="plr-a" data-go="close">Close</button></div>' +
       (engineRunning
         ? '<p class="plr-note">The local engine is running but has no data for this torrent yet — give it a moment and retry.</p>'
-        : '<p class="plr-note">Optional: run the local streaming engine (<code>server/engine.mjs</code> on ' +
+        : '<p class="plr-note plr-engine-note">Optional: run the local streaming engine (<code>server/engine.mjs</code> on ' +
           esc(ENGINE) + ') and this plays in-app, no copy-paste.</p>')
     );
+    /* The footnote is only honest when the engine is actually down. If it IS up but the
+       opt-in is off, say so and offer the opt-in as one click — an explicit choice, so the
+       browser-only-p2p law stays intact (the engine streams bytes through node). */
+    var note = box.querySelector('.plr-engine-note');
+    var optedIn = false;
+    try { optedIn = localStorage.getItem('hp.torrent.localEngine') === '1'; } catch (e) {}
+    if (note && !optedIn) engineUp().then(function (up) {
+      if (!up || !note.isConnected) return;
+      note.innerHTML = 'The local engine <b>is running</b> on <code>' + esc(ENGINE) + '</code> but in-app engine playback is off (browser-only p2p is the default). ' +
+        '<button class="plr-a plr-pri" data-go="optin">Use the local engine</button>';
+      note.querySelector('[data-go="optin"]').addEventListener('click', function () {
+        try { localStorage.setItem('hp.torrent.localEngine', '1'); } catch (e) {}
+        closeCard(); route();
+      });
+    });
     var ta = box.querySelector('textarea');
     var copy = box.querySelector('[data-go="copy"]');
     copy.addEventListener('click', function () {
