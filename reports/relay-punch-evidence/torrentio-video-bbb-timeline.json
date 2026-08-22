@@ -1,0 +1,574 @@
+{
+  "infoHash": "8337c196d4536e9af5d2c7e599f0f1b7d71eee54",
+  "name": "BigBuckBunny_124",
+  "mp4": "big_buck_bunny_720p_surround.mp4",
+  "magnet": "magnet:?xt=urn:btih:8337c196d4536e9af5d2c7e599f0f1b7d71eee54&dn=BigBuckBunny_124&tr=ws%3A%2F%2F127.0.0.1%3A60810",
+  "canPlay": false,
+  "cut": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:8337c196d4536e9af5d2c7e599f0f1b7d71eee54&dn=BigBuckBunny_124&tr=ws%3A%2F%2F127.0.0.1%3A60810",
+    "infoHash": "8337c196d4536e9af5d2c7e599f0f1b7d71eee54",
+    "progress": 0.00902,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 3981312,
+    "uploaded": 5015,
+    "downloadSpeed": 797273,
+    "length": 441396841,
+    "done": false,
+    "videoTime": 0,
+    "videoPaused": true,
+    "muted": true,
+    "error": null
+  },
+  "dl0": 11010048,
+  "vt0": 0,
+  "finalA": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:8337c196d4536e9af5d2c7e599f0f1b7d71eee54&dn=BigBuckBunny_124&tr=ws%3A%2F%2F127.0.0.1%3A60810",
+    "infoHash": "8337c196d4536e9af5d2c7e599f0f1b7d71eee54",
+    "progress": 0.14135,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 62390272,
+    "uploaded": 65999,
+    "downloadSpeed": 9005542,
+    "length": 441396841,
+    "done": false,
+    "videoTime": 1.53,
+    "videoPaused": false,
+    "muted": true,
+    "error": null
+  },
+  "samples": [
+    {
+      "t": 50307,
+      "downloaded": 11010048,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 50509,
+      "downloaded": 17399808,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 50712,
+      "downloaded": 23756800,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 50914,
+      "downloaded": 31588352,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 51116,
+      "downloaded": 37208064,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 51318,
+      "downloaded": 43679744,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 51520,
+      "downloaded": 51101696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 51723,
+      "downloaded": 57917440,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 51924,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 52126,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 52328,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 52530,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 52731,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 52932,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 53134,
+      "downloaded": 61341696,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 53335,
+      "downloaded": 61865984,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 53537,
+      "downloaded": 62390272,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 53740,
+      "downloaded": 62390272,
+      "videoTime": 0,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 53941,
+      "downloaded": 62390272,
+      "videoTime": 0.12,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 54143,
+      "downloaded": 62390272,
+      "videoTime": 0.32,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 54345,
+      "downloaded": 62390272,
+      "videoTime": 0.53,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 54546,
+      "downloaded": 62390272,
+      "videoTime": 0.73,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 54748,
+      "downloaded": 62390272,
+      "videoTime": 0.92,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 54950,
+      "downloaded": 62390272,
+      "videoTime": 1.13,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 55152,
+      "downloaded": 62390272,
+      "videoTime": 1.33,
+      "wires": 1,
+      "bAlive": false
+    },
+    {
+      "t": 55355,
+      "downloaded": 62390272,
+      "videoTime": 1.53,
+      "wires": 1,
+      "bAlive": false
+    }
+  ],
+  "cStats": [
+    {
+      "t": 2378,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 136888320,
+      "uploaded": 3657,
+      "progress": 0.3101,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 4379,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 139051008,
+      "uploaded": 6459,
+      "progress": 0.315,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 6380,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 141295616,
+      "uploaded": 8985,
+      "progress": 0.3201,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 8380,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 143785984,
+      "uploaded": 12021,
+      "progress": 0.3258,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 10381,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 146325504,
+      "uploaded": 14762,
+      "progress": 0.3315,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 12381,
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 148684800,
+      "uploaded": 17911,
+      "progress": 0.3369,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 14382,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 150880256,
+      "uploaded": 39754,
+      "progress": 0.3418,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 16381,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 153124864,
+      "uploaded": 42129,
+      "progress": 0.3469,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 18382,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 156647424,
+      "uploaded": 45139,
+      "progress": 0.3549,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 20383,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 158973952,
+      "uploaded": 47837,
+      "progress": 0.3602,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 22383,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 162185216,
+      "uploaded": 50881,
+      "progress": 0.3674,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 24384,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 166789120,
+      "uploaded": 55130,
+      "progress": 0.3779,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 26384,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 171819008,
+      "uploaded": 59654,
+      "progress": 0.3893,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 28384,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 174211072,
+      "uploaded": 62194,
+      "progress": 0.3947,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 30384,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 177913856,
+      "uploaded": 64238,
+      "progress": 0.4031,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 32384,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 181157888,
+      "uploaded": 67214,
+      "progress": 0.4104,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 34385,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 184877056,
+      "uploaded": 70780,
+      "progress": 0.4188,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 36386,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 188547072,
+      "uploaded": 74847,
+      "progress": 0.4272,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 38388,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 191561728,
+      "uploaded": 78370,
+      "progress": 0.434,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 40388,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 194183168,
+      "uploaded": 81238,
+      "progress": 0.4399,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 42387,
+      "webrtcPeers": 1,
+      "classicPeers": 5,
+      "downloaded": 198885376,
+      "uploaded": 85365,
+      "progress": 0.4506,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 44388,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 210042880,
+      "uploaded": 100900,
+      "progress": 0.4759,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 46389,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 266584064,
+      "uploaded": 171415,
+      "progress": 0.604,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 48389,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 309821440,
+      "uploaded": 221337,
+      "progress": 0.7019,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 50389,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 351059968,
+      "uploaded": 13533244,
+      "progress": 0.7953,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 52391,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 410370048,
+      "uploaded": 61726067,
+      "progress": 0.9297,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 54390,
+      "webrtcPeers": 1,
+      "classicPeers": 6,
+      "downloaded": 440036969,
+      "uploaded": 62802524,
+      "progress": 0.9969,
+      "dhtNodes": null,
+      "bounded": 0
+    }
+  ],
+  "timeline": [
+    {
+      "t": 1,
+      "event": "torrent-loaded",
+      "infoHash": "8337c196d4536e9af5d2c7e599f0f1b7d71eee54",
+      "name": "BigBuckBunny_124",
+      "mp4": "big_buck_bunny_720p_surround.mp4",
+      "mp4Idx": 10,
+      "mp4MB": 62
+    },
+    {
+      "t": 95,
+      "event": "B-up",
+      "pid": 37784,
+      "relay": "ws://127.0.0.1:60810"
+    },
+    {
+      "t": 2602,
+      "event": "C-buffered-from-real-swarm",
+      "webrtcPeers": 0,
+      "classicPeers": 5,
+      "downloaded": 136888320,
+      "uploaded": 3657,
+      "progress": 0.3101,
+      "dhtNodes": null,
+      "bounded": 0
+    },
+    {
+      "t": 3205,
+      "event": "ceiling-canPlay",
+      "canPlay": false,
+      "expect": false
+    },
+    {
+      "t": 3413,
+      "event": "A-added-torrentio-magnet-via-B"
+    },
+    {
+      "t": 49997,
+      "event": "A-pulling-via-C",
+      "wires": 1,
+      "downloaded": 3948544,
+      "videoTime": 0
+    },
+    {
+      "t": 50000,
+      "event": "B-exit",
+      "code": null
+    },
+    {
+      "t": 50305,
+      "event": "B-KILLED",
+      "B_alive": false,
+      "ps": "DEAD",
+      "downloadedAtCut": 3981312,
+      "videoTimeAtCut": 0
+    },
+    {
+      "t": 55355,
+      "event": "A-after-killB",
+      "dlFirstAfterBdead": 11010048,
+      "dlEnd": 62390272,
+      "dlGained": 51380224,
+      "vtFirstAfterBdead": 0,
+      "vtEnd": 1.53,
+      "vtGained": 1.53,
+      "wires": 1,
+      "bDead": true
+    }
+  ],
+  "transportPass": true,
+  "playbackAdvanced": true,
+  "PASS": true
+}

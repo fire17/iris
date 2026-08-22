@@ -1,0 +1,154 @@
+<title>hp-resolver Close-Out</title>
+<style>
+  :root{--bg:#0d0d0f;--panel:#141418;--line:#26262d;--ink:#e9e9ee;--dim:#9a9aa6;
+        --pink:#f5387b;--ok:#3ecf8e;--warn:#f5b942;--bad:#ff5c5c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    padding:48px 28px 96px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:29px;margin:0 0 6px;letter-spacing:-.02em}h1 b{color:var(--pink)}
+  h2{font-size:18px;margin:42px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .sub{color:var(--dim);margin:0 0 30px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:13.5px}
+  th{text-align:left;color:var(--dim);font-weight:600;font-size:11.5px;letter-spacing:.06em;
+     text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid #1c1c22;vertical-align:top}
+  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d6e5;
+    background:#1b1b21;padding:1.5px 5px;border-radius:4px}
+  pre{background:#131318;border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+    overflow-x:auto;font:12.5px ui-monospace,Menlo,monospace;color:#c9d6e5}
+  .ok{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
+  .unv{color:var(--warn);font-weight:700}
+  .note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--pink);
+    border-radius:8px;padding:14px 18px;margin:20px 0}
+  .note b{color:var(--pink)}
+  ul{padding-left:20px}li{margin:6px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:22px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card b{display:block;font-size:23px;color:var(--pink);letter-spacing:-.02em}
+  .card span{color:var(--dim);font-size:12px}
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+</style>
+
+<div class="wrap">
+
+<h1>Lane <b>hp-resolver</b> — close-out</h1>
+<p class="sub">Local stream-resolver service · dedicated Chaturbate first, generic yt-dlp backup · single-file stdlib
+<code>ThreadingHTTPServer</code> on :11471 · built &amp; verified 2026-08-21 · model claude-opus-4-8 (runtime).</p>
+
+<div class="grid">
+  <div class="card"><b>LIVE</b><span>CB stream proven advancing</span></div>
+  <div class="card"><b>5</b><span>routes: resolve/thumb/proxy/health</span></div>
+  <div class="card"><b>0</b><span>pip deps (curl + yt-dlp external)</span></div>
+  <div class="card"><b>~300 LOC</b><span>one file, stdlib server</span></div>
+</div>
+
+<div class="note">
+<b>Lane verdict.</b> Internal Chaturbate streaming <i>works</i> and it streams <i>live</i> — the acceptance bar is met.
+<code>GET /resolve?site=chaturbate&amp;room=&lt;live&gt;</code> returns the master <code>llhls.m3u8</code> (CORS <code>ACAO:*</code>,
+low-latency, audio group + 4 video variants → hls.js muxes A/V itself), and the URL the service hands the client was
+proven to be a <i>live</i> media stream whose segments advance — not a dead or VOD url. The dedicated path uses
+Chaturbate's own edge-HLS endpoint (a single <code>curl</code> POST, no subprocess, fast enough for the 100s-preview
+scale); the generic path shells to <code>yt-dlp</code> as a backup for everything else. The service is <b>optional</b> —
+the app degrades gracefully to addon streams / the external link when it isn't running.
+</div>
+
+<h2>Design — dedicated-first, generic-backup</h2>
+<table>
+<tr><th>Path</th><th>Mechanism</th><th>Why</th></tr>
+<tr><td><b>Dedicated · Chaturbate</b></td>
+    <td><code>curl</code> POST → <code>chaturbate.com/get_edge_hls_url_ajax/</code> with
+        <code>room_slug=&lt;room&gt;&amp;bandwidth=high</code> → <code>{success,url,room_status}</code>. Returns the master
+        <code>edge*.live.mmcdn.com/…/llhls.m3u8?token=</code>.</td>
+    <td>Cleaner &amp; faster than yt-dlp: no python subprocess, no format explosion, one ~200&nbsp;ms POST. Returns the
+        <i>master</i> (not the split audio/video chunklists yt-dlp emits), so hls.js muxes A/V and ladder-switches itself.</td></tr>
+<tr><td><b>Generic · backup</b></td>
+    <td><code>yt-dlp -J --no-warnings --no-playlist &lt;url&gt;</code> → pick HLS master → format <code>manifest_url</code>
+        → best progressive → any <code>.m3u8</code> → fallback url. A cheap <code>curl -sI</code> sets <code>corsSafe</code>.</td>
+    <td>yt-dlp already solves generic extraction across ~1800 sites (ponytail: don't reinvent it, shell to it). Non-CORS
+        streams get a <code>proxyUrl</code> so the client can still play them in-house.</td></tr>
+</table>
+
+<div class="note"><b>Why curl, not urllib.</b> The stock python.org 3.12 build ships without a CA bundle and fails TLS
+verification on <code>chaturbate.com</code> (<code>CERTIFICATE_VERIFY_FAILED</code>). <code>curl</code> and <code>yt-dlp</code>
+use the OS trust store and work. Outbound HTTPS therefore goes through them; the stdlib <code>http.server</code> handles
+inbound only. Zero pip installs, portable on macOS.</div>
+
+<h2>HTTP contract</h2>
+<table>
+<tr><th>Route</th><th>Returns</th></tr>
+<tr><td><code>GET /health</code></td><td><code>{ok:true, service, port, routes}</code> — probe with ~1s timeout; on failure fall back.</td></tr>
+<tr><td><code>GET /resolve?site=chaturbate&amp;room=&lt;name&gt;</code><br>(also <code>?url=&lt;cb page&gt;</code> / <code>?url=chaturbate:&lt;room&gt;</code>)</td>
+    <td>live → <code>{ok:true, kind:"hls", via:"chaturbate", url:&lt;master&gt;, live:true, room, thumb, corsSafe:true, lowLatency:true}</code><br>
+        offline → <code>{ok:false, reason:"offline"|"private"|"away"|…, via:"chaturbate", room, thumb, live:false}</code></td></tr>
+<tr><td><code>GET /resolve?url=&lt;any video page&gt;</code></td>
+    <td><code>{ok:true, kind:"hls"|"mp4"|…, via:"generic", url, muxed, live, title, corsSafe:bool|null, extractor}</code>;
+        when <code>corsSafe!==true</code> also <code>proxyUrl</code> + <code>note</code>. Fail → <code>{ok:false, reason, detail}</code>.</td></tr>
+<tr><td><code>GET /thumb?site=chaturbate&amp;room=&lt;name&gt;</code></td><td><code>302</code> → <code>thumb.live.mmcdn.com/riw/&lt;name&gt;.jpg</code> (live snapshot, 200 image/jpeg ACAO:*).</td></tr>
+<tr><td><code>GET /proxy?url=&lt;abs&gt;</code></td><td>CORS passthrough: m3u8 rewritten (URIs routed back through <code>/proxy</code>), binary streamed with <code>ACAO:*</code> + Range forwarded.</td></tr>
+</table>
+<p class="sub" style="margin:-6px 0 0">Every response sends <code>Access-Control-Allow-Origin: *</code>. Full contract + client recipe: <code>server/resolver/README.md</code>. Client integration (app.js) is hp-stream's lane.</p>
+
+<h2>Live-streaming proof — the acceptance bar</h2>
+<p class="sub" style="margin-top:0">"make sure its streaming" → prove segments advance on the URL the <i>service</i> returns, not just that a URL comes back.</p>
+<pre>service: {ok:true, kind:"hls", via:"chaturbate", live:true, corsSafe:true, lowLatency:true}
+master ACAO: access-control-allow-origin: *   |   content-type: application/vnd.apple.mpegurl
+is_master: True   audio_group: True   variants: 4
+t0    #EXT-X-MEDIA-SEQUENCE = 16860   segments = 4
+t+10  #EXT-X-MEDIA-SEQUENCE = 16866   segments = 4     ← +7 new segments in 10s
+SERVICE_URL_LIVE_ADVANCING: True</pre>
+<p>The master the service handed back is a genuine live LL-HLS stream — its media sequence advanced (16860→16866) over a
+10-second window with a 4-deep sliding segment window. A dead or VOD url would not move.</p>
+
+<div class="note"><b>Token behaviour (measured, documented for the client).</b> Chaturbate tokens are per-resolve — the client
+must <b>resolve fresh at every play/preview and never cache the m3u8</b>. Grace from resolve to first GET is <b>30s+</b>
+(delays of 0/5/15/30s all still returned a valid master), so normal use is safe. One sharp edge: a <b>HEAD</b> request on the
+master <b>voids the token</b> (observed) — GET only. hls.js uses GET, so this bites only hand-rolled probes; the service's CB
+path never issues a HEAD.</div>
+
+<h2>Verification — honest</h2>
+<table>
+<tr><th>Test</th><th>Result</th><th>Status</th></tr>
+<tr><td><code>/health</code></td><td><code>{ok:true, service:"hp-resolver"}</code></td><td class="ok">PASS</td></tr>
+<tr><td>Dedicated CB resolve (live room)</td><td>master llhls, live:true, corsSafe:true</td><td class="ok">PASS</td></tr>
+<tr><td>CB master actually streams live</td><td>media-sequence advanced 16860→16866 / 10s</td><td class="ok">PROVEN</td></tr>
+<tr><td>Graceful offline (dark/bad room)</td><td><code>{ok:false, reason:"offline", live:false}</code></td><td class="ok">PASS</td></tr>
+<tr><td><code>/thumb</code> 302 + mmcdn host</td><td>302 → thumbnail; host 200 image/jpeg ACAO:*</td><td class="ok">PASS</td></tr>
+<tr><td>Generic HLS (Mux public test master)</td><td>ok:true kind:hls muxed:true corsSafe:true</td><td class="ok">PASS</td></tr>
+<tr><td>Generic mp4 (progressive)</td><td>ok:true kind:mp4 corsSafe:false + proxyUrl + note</td><td class="ok">PASS</td></tr>
+<tr><td><code>/proxy</code> HLS rewrite</td><td>ACAO:*; variant URIs routed through /proxy</td><td class="ok">PASS</td></tr>
+<tr><td><code>/proxy</code> binary streaming</td><td>ACAO:*; 206 + Range forwarded; valid ftyp bytes</td><td class="ok">PASS</td></tr>
+<tr><td>Missing-params guard</td><td>400</td><td class="ok">PASS</td></tr>
+<tr><td>Concurrent 100s-preview load test</td><td>server is threaded; not adversarially load-tested</td><td class="unv">UNVERIFIED</td></tr>
+<tr><td>In-browser hls.js playback</td><td>URL/CORS/live all proven at HTTP layer; not opened in a real <code>&lt;video&gt;</code> here (hp-stream's lane)</td><td class="unv">UNVERIFIED (by design — client lane)</td></tr>
+</table>
+
+<h2>Graceful degrade</h2>
+<ul>
+<li>The service is <b>optional</b>. The client probes <code>/health</code> with a ~1s timeout; if nothing answers it falls
+back to addon-provided streams / the external "Chat Now!" link. The static app works with the resolver absent.</li>
+<li>Room offline → <code>{ok:false, reason:"offline"}</code>: the client shows an offline chip instead of a dead player.</li>
+<li>Generic host not CORS-clean → <code>proxyUrl</code> is offered so playback still happens in-house, or the client can
+choose the external link.</li>
+<li><code>yt-dlp</code> missing → generic path returns <code>{ok:false, reason:"yt-dlp-missing"}</code>; the dedicated CB
+path still works (curl only).</li>
+</ul>
+
+<h2>Run it</h2>
+<pre>python3 server/resolver/resolver.py        # binds 127.0.0.1:11471
+# env: HOST (127.0.0.1)  PORT (11471)  YTDLP (yt-dlp)
+# deps: curl (always on macOS) for CB + proxy · yt-dlp for the generic path only</pre>
+
+<h2>Scope law honoured</h2>
+<p>No stream data, thumbnail image, or screenshot of adult content is committed — those stayed in the scratchpad. The
+committed code is generic infrastructure that bundles no content (like <code>server/engine.mjs</code>); committed evidence
+is JSON responses (urls/booleans) and the media-sequence numbers proving liveness.</p>
+
+<footer>
+Deliverables: <code>server/resolver/resolver.py</code> · <code>server/resolver/README.md</code> (HTTP contract) ·
+this report. Built inline (single focused file — a multi-agent fan-out to co-write one ~300-line stdlib server would be
+faked density, not real parallelism). Ponytail lens: stdlib server, shell to the tools that already solve extraction.
+</footer>
+
+</div>

@@ -1,0 +1,280 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>honestporn Dev Showcase</title>
+<style>
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1000px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav .brand{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);display:flex;align-items:center;gap:8px}
+.topnav .brand::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+header.hero{padding:clamp(40px,7vw,78px) 0 clamp(30px,4vw,44px);border-bottom:1px solid var(--line-soft)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 16px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(30px,6vw,56px);letter-spacing:-.035em;line-height:1.04;margin:0 0 .28em;color:var(--fg)}
+h1 .accent{color:var(--pink)}
+.lede{max-width:66ch;font-size:clamp(16px,2.1vw,19px);color:var(--fg-1);margin:.1em 0 0}
+.herometa{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:26px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.herometa b{color:var(--fg-1);font-weight:500}
+section{padding:clamp(34px,5vw,54px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(20px,2.9vw,27px);letter-spacing:-.02em;margin:0 0 .2em;color:var(--fg)}
+.sub{color:var(--fg-2);max-width:70ch;margin:.3em 0 1.4em}
+p{max-width:76ch;color:var(--fg-1)}
+/* the split: plays vs impossible */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+@media(max-width:720px){.split{grid-template-columns:1fr}}
+.col{border:1px solid var(--line);border-radius:14px;background:var(--s1);padding:20px 22px;box-shadow:var(--shadow)}
+.col.plays{border-color:color-mix(in srgb,var(--ok) 38%,transparent)}
+.col.imposs{border-color:color-mix(in srgb,var(--no) 38%,transparent)}
+.col h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:9px;color:var(--fg)}
+.col h3 .dot{width:9px;height:9px;border-radius:50%}
+.col.plays h3 .dot{background:var(--ok)} .col.imposs h3 .dot{background:var(--no)}
+.col .cap{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--fg-2);margin:0 0 12px}
+.col ul{margin:0;padding-left:1.15em;color:var(--fg-1);font-size:14.5px}
+.col li{margin-bottom:.5em}
+.col li::marker{color:var(--pink)}
+.col li b{color:var(--fg)}
+/* report cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:8px}
+a.card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--s1);
+  padding:22px 22px 20px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s;color:inherit}
+a.card:hover{border-color:var(--pink);transform:translateY(-2px)}
+a.card .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+a.card h3{font-size:19px;letter-spacing:-.02em;margin:10px 0 8px;color:var(--fg)}
+a.card p{font-size:14px;color:var(--fg-1);margin:0 0 16px;flex:1}
+a.card .badge{align-self:flex-start;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid;display:inline-flex;align-items:center;gap:7px}
+a.card .badge::before{content:"";width:7px;height:7px;border-radius:50%}
+.badge.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--ok-tint)}
+.badge.ok::before{background:var(--ok)}
+.badge.no{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,transparent);background:var(--no-tint)}
+.badge.no::before{background:var(--no)}
+a.card .go{font-family:var(--mono);font-size:12px;color:var(--pink-hi);margin-top:12px}
+/* status strip */
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:8px}
+.st{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.st .n{font-size:clamp(21px,2.8vw,28px);font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--fg);font-family:var(--mono)}
+.st .n.ok{color:var(--ok)} .st .n.no{color:var(--no)} .st .n.pink{color:var(--pink)}
+.st .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+/* the law box */
+.law{border:1px solid color-mix(in srgb,var(--pink) 34%,transparent);background:var(--pink-tint);
+  border-radius:14px;padding:20px 24px;margin-top:6px;box-shadow:var(--shadow)}
+.law .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);font-weight:700;margin:0 0 8px;display:block}
+.law p{font-size:17px;color:var(--fg);max-width:74ch;margin:0}
+/* archive list */
+.arch{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:6px}
+a.arow{display:flex;align-items:center;gap:9px;border:1px solid var(--line-soft);border-radius:9px;background:var(--s1);
+  padding:10px 13px;font-family:var(--mono);font-size:12.5px;color:var(--fg-1)}
+a.arow:hover{border-color:var(--pink);color:var(--fg)}
+a.arow::before{content:"";width:6px;height:6px;border-radius:1px;background:var(--fg-2);transform:rotate(45deg);flex:none}
+a.arow:hover::before{background:var(--pink)}
+footer.ft{border-top:1px solid var(--line-soft);padding:34px 0 64px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+footer.ft a{color:var(--fg-2)}
+</style>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">honestporn · dev showcase</span>
+  <span class="sp"></span>
+  <button class="tglbtn" data-theme-btn onclick="__toggleTheme()">theme</button>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <p class="tagline">browser-only mission · close-out</p>
+  <h1>Everything the browser <span class="accent">can</span> do —<br>and the wall it <span class="accent">can't</span> cross.</h1>
+  <p class="lede">honestporn plays video peer-to-peer in the browser with no node of ours in the byte path,
+    renders live subtitles from open sources, and — where physics forbids the browser-only dream — says so,
+    with the measurement to prove it. This is the mission's honest close-out.</p>
+  <div class="herometa">
+    <span>date <b>2026-08-21</b></span>
+    <span>lanes shipped <b>merged on main</b></span>
+    <span>published <b>nothing — all local</b></span>
+    <span>the aesthetic <b>honesty</b></span>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <div class="law"><span class="lab">the law · fire17, non-negotiable</span>
+    <p>Any node we run may relay <b>handshakes and signaling only</b>. It must <b>never carry file
+      bytes</b>. Files flow peer&rarr;browser directly, or not through us. A bridge that re-serves torrent
+      bytes to the browser <b>violates the law and is a failed result — even if it "works".</b></p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The mission in one screen</h2>
+  <p class="sub">Two columns, one honest boundary. On the left, what genuinely plays browser-only with zero
+    node in the byte path. On the right, what physically cannot — and exactly why.</p>
+  <div class="split">
+    <div class="col plays">
+      <h3><span class="dot"></span>Plays browser-only · law-compliant</h3>
+      <p class="cap">bytes flow peer&rarr;browser, no node in the path</p>
+      <ul>
+        <li><b>Browser-to-browser WebRTC torrent.</b> Two browsers exchange the file over a direct
+          DataChannel; our signaling node is SIGKILLed the instant the channel opens and the full
+          <b>68,086,404-byte</b> clip still streams to 100%. Node carried <b>0 file bytes</b>.</li>
+        <li><b>Self-sustaining swarm.</b> Once one browser holds the bytes, the swarm survives with no
+          tracker and no original seeder — pure browser-to-browser reseed.</li>
+        <li><b>Self-seeded catalog</b> over a plain static host (HTTP Range web-seed), played through the
+          real player with <b>no backend</b>.</li>
+        <li><b>Live subtitles</b> from OpenSubtitles v3 + every installed addon, SRT/SSA/VTT &rarr; WebVTT,
+          language picker, offset, remembered — no proxy of ours.</li>
+        <li><b>User-brings-the-file</b> seeding, and third-party HTTP mirrors — the two genuine
+          law-compliant boundaries.</li>
+      </ul>
+    </div>
+    <div class="col imposs">
+      <h3><span class="dot"></span>Physically cannot · and why</h3>
+      <p class="cap">arbitrary TCP-only magnet, no local copy</p>
+      <ul>
+        <li><b>An arbitrary TCP/uTP Torrentio magnet cannot play browser-only.</b> A browser reaches bytes
+          over exactly four transports — WebRTC, WebSocket, WebTransport, HTTP — and a raw BitTorrent peer
+          speaks <b>none</b> of them. There is no fifth transport.</li>
+        <li><b>Signaling can't fix it.</b> A relay changes introductions, not the wire protocol. The only
+          ICE path to a non-STUN host is TURN, which relays the bytes — a forbidden byte-path node.</li>
+        <li><b>The bootstrap paradox.</b> A browser can only seed over WebRTC content it already holds; for
+          TCP-only content the genesis seeder could only have gotten it from a byte-path node. No such node
+          &rArr; no browser swarm ever forms.</li>
+        <li><b>Measured:</b> the target swarm was fully alive over TCP/uTP (<b>54 seeders</b>) yet exposed
+          <b>0</b> browser-reachable WebRTC seeders.</li>
+        <li><b>The "torrentio bridge" is not a win</b> — it leeched <b>99,532,800 B</b> through a node we
+          run and re-served them. That is the law-violation the verdict names, not a browser-first success.</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Close-out reports</h2>
+  <p class="sub">Each lane, grounded in real proof output. Numbers are observed, not invented; gaps are
+    marked plainly.</p>
+  <div class="cards">
+    <a class="card" href="torrent-p2p.html">
+      <span class="k">lane 1</span>
+      <h3>Direct-P2P Browser Torrent</h3>
+      <p>The signaling node relays SDP/ICE only, is killed mid-transfer, and the clip still completes
+        peer-to-peer. Self-sustaining swarm, self-seed, the honest copy-magnet fallback.</p>
+      <span class="badge ok">law-compliant · byte-level proven</span>
+      <span class="go">read the close-out &rarr;</span>
+    </a>
+    <a class="card" href="subtitles.html">
+      <span class="k">lane 2</span>
+      <h3>Browser-Only Live Subtitles</h3>
+      <p>OpenSubtitles v3 + every addon, merged and deduped, SRT/SSA/VTT &rarr; WebVTT, language picker,
+        sync offset, localStorage. Whisper auto-sync: interop-ready, honestly not shipped.</p>
+      <span class="badge ok">shipped · live in the player</span>
+      <span class="go">read the close-out &rarr;</span>
+    </a>
+    <a class="card" href="physics-verdict.html">
+      <span class="k">lane 3</span>
+      <h3>The Transport-Law Verdict</h3>
+      <p>The definitive proof that an arbitrary TCP-only browser-P2P play is impossible under the law —
+        the four-transports wall, the bootstrap paradox, the measured swarm, 38 dead-ends.</p>
+      <span class="badge no">verdict · impossible (proven)</span>
+      <span class="go">read the verdict &rarr;</span>
+    </a>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Current live status</h2>
+  <p class="sub">Where the mission stands right now — observed, committed, and honestly bounded.</p>
+  <div class="status">
+    <div class="st"><div class="n ok">0</div><div class="k">node file bytes at relay-kill</div></div>
+    <div class="st"><div class="n">68,086,404</div><div class="k">bytes streamed P2P to 100%</div></div>
+    <div class="st"><div class="n ok">3</div><div class="k">lanes merged on main</div></div>
+    <div class="st"><div class="n no">0</div><div class="k">browser-reachable WebRTC seeders (target swarm)</div></div>
+    <div class="st"><div class="n pink">54</div><div class="k">TCP/uTP seeders on that same swarm</div></div>
+    <div class="st"><div class="n">0</div><div class="k">things published — all local</div></div>
+  </div>
+  <p style="margin-top:18px">The byte-level zero-relay result is committed and verified
+    (<code>rtc-timeline.json</code>). The self-seed and wss-tracker frame-accounting harnesses are present
+    and assertion-designed, but their captured run output is not committed — those are marked
+    <b>unverified in-report</b> on the lane page rather than claimed. Nothing was pushed, published, or
+    shared; every artifact lives in this worktree.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Fleet report archive</h2>
+  <p class="sub">The wider HIGHREV fleet's per-lane reports, alongside these three close-outs, all in
+    <code>.grand/reports/</code>.</p>
+  <div class="arch">
+    <a class="arow" href="torrent-p2p.html">torrent-p2p</a>
+    <a class="arow" href="subtitles.html">subtitles</a>
+    <a class="arow" href="physics-verdict.html">physics-verdict</a>
+    <a class="arow" href="relay-punch.html">relay-punch</a>
+    <a class="arow" href="p2p-torrent-solver.html">p2p-torrent-solver</a>
+    <a class="arow" href="hp-showcase.html">hp-showcase</a>
+    <a class="arow" href="hp-player.html">hp-player</a>
+    <a class="arow" href="hp-stream.html">hp-stream</a>
+    <a class="arow" href="hp-resolver.html">hp-resolver</a>
+    <a class="arow" href="hp-catalog.html">hp-catalog</a>
+    <a class="arow" href="hp-addons.html">hp-addons</a>
+    <a class="arow" href="hp-nav.html">hp-nav</a>
+    <a class="arow" href="hp-motion.html">hp-motion</a>
+    <a class="arow" href="hp-responsive.html">hp-responsive</a>
+    <a class="arow" href="hp-trust.html">hp-trust</a>
+    <a class="arow" href="hp-quality.html">hp-quality</a>
+    <a class="arow" href="quality-round1.html">quality-round1</a>
+  </div>
+</div></section>
+
+<footer class="ft"><div class="wrap">
+  honestporn · browser-only mission close-out · 2026-08-21 · the aesthetic is honesty ·
+  no publish, no push — all local.
+</div></footer>
+
+<script>
+(function(){var K='hp-report-theme';var r=document.documentElement;try{var s=localStorage.getItem(K);if(s)r.setAttribute('data-theme',s);}catch(e){}
+function cur(){var a=r.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+window.__toggleTheme=function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem(K,n);}catch(e){}var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=n==='dark'?'◐ dark':'◑ light';};
+addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=cur()==='dark'?'◐ dark':'◑ light';});})();
+</script>

@@ -1,0 +1,341 @@
+{
+  "bareMagnet": "magnet:?xt=urn:btih:481b6e3617be4c88f96cb25e47c9d8272130071e&dn=debian-13.6.0-amd64-netinst.iso",
+  "wss": "ws://127.0.0.1:51601",
+  "canPlayBare": false,
+  "atKill": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:481b6e3617be4c88f96cb25e47c9d8272130071e&dn=debian-13.6.0-amd64-netinst.iso&tr=ws%3A%2F%2F127.0.0.1%3A51601",
+    "infoHash": "481b6e3617be4c88f96cb25e47c9d8272130071e",
+    "progress": 0.00149,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 1179648,
+    "uploaded": 2767,
+    "downloadSpeed": 248292,
+    "length": 791674880,
+    "done": false,
+    "videoTime": 0,
+    "videoPaused": true,
+    "muted": true,
+    "error": null
+  },
+  "finalA": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:481b6e3617be4c88f96cb25e47c9d8272130071e&dn=debian-13.6.0-amd64-netinst.iso&tr=ws%3A%2F%2F127.0.0.1%3A51601",
+    "infoHash": "481b6e3617be4c88f96cb25e47c9d8272130071e",
+    "progress": 0.19737,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 156254208,
+    "uploaded": 208210,
+    "downloadSpeed": 31287813,
+    "length": 791674880,
+    "done": false,
+    "videoTime": 0,
+    "videoPaused": true,
+    "muted": true,
+    "error": null
+  },
+  "samples": [
+    {
+      "t": 14964,
+      "downloaded": 12845056,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 0,
+      "cDown": 791674880
+    },
+    {
+      "t": 15166,
+      "downloaded": 22020096,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 0,
+      "cDown": 791674880
+    },
+    {
+      "t": 15368,
+      "downloaded": 31227904,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 0,
+      "cDown": 791674880
+    },
+    {
+      "t": 15570,
+      "downloaded": 40861696,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 0,
+      "cDown": 791674880
+    },
+    {
+      "t": 15773,
+      "downloaded": 50774016,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 0,
+      "cDown": 791674880
+    },
+    {
+      "t": 15974,
+      "downloaded": 59719680,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 16176,
+      "downloaded": 70402048,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 16378,
+      "downloaded": 79822848,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 16579,
+      "downloaded": 90390528,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 16782,
+      "downloaded": 99942400,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 16984,
+      "downloaded": 110116864,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 17186,
+      "downloaded": 119177216,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 17388,
+      "downloaded": 129613824,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 17590,
+      "downloaded": 139149312,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 17792,
+      "downloaded": 147587072,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    },
+    {
+      "t": 17993,
+      "downloaded": 156254208,
+      "wires": 1,
+      "connOk": true,
+      "bAlive": false,
+      "cWebrtc": 1,
+      "cDown": 791674880
+    }
+  ],
+  "cStats": [
+    {
+      "t": 3902,
+      "webrtcPeers": 0,
+      "classicPeers": 26,
+      "downloaded": 791674880,
+      "uploaded": 24520,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 5903,
+      "webrtcPeers": 0,
+      "classicPeers": 26,
+      "downloaded": 791674880,
+      "uploaded": 24520,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 7903,
+      "webrtcPeers": 0,
+      "classicPeers": 34,
+      "downloaded": 791674880,
+      "uploaded": 37954,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 9904,
+      "webrtcPeers": 0,
+      "classicPeers": 36,
+      "downloaded": 791674880,
+      "uploaded": 38140,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 11904,
+      "webrtcPeers": 0,
+      "classicPeers": 36,
+      "downloaded": 791674880,
+      "uploaded": 38354,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 13904,
+      "webrtcPeers": 0,
+      "classicPeers": 48,
+      "downloaded": 791674880,
+      "uploaded": 50447,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 15904,
+      "webrtcPeers": 1,
+      "classicPeers": 47,
+      "downloaded": 791674880,
+      "uploaded": 56320224,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 17929,
+      "webrtcPeers": 1,
+      "classicPeers": 47,
+      "downloaded": 791674880,
+      "uploaded": 155115565,
+      "progress": 1,
+      "dhtNodes": null
+    }
+  ],
+  "timeline": [
+    {
+      "t": 3,
+      "wall": "2026-08-21T14:23:44.741Z",
+      "event": "static-up",
+      "port": 51597
+    },
+    {
+      "t": 90,
+      "wall": "2026-08-21T14:23:44.828Z",
+      "event": "B-up",
+      "port": 51601,
+      "pid": 25517,
+      "relay": "ws://127.0.0.1:51601"
+    },
+    {
+      "t": 1901,
+      "wall": "2026-08-21T14:23:46.639Z",
+      "event": "C-ready"
+    },
+    {
+      "t": 4099,
+      "wall": "2026-08-21T14:23:48.837Z",
+      "event": "C-buffered-from-real-swarm",
+      "webrtcPeers": 0,
+      "classicPeers": 26,
+      "downloaded": 791674880,
+      "uploaded": 24520,
+      "progress": 1,
+      "dhtNodes": null
+    },
+    {
+      "t": 4311,
+      "wall": "2026-08-21T14:23:49.049Z",
+      "event": "ceiling-canPlay-bareMagnet",
+      "canPlay": false,
+      "expect": false
+    },
+    {
+      "t": 4369,
+      "wall": "2026-08-21T14:23:49.107Z",
+      "event": "A-added-bareMagnet-via-B"
+    },
+    {
+      "t": 14704,
+      "wall": "2026-08-21T14:23:59.442Z",
+      "event": "A<->C-WIRE + bytes flowing",
+      "wires": 1,
+      "downloaded": 1179648,
+      "numPeers": 1
+    },
+    {
+      "t": 14709,
+      "wall": "2026-08-21T14:23:59.447Z",
+      "event": "B-exit",
+      "code": null
+    },
+    {
+      "t": 14962,
+      "wall": "2026-08-21T14:23:59.700Z",
+      "event": "B-KILLED",
+      "pid": 25517,
+      "alive": false,
+      "ps": "NO_SUCH_PROCESS",
+      "downloadedAtKill": 1179648
+    },
+    {
+      "t": 17993,
+      "wall": "2026-08-21T14:24:02.731Z",
+      "event": "A-after-killB",
+      "downloadedAtKill": 1179648,
+      "dlFirstReadAfterBdead": 12812288,
+      "downloadedNow": 156254208,
+      "gainedStrictlyAfterBdead": 143441920,
+      "wires": 1,
+      "bDead": true,
+      "C_webrtcPeers": 1
+    }
+  ],
+  "PASS": true
+}

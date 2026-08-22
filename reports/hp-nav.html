@@ -1,0 +1,189 @@
+<title>hp-nav</title>
+<style>
+  :root{
+    --bg:#fbfaf9; --panel:#ffffff; --ink:#16151a; --muted:#5d5b66; --line:#e5e2dd;
+    --accent:#f5387b; --ai:#7a63f0; --ok:#1f9d6b; --demo:#c07d17; --warn:#b45309;
+    --code:#f3f1ee;
+  }
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0c0c0f; --panel:#141419; --ink:#eceaf2; --muted:#9b98a6; --line:#26262f;
+      --accent:#f5387b; --ai:#9d8bff; --ok:#3fd39a; --demo:#f0a83c; --warn:#f0a83c;
+      --code:#1b1b22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c0c0f; --panel:#141419; --ink:#eceaf2; --muted:#9b98a6; --line:#26262f;
+    --accent:#f5387b; --ai:#9d8bff; --ok:#3fd39a; --demo:#f0a83c; --warn:#f0a83c;
+    --code:#1b1b22;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink); margin:0;
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    padding:0 20px 96px;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  header{padding:56px 0 28px;border-bottom:1px solid var(--line)}
+  .kicker{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 10px
+  }
+  h1{font-size:38px;line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:0;font-size:17px}
+  h2{
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin:52px 0 16px;font-weight:700
+  }
+  h3{font-size:17px;margin:26px 0 8px}
+  p{margin:0 0 14px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:0 0 14px
+  }
+  .verdict{border-left:3px solid var(--accent)}
+  .honest{border-left:3px solid var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
+  td code,p code,li code{background:var(--code);border-radius:4px;padding:1px 5px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.55;margin:0 0 14px}
+  .pass{color:var(--ok);font-weight:700;white-space:nowrap}
+  .part{color:var(--warn);font-weight:700;white-space:nowrap}
+  .no{color:var(--muted);font-weight:700;white-space:nowrap}
+  ul{margin:0 0 14px;padding-left:22px}
+  li{margin:0 0 7px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:var(--panel);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:600
+  }
+  .dot{width:9px;height:9px;border-radius:99px;display:inline-block}
+  .d-ok{background:var(--ok)} .d-accent{background:var(--accent)} .d-ai{background:var(--ai)}
+  figure{margin:0 0 18px}
+  img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block}
+  figcaption{color:var(--muted);font-size:13px;margin-top:8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 18px}
+  @media (max-width:680px){.grid2{grid-template-columns:1fr}}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+  @media (max-width:640px){h1{font-size:29px}body{padding:0 15px 64px}}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="kicker">honestporn · HIGHREV fleet · lane report</p>
+  <h1>hp-nav</h1>
+  <p class="sub">The board's row control and navigation feel — made flawless. The 1&ndash;5 row control works with tall poster tiles, the camera never yanks while you browse, and a live-thumbnail preview mode scales to hundreds of feeds.</p>
+</header>
+
+<div class="chips">
+  <span class="chip"><span class="dot d-ok"></span>Rows 1&ndash;5 all re-lay-out</span>
+  <span class="chip"><span class="dot d-ok"></span>Cursor-anchored zoom + free pan</span>
+  <span class="chip"><span class="dot d-ok"></span>No camera yank on poll/resize</span>
+  <span class="chip"><span class="dot d-accent"></span>Live previews, hundreds at once</span>
+  <span class="chip"><span class="dot d-ok"></span>Zero console errors · idle-zero</span>
+</div>
+
+<div class="card verdict">
+  <p style="margin:0"><strong>Verdict.</strong> Both tasks landed and were verified live in a browser driven against the served worktree. The row control &mdash; the reported failure &mdash; now visibly re-lays-out at every count from 1 to 5, at both a tall and a short viewport, and no background repaint clobbers the user's choice. Zoom is cursor-anchored, pan is free with inertia, and a 2.5&nbsp;s repaint leaves the camera byte-identical. The follow-on live-preview mode refreshes only on-screen tiles, staggered and concurrency-capped, and is off by default so idle-zero holds. Owned file: <code>js/wallview.js</code> only. Commits <code>2cffd79</code> (rows) and <code>d54c796</code> (live preview).</p>
+</div>
+
+<h2>The complaint</h2>
+<div class="card">
+  <p style="margin:0">User feel-test, verbatim: <em>&ldquo;changing the ammount of rows doesnt work also in the board tab &mdash; its not allowing me to zoom or navigate.&rdquo;</em></p>
+</div>
+
+<h2>Task 1 &mdash; root cause</h2>
+<p>The board is a <code>WallView</code> built as <code>{ layout:"wall", rows:3 }</code> with the default cells &mdash; 160&times;240 (a 2:3 poster), gap&nbsp;46, so the vertical pitch is <strong>286&nbsp;px</strong>. <code>layoutWall</code> then capped the row count to what fits the viewport without clipping a cell:</p>
+<pre>var maxRows = Math.max(1, Math.floor((viewport.vh + gapY) / PITCH_Y));
+var rows = clamp(config.rows | 0, 1, config.maxRows);
+if (rows &gt; maxRows) rows = maxRows;                 // &larr; the clamp</pre>
+<p>With a 286&nbsp;px pitch, <code>maxRows</code> evaluates to only <strong>2&ndash;3</strong> at a normal window height &mdash; often 2. So the higher row counts were silently discarded. Worse, the reversion was written back into the engine's state: <code>relayout</code> does <code>if (res.rows) rows = res.rows</code>, and <code>layoutWall</code> returned the <em>clamped</em> value &mdash; so <code>setRows(5)</code> became <code>rows&nbsp;=&nbsp;1&ndash;3</code> permanently, and <strong>every resize and every 2.5&nbsp;s content poll re-clamped it too</strong>. The row dots, the number keys, and <code>setRows()</code> all appeared dead, and 100 items forced into one or two very long rows is exactly what &ldquo;can't navigate&rdquo; feels like. (The pan/zoom machinery itself was never broken &mdash; it was the single mega-row that made the board feel stuck.)</p>
+
+<h2>Task 1 &mdash; the design call</h2>
+<p>Three options were on the table: (a)&nbsp;honour the requested rows and let a tall multi-row wall be panned; (b)&nbsp;shrink the cells so N rows always fit; (c)&nbsp;a hybrid. I chose <strong>(a)</strong>.</p>
+<ul>
+  <li><strong>It keeps the wall's feel.</strong> A Cooliris-style wall is meant to be flown around &mdash; cursor-anchored zoom to survey, drag to roam. <code>computeBounds()</code> already unlocks vertical pan the moment content is taller than the viewport, and the wall is vertically centred on its origin, so more rows simply grow the wall symmetrically around the gaze. Nothing new was needed to make it navigable.</li>
+  <li><strong>No poster is ever clipped mid-cell</strong> &mdash; whole rows sit off-screen until panned to, which is the point of a wall, not a bug.</li>
+  <li><strong>(b)/(c) change the feel</strong> (tiles shrink to postage stamps at 5 rows) and add code for no benefit. Per the wall's own doctrine the row-per-catalog &ldquo;Netflix&rdquo; shape already exists as the separate <code>catalogRows</code> layout.</li>
+  <li>A row change stays a <em>non-arrival</em> relayout (<code>relayout(false)</code>), so the camera holds and the tiles reflow around the fixed gaze &mdash; consistent with hp-motion's arrival-vs-non-arrival rule and task&nbsp;2's no-yank requirement.</li>
+</ul>
+<p>The fix is the removal of the clamp: <code>rows = clamp(config.rows|0, 1, config.maxRows)</code> and nothing more. Because the returned <code>res.rows</code> now always equals the request, the write-back is idempotent &mdash; a resize or poll can no longer revert the user's choice.</p>
+
+<h2>Task 1 &mdash; rows 1&ndash;5, live</h2>
+<p>Driven with <code>agent-browser</code> at 1440&times;900 against the served worktree (byte-verified: the browser ran my worktree's <code>js/wallview.js</code>). Each shot is the real canvas; the engine's own <code>getState().rows</code> confirmed the number, and the row dots at bottom-left match it.</p>
+
+<div class="grid2">
+  <figure><img src="hp-nav-shots/rows-1.png" alt="board at 1 row"><figcaption><strong>rows = 1.</strong> One dot lit; a single strip.</figcaption></figure>
+  <figure><img src="hp-nav-shots/rows-2.png" alt="board at 2 rows"><figcaption><strong>rows = 2.</strong> Two dots; columns halve.</figcaption></figure>
+  <figure><img src="hp-nav-shots/rows-3.png" alt="board at 3 rows"><figcaption><strong>rows = 3.</strong> The default.</figcaption></figure>
+  <figure><img src="hp-nav-shots/rows-4.png" alt="board at 4 rows"><figcaption><strong>rows = 4.</strong> Four dots lit, one dim.</figcaption></figure>
+</div>
+<figure><img src="hp-nav-shots/rows-5.png" alt="board at 5 rows"><figcaption><strong>rows = 5.</strong> All five dots lit; the densest pack. The old cap discarded this count at this viewport.</figcaption></figure>
+<figure><img src="hp-nav-shots/rows-5-short-viewport-720h.png" alt="board at 5 rows on a 720px-tall viewport"><figcaption><strong>rows = 5 at 1280&times;720 &mdash; the exact failure scenario.</strong> At this height the old cap was <strong>2</strong>, so 3/4/5 all &ldquo;did nothing.&rdquo; Now all five work; three rows show and the rest are one pan away. A resize first confirmed rows stays at the chosen value (no clobber), and <code>running:false</code> confirmed the rAF slept when static.</figcaption></figure>
+
+<h2>Task 2 &mdash; navigation feel</h2>
+<p>All measured from the engine's <code>getState().cam</code> and from screenshots, on the board (<code>panLockedX:false</code>).</p>
+<div class="scroll"><table>
+  <thead><tr><th>Check</th><th>Method</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>Cursor-anchored wheel zoom</td><td>Real <code>WheelEvent</code> at screen (900,300); one notch each</td><td><span class="pass">PASS</span> &mdash; zoom 1&rarr;1.197&rarr;1.433&rarr;2.054 (exactly e<sup>0.18n</sup>); cam drifted 532&rarr;678 toward the cursor. "Masters of the Universe" stayed under (900,300) from 1&times; to 2&times; (below). Zoom-out returned to the exact origin (532, &minus;179.5, 1&times;) &mdash; lossless.</td></tr>
+    <tr><td>Free drag-pan + inertia</td><td>Pointer down/move/up</td><td><span class="pass">PASS</span> &mdash; cam.x 532&rarr;3079 (drag + momentum overshoot); cam.y held on a horizontal drag.</td></tr>
+    <tr><td>Camera does not yank on a repaint</td><td>Re-set the same items (the non-arrival poll path) while zoomed 2.05&times; and panned, + 2.5&nbsp;s settle</td><td><span class="pass">PASS</span> &mdash; cam byte-identical before/after: (678.59, &minus;216.71, 2.054). No re-frame.</td></tr>
+    <tr><td>Camera does not yank on resize</td><td>1440&times;900 &rarr; 1280&times;720</td><td><span class="pass">PASS</span> &mdash; rows held at 3, cam held at &minus;179.5.</td></tr>
+    <tr><td>Arrows / Home / End</td><td><code>Home</code> key from an off-content pan</td><td><span class="pass">PASS</span> &mdash; flew back to content start.</td></tr>
+  </tbody>
+</table></div>
+<div class="grid2">
+  <figure><img src="hp-nav-shots/zoom-anchor-1x.png" alt="zoom 1x, cursor over Masters of the Universe"><figcaption><strong>1&times;.</strong> Cursor at screen (900,300) sits over <em>Masters of the Universe</em>.</figcaption></figure>
+  <figure><img src="hp-nav-shots/zoom-anchor-2x.png" alt="zoom 2x, same poster still under the cursor"><figcaption><strong>2.05&times;.</strong> The same poster is still under (900,300); neighbours expanded outward from that anchor &mdash; textbook cursor-anchored zoom.</figcaption></figure>
+</div>
+<p><strong>Home-view regression.</strong> The registry home (<code>#home</code>, <code>catalogRows</code> layout &mdash; untouched by this change) still frames the trust lanes correctly at the top-left: labels <em>&ldquo;AI-Generated&nbsp;&middot; no human performed&rdquo;</em> and <em>&ldquo;Performer-Verified&nbsp;&middot; consent&nbsp;&middot; fair&nbsp;pay&nbsp;&middot; pull-anytime&rdquo;</em> with their badged tiles. hp-motion's home-camera fix is intact.</p>
+<figure><img src="hp-nav-shots/home-catalogrows.png" alt="home catalogRows framing the trust lanes"><figcaption><strong>#home.</strong> Trust lanes framed at rest (posters still loading across 246 items; structure and framing are correct).</figcaption></figure>
+
+<h2>Task 3 (escalation) &mdash; live-thumbnail previews</h2>
+<p>Turning on live previews for hundreds of feeds can't use hundreds of <code>&lt;video&gt;</code> elements (browsers cap at a few dozen; each HLS decode is heavy). The cheap primitive is a small <code>&lt;img&gt;</code> per tile, re-pulled periodically &mdash; no video decode, scales to hundreds. This lane owns that <strong>cheap-many</strong> half; the focused tile's real motion <code>&lt;video&gt;</code> overlay is hp-stream's.</p>
+<p>Rather than build a parallel loader, the driver rides the wall's existing image pipeline &mdash; the same <code>cache</code>, the same concurrency-capped <code>queue</code>/<code>pump</code> (<code>MAX_LOADS</code>, the &ldquo;laundromat&rdquo;), and the same off-thread <code>decode()</code>-then-swap. A dedicated <code>tl.live</code> slot wins in the draw's <code>src</code> (so the reflection follows it too); a cache-busted, single-use URL is dropped the moment it decodes so the cache never grows.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Requirement</th><th>How</th><th>Verified</th></tr></thead>
+  <tbody>
+    <tr><td>Visible tiles only</td><td><code>tile.vis</code> gate; live URL computed lazily only when a tile is on-screen</td><td><span class="pass">PASS</span> &mdash; <code>capable</code> grew 16&rarr;36 only as tiles were panned into view (never 100); <code>visibleSnapped</code> tracked the current view across pans.</td></tr>
+    <tr><td>Throttled + staggered</td><td>Driver on a <code>LIVE_TICK</code> cadence refreshes only a slice per tick so one <code>LIVE_MS</code> sweep spreads over time</td><td><span class="pass">PASS</span> &mdash; snapshots filled 2&rarr;9&rarr;16 over ~4&nbsp;s; never a burst.</td></tr>
+    <tr><td>Global toggle + concurrency cap / queue</td><td><code>setLivePreview(on)</code>; pulls share the <code>MAX_LOADS</code> queue (overflow waits its turn)</td><td><span class="pass">PASS</span></td></tr>
+    <tr><td>Decode off-thread, swap after decode</td><td><code>img.decoding="async"</code>; the tile's image is swapped only in the decode callback</td><td><span class="pass">PASS</span> &mdash; clean swap, no half-painted flicker (below).</td></tr>
+    <tr><td>Reduced-motion &rarr; off</td><td><code>setLivePreview</code> ANDs with <code>!REDUCED</code></td><td><span class="pass">PASS</span> &mdash; under emulated <code>prefers-reduced-motion: reduce</code>, enabling no-ops (<code>livePreview</code> stayed false, nothing snapped).</td></tr>
+    <tr><td>Zero console errors; idle-zero when off</td><td>No timer when off; rAF sleeps between refreshes</td><td><span class="pass">PASS</span> &mdash; empty console throughout; off by default (<code>capable:0</code> on the real, non-live catalog); <code>running:false</code> between refreshes even while on.</td></tr>
+  </tbody>
+</table></div>
+<p>Tested with an injected, network-free local source (a served screenshot) applied to every board item &mdash; I did not point the automated browser at a real cam CDN. So the <em>mechanism</em> is fully verified; the real Chaturbate snapshot fetch is unverified from here (see honest notes).</p>
+<div class="grid2">
+  <figure><img src="hp-nav-shots/live-preview-on.png" alt="live preview on: tiles show the injected live snapshot"><figcaption><strong>Previews on.</strong> Every visible tile swapped from its poster to the (test) live snapshot &mdash; contain-fit, not stretched.</figcaption></figure>
+  <figure><img src="hp-nav-shots/live-preview-off-reverted.png" alt="live preview off: posters restored at correct aspect"><figcaption><strong>Previews off.</strong> Posters restored at the correct 2:3 aspect &mdash; <code>clearLive()</code> undoes the live refit.</figcaption></figure>
+</div>
+
+<h2>Honest verification notes</h2>
+<div class="card honest">
+  <ul style="margin:0">
+    <li><strong>Live-preview real-source fetch is unverified from this lane.</strong> The refresh/stagger/cap/decode/toggle/reduced-motion mechanics were all confirmed live with a local test source; the actual <code>https://thumb.live.mmcdn.com/riw/&lt;room&gt;.jpg</code> pull (CORS, cadence, content) was not exercised &mdash; the board's catalog carries no live items, and I would not drive the automated browser at a real cam CDN.</li>
+    <li><strong>Field contract handed to hp-stream (via coordinator).</strong> The default resolver reads <code>item.liveThumb</code> (a full URL) first, else derives the Chaturbate URL from <code>item.liveRoom</code> or an id of the form <code>chaturbate:&lt;room&gt;</code>. Any of the three works out of the box; otherwise <code>wall.setLiveThumbURL(fn)</code>. Turning previews on is <code>wall.setLivePreview(true)</code> &mdash; app.js is frozen in this lane, so whoever owns the previews UI wires that call.</li>
+    <li><strong>Aspect on a dual item.</strong> A live pull refits the cell to the snapshot's aspect; on toggle-off <code>clearLive()</code> restores the base image's aspect. A cam catalog that wants a wide cell is a data/layout decision (hp-stream/catalog), out of this lane's scope.</li>
+    <li><strong>Automation caveat.</strong> <code>agent-browser mouse wheel</code> did not dispatch to the canvas in this harness, so wheel zoom was verified by dispatching a genuine <code>WheelEvent</code> through a test hook &mdash; it exercises the real <code>onWheel</code>/<code>zoomAt</code> path. Pointer events (drag-pan) dispatched normally.</li>
+    <li><strong>No fabricated counts.</strong> Every row count in this report was screenshotted and cross-checked against <code>getState().rows</code>; the served <code>js/wallview.js</code> was byte-verified equal to the worktree copy before trusting any behaviour.</li>
+  </ul>
+</div>
+
+<h2>Changes</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Commit</th><th>File</th><th>What</th></tr></thead>
+  <tbody>
+    <tr><td><code>2cffd79</code></td><td><code>js/wallview.js</code></td><td>Row control works with tall poster tiles &mdash; drop the no-clip cap; requested 1&ndash;5 rows honoured, surveyed by free vertical pan + cursor-anchored zoom.</td></tr>
+    <tr><td><code>d54c796</code></td><td><code>js/wallview.js</code></td><td>Live-thumbnail preview mode &mdash; visible-only, staggered, <code>MAX_LOADS</code>-capped, decode-off-thread, reduced-motion off, off by default (idle-zero). API: <code>setLivePreview</code>/<code>getLivePreview</code>/<code>setLiveThumbURL</code>, <code>opts.livePreview</code>.</td></tr>
+  </tbody>
+</table></div>
+
+<footer>
+  hp-nav &middot; honestporn HIGHREV fleet &middot; owned path <code>js/wallview.js</code> &middot; verified live with agent-browser against the served worktree. Nested agents: 0 &mdash; single-file, tightly-scoped work where direct live-browser iteration beats fan-out.
+</footer>
+</div>

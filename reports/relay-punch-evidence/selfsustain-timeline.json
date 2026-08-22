@@ -1,0 +1,771 @@
+{
+  "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A58825",
+  "atCut": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A58825",
+    "infoHash": "f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6",
+    "progress": 0.08735,
+    "numPeers": 2,
+    "wires": 2,
+    "downloaded": 5947392,
+    "uploaded": 10032,
+    "downloadSpeed": 1198871,
+    "length": 68086404,
+    "done": false,
+    "videoTime": 0,
+    "videoPaused": true,
+    "muted": true,
+    "error": null
+  },
+  "a2final": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A58825",
+    "infoHash": "f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6",
+    "progress": 1,
+    "numPeers": 2,
+    "wires": 2,
+    "downloaded": 68086404,
+    "uploaded": 92713,
+    "downloadSpeed": 11699797,
+    "length": 68086404,
+    "done": true,
+    "videoTime": 0.12,
+    "videoPaused": false,
+    "muted": true,
+    "error": null
+  },
+  "samples": [
+    {
+      "t": 19779,
+      "progress": 0.12393,
+      "downloaded": 8437760,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 19931,
+      "progress": 0.12393,
+      "downloaded": 8437760,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20081,
+      "progress": 0.12393,
+      "downloaded": 8437760,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20233,
+      "progress": 0.12393,
+      "downloaded": 8437760,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20385,
+      "progress": 0.12465,
+      "downloaded": 8486912,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20537,
+      "progress": 0.12465,
+      "downloaded": 8486912,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20689,
+      "progress": 0.12465,
+      "downloaded": 8486912,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20841,
+      "progress": 0.12513,
+      "downloaded": 8519680,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 20993,
+      "progress": 0.12513,
+      "downloaded": 8519680,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21145,
+      "progress": 0.12513,
+      "downloaded": 8519680,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21297,
+      "progress": 0.12633,
+      "downloaded": 8601600,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21449,
+      "progress": 0.12633,
+      "downloaded": 8601600,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21600,
+      "progress": 0.12633,
+      "downloaded": 8601600,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21752,
+      "progress": 0.12706,
+      "downloaded": 8650752,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 21904,
+      "progress": 0.12706,
+      "downloaded": 8650752,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22056,
+      "progress": 0.12826,
+      "downloaded": 8732672,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22208,
+      "progress": 0.12826,
+      "downloaded": 8732672,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22360,
+      "progress": 0.12826,
+      "downloaded": 8732672,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22512,
+      "progress": 0.1285,
+      "downloaded": 8749056,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22663,
+      "progress": 0.1285,
+      "downloaded": 8749056,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22815,
+      "progress": 0.1285,
+      "downloaded": 8749056,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 22967,
+      "progress": 0.12898,
+      "downloaded": 8781824,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23119,
+      "progress": 0.12898,
+      "downloaded": 8781824,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23270,
+      "progress": 0.12994,
+      "downloaded": 8847360,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23422,
+      "progress": 0.12994,
+      "downloaded": 8847360,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23574,
+      "progress": 0.12994,
+      "downloaded": 8847360,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23726,
+      "progress": 0.13091,
+      "downloaded": 8912896,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 23878,
+      "progress": 0.13091,
+      "downloaded": 8912896,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24029,
+      "progress": 0.13091,
+      "downloaded": 8912896,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24181,
+      "progress": 0.13115,
+      "downloaded": 8929280,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24333,
+      "progress": 0.13115,
+      "downloaded": 8929280,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24485,
+      "progress": 0.13187,
+      "downloaded": 8978432,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24637,
+      "progress": 0.13187,
+      "downloaded": 8978432,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24789,
+      "progress": 0.13187,
+      "downloaded": 8978432,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 24940,
+      "progress": 0.13283,
+      "downloaded": 9043968,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25091,
+      "progress": 0.13283,
+      "downloaded": 9043968,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25242,
+      "progress": 0.13283,
+      "downloaded": 9043968,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25395,
+      "progress": 0.13379,
+      "downloaded": 9109504,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25547,
+      "progress": 0.13379,
+      "downloaded": 9109504,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25698,
+      "progress": 0.13452,
+      "downloaded": 9158656,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 25850,
+      "progress": 0.13452,
+      "downloaded": 9158656,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26006,
+      "progress": 0.13452,
+      "downloaded": 9158656,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26157,
+      "progress": 0.13572,
+      "downloaded": 9240576,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26309,
+      "progress": 0.13572,
+      "downloaded": 9240576,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26461,
+      "progress": 0.13572,
+      "downloaded": 9240576,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26613,
+      "progress": 0.13644,
+      "downloaded": 9289728,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26764,
+      "progress": 0.13644,
+      "downloaded": 9289728,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 26915,
+      "progress": 0.13764,
+      "downloaded": 9371648,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27068,
+      "progress": 0.13764,
+      "downloaded": 9371648,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27220,
+      "progress": 0.13764,
+      "downloaded": 9371648,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27373,
+      "progress": 0.13812,
+      "downloaded": 9404416,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27526,
+      "progress": 0.13812,
+      "downloaded": 9404416,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27678,
+      "progress": 0.13812,
+      "downloaded": 9404416,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27829,
+      "progress": 0.13861,
+      "downloaded": 9437184,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 27981,
+      "progress": 0.13861,
+      "downloaded": 9437184,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28133,
+      "progress": 0.13933,
+      "downloaded": 9486336,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28285,
+      "progress": 0.13933,
+      "downloaded": 9486336,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28437,
+      "progress": 0.13933,
+      "downloaded": 9486336,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28589,
+      "progress": 0.14005,
+      "downloaded": 9535488,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28741,
+      "progress": 0.14005,
+      "downloaded": 9535488,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 28893,
+      "progress": 0.14005,
+      "downloaded": 9535488,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29045,
+      "progress": 0.14053,
+      "downloaded": 9568256,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29197,
+      "progress": 0.14053,
+      "downloaded": 9568256,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29349,
+      "progress": 0.14149,
+      "downloaded": 9633792,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29501,
+      "progress": 0.14149,
+      "downloaded": 9633792,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29653,
+      "progress": 0.14149,
+      "downloaded": 9633792,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29805,
+      "progress": 0.14222,
+      "downloaded": 9682944,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 29957,
+      "progress": 0.14222,
+      "downloaded": 9682944,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30108,
+      "progress": 0.14222,
+      "downloaded": 9682944,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30260,
+      "progress": 0.14294,
+      "downloaded": 9732096,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30411,
+      "progress": 0.14294,
+      "downloaded": 9732096,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30563,
+      "progress": 0.14294,
+      "downloaded": 9732096,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30714,
+      "progress": 0.14342,
+      "downloaded": 9764864,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 30866,
+      "progress": 0.14342,
+      "downloaded": 9764864,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31018,
+      "progress": 0.14414,
+      "downloaded": 9814016,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31170,
+      "progress": 0.14414,
+      "downloaded": 9814016,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31322,
+      "progress": 0.14414,
+      "downloaded": 9814016,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31474,
+      "progress": 0.14486,
+      "downloaded": 9863168,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31626,
+      "progress": 0.14486,
+      "downloaded": 9863168,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31777,
+      "progress": 0.14486,
+      "downloaded": 9863168,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 31929,
+      "progress": 0.14534,
+      "downloaded": 9895936,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32081,
+      "progress": 0.14534,
+      "downloaded": 9895936,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32232,
+      "progress": 0.14607,
+      "downloaded": 9945088,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32384,
+      "progress": 0.14607,
+      "downloaded": 9945088,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32536,
+      "progress": 0.14607,
+      "downloaded": 9945088,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32688,
+      "progress": 0.14823,
+      "downloaded": 10092544,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32841,
+      "progress": 0.20622,
+      "downloaded": 14041088,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 32993,
+      "progress": 0.2428,
+      "downloaded": 16531456,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33145,
+      "progress": 0.30874,
+      "downloaded": 21020672,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33297,
+      "progress": 0.39416,
+      "downloaded": 26836992,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33449,
+      "progress": 0.47525,
+      "downloaded": 32358400,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33603,
+      "progress": 0.56405,
+      "downloaded": 38404096,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33757,
+      "progress": 0.65212,
+      "downloaded": 44400640,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 33909,
+      "progress": 0.73249,
+      "downloaded": 49872896,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 34068,
+      "progress": 0.81648,
+      "downloaded": 55590912,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 34221,
+      "progress": 0.90623,
+      "downloaded": 61702144,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 34373,
+      "progress": 0.99334,
+      "downloaded": 67633152,
+      "wires": 2,
+      "bAlive": false
+    },
+    {
+      "t": 34526,
+      "progress": 1,
+      "downloaded": 68086404,
+      "wires": 2,
+      "bAlive": false
+    }
+  ],
+  "timeline": [
+    {
+      "t": 94,
+      "event": "B-up",
+      "pid": 47745,
+      "tracker": "ws://127.0.0.1:58825"
+    },
+    {
+      "t": 825,
+      "event": "C-seeding"
+    },
+    {
+      "t": 14029,
+      "event": "A-full-copy",
+      "done": true
+    },
+    {
+      "t": 19480,
+      "event": "A2-wired+partial",
+      "wires": 2,
+      "progress": 0.08735
+    },
+    {
+      "t": 19778,
+      "event": "B-KILLED+C-CLOSED",
+      "B_alive": false,
+      "B_ps": "DEAD",
+      "progressAtCut": 0.08735
+    },
+    {
+      "t": 34527,
+      "event": "A2-final",
+      "progress": 1,
+      "done": true,
+      "downloaded": 68086404
+    },
+    {
+      "t": 34527,
+      "event": "A-as-only-seeder",
+      "uploaded": 65405056,
+      "wires": 2
+    }
+  ],
+  "PASS": true
+}

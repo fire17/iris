@@ -1,0 +1,1222 @@
+/* =========================================================================
+   CoolStremio — shell styles
+   Dark cinematic, matched to the wall engine (bg #0d0d0f, accent #f5387b).
+   No build step, no external assets, no webfonts.
+   ========================================================================= */
+
+:root {
+  --bg:        #0d0d0f;
+  --bg-deep:   #050506;
+  --bg-1:      #141417;
+  --bg-2:      #1b1b1f;
+  --bg-3:      #232328;
+  --line:      #26262c;
+  --line-soft: #1e1e23;
+
+  --fg:        #eceef1;
+  --fg-1:      #b9bec6;
+  --fg-2:      #7f858f;
+  --fg-3:      #575d67;
+
+  --accent:      #f5387b;
+  --accent-deep: #c21860;
+  --accent-dim:  rgba(245,56,123,.16);
+  --accent-line: rgba(245,56,123,.42);
+
+  --danger:  #f2555a;
+  --warn:    #f0b429;
+  --ok:      #3ddc97;
+
+  --r-sm: 6px;
+  --r:    10px;
+  --r-lg: 16px;
+
+  --topbar-h: 56px;
+  --catbar-h: 48px;
+
+  --shadow:    0 8px 30px rgba(0,0,0,.55);
+  --shadow-lg: 0 24px 70px rgba(0,0,0,.7);
+
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+/* Class rules that set `display` would otherwise beat the UA's [hidden] rule
+   — every hidden toggle in app.js relies on this holding. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The shell is a fixed, non-scrolling surface, so its height must track the
+   VISIBLE viewport — on mobile, `100%` resolves against the large viewport and
+   leaves the bottom strip (the wall's own chrome row) hidden behind the URL bar
+   until the browser settles. `dvh` follows the bar as it retracts. */
+@supports (height: 100dvh) {
+  html, body { height: 100dvh; }
+}
+
+h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -.01em; }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: .92em; color: var(--fg-1);
+       background: var(--bg-2); padding: 1px 5px; border-radius: 4px; }
+img { display: block; max-width: 100%; }
+::selection { background: var(--accent-dim); color: #fff; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* scrollbars ------------------------------------------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2b2b31; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a43; background-clip: content-box; }
+
+/* =============================== layout ================================= */
+#app {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: var(--topbar-h) auto auto 1fr;
+  grid-template-areas: "top" "catbar" "cw" "stage";
+  /* 320px = the narrowest phone still in the wild (iPhone SE 1st gen). Below the
+     floor the shell clips rather than reflows, so the floor is the real support
+     boundary — keep it honest and low. */
+  min-width: 320px;
+}
+
+/* =============================== topbar ================================= */
+#topbar {
+  grid-area: top;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 16px;
+  background: rgba(13,13,15,.86);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid var(--line-soft);
+  position: relative; z-index: 40;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--fg); text-decoration: none;
+  font-size: 15px; letter-spacing: -.015em;
+  flex: 0 0 auto; padding: 6px 2px; border-radius: var(--r-sm);
+}
+.brand-mark {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 7px;
+  color: var(--accent);
+  background: linear-gradient(160deg, #2b1220, #121016);
+  box-shadow: inset 0 0 0 1px rgba(245,56,123,.25);
+}
+.brand-name { font-weight: 400; color: var(--fg-1); }
+.brand-name b { font-weight: 700; color: var(--fg); }
+.brand:hover .brand-mark { box-shadow: inset 0 0 0 1px var(--accent-line), 0 0 18px -6px var(--accent); }
+@media (max-width: 700px) { .brand-name { display: none; } }
+
+/* search ----------------------------------------------------------------- */
+.search-wrap {
+  position: relative; flex: 1 1 auto;
+  max-width: 640px; margin: 0 auto;
+  display: flex; align-items: center;
+}
+.search-icon {
+  position: absolute; left: 11px; width: 16px; height: 16px;
+  color: var(--fg-3); pointer-events: none; transition: color .18s var(--ease);
+}
+#search-input {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; height: 36px;
+  padding: 0 66px 0 34px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg); font: inherit; font-size: 13.5px;
+  transition: border-color .18s var(--ease), background .18s var(--ease), box-shadow .18s var(--ease);
+}
+#search-input::placeholder { color: var(--fg-3); }
+#search-input::-webkit-search-cancel-button { display: none; }
+#search-input:hover { border-color: #313139; }
+#search-input:focus {
+  outline: none;
+  background: var(--bg-2);
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.search-wrap:focus-within .search-icon { color: var(--accent); }
+.search-kbd {
+  position: absolute; right: 11px;
+  font: 600 11px/1 var(--mono); color: var(--fg-3);
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 5px; padding: 3px 6px; pointer-events: none;
+  transition: opacity .15s var(--ease);
+}
+.search-wrap:focus-within .search-kbd { opacity: 0; }
+.search-clear {
+  position: absolute; right: 8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--bg-3); border: 0; color: var(--fg-1);
+  font-size: 11px; cursor: pointer;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.search-clear:hover { background: #34343c; color: #fff; }
+
+/* nav -------------------------------------------------------------------- */
+.topnav { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.navbtn {
+  display: flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 999px;
+  color: var(--fg-2); text-decoration: none;
+  font-size: 13px; font-weight: 550;
+  transition: background .16s var(--ease), color .16s var(--ease);
+  white-space: nowrap;
+}
+.navbtn:hover { background: var(--bg-2); color: var(--fg); }
+.navbtn.on { background: var(--accent-dim); color: var(--accent); }
+@media (max-width: 620px) { .navbtn span { display: none; } .navbtn { padding: 0 9px; } }
+
+/* ============================= catalog bar ============================== */
+.catalogbar {
+  grid-area: catbar;
+  display: flex; align-items: center; gap: 10px;
+  min-height: var(--catbar-h);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(20,20,23,.9), rgba(13,13,15,.6));
+  overflow: hidden;
+  position: relative; z-index: 30;
+}
+.catalogbar[hidden] { display: none; }
+
+.pills { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.pills::-webkit-scrollbar { display: none; }
+.pills-cat { flex: 1 1 auto; min-width: 0; }
+.pills-type { flex: 0 0 auto; }
+.pill-sep { width: 1px; height: 20px; background: var(--line); flex: 0 0 auto; }
+
+.pill {
+  flex: 0 0 auto;
+  height: 30px; padding: 0 13px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg-1); font: inherit; font-size: 12.5px; font-weight: 550;
+  white-space: nowrap; cursor: pointer;
+  transition: background .16s var(--ease), color .16s var(--ease),
+              border-color .16s var(--ease), transform .16s var(--ease);
+}
+.pill:hover { background: var(--bg-3); color: var(--fg); border-color: #34343d; transform: translateY(-1px); }
+.pill:active { transform: translateY(0); }
+.pill.on {
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  border-color: transparent; color: #fff;
+  box-shadow: 0 4px 16px -6px var(--accent);
+}
+.pill .pill-sub { color: inherit; opacity: .65; font-weight: 450; }
+
+.catalogbar-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; margin-left: auto; }
+.catcount { color: var(--fg-3); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 820px) { .catcount { display: none; } }
+
+/* =========================== continue watching ========================== */
+.cw {
+  grid-area: cw;
+  padding: 14px 16px 4px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--bg);
+}
+.cw[hidden] { display: none; }
+.cw-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.cw-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--fg-2); }
+.cw-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x proximity; }
+
+.cw-card {
+  position: relative; flex: 0 0 auto;
+  width: 176px; border-radius: var(--r);
+  background: var(--bg-1); border: 1px solid var(--line);
+  cursor: pointer; overflow: hidden;
+  scroll-snap-align: start;
+  transition: transform .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.cw-card:hover { transform: translateY(-3px); border-color: var(--accent-line); box-shadow: var(--shadow); }
+.cw-thumb { position: relative; aspect-ratio: 16/9; background: var(--bg-3); overflow: hidden; }
+.cw-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s var(--ease); }
+.cw-thumb img.loaded { opacity: 1; }
+.cw-play {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.55));
+  opacity: 0; transition: opacity .2s var(--ease); color: #fff;
+}
+.cw-card:hover .cw-play { opacity: 1; }
+.cw-body { padding: 8px 10px 10px; }
+.cw-title { font-size: 12.5px; font-weight: 600; color: var(--fg);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-sub { font-size: 11.5px; color: var(--fg-3); margin-top: 2px;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-bar { height: 3px; background: var(--bg-3); }
+.cw-bar > i { display: block; height: 100%; background: var(--accent); }
+.cw-x {
+  position: absolute; top: 6px; right: 6px;
+  width: 22px; height: 22px; border-radius: 50%; border: 0;
+  background: rgba(0,0,0,.6); color: #fff; font-size: 11px; cursor: pointer;
+  opacity: 0; transition: opacity .18s var(--ease), background .18s var(--ease);
+}
+.cw-card:hover .cw-x { opacity: 1; }
+.cw-x:hover { background: var(--danger); }
+
+/* =============================== stage ================================== */
+#stage {
+  grid-area: stage;
+  position: relative;
+  background: var(--bg-deep);
+  overflow: hidden;
+  min-height: 0;
+}
+#wall {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block; outline: none;
+  touch-action: none;
+}
+#wall[hidden] { display: none; }
+
+/* fallback DOM grid (used only when the wall engine is unavailable) ------- */
+.grid {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 20px;
+  display: grid; align-content: start; justify-content: center;
+  grid-template-columns: repeat(auto-fill, 164px);
+  grid-auto-rows: min-content;   /* auto rows collapse under align-content:start here */
+  gap: 20px 16px;
+  outline: none;
+}
+.grid[hidden] { display: none; }
+.gcard {
+  position: relative; cursor: pointer;
+  border-radius: var(--r); overflow: hidden;
+  background: var(--bg-1); border: 1px solid var(--line);
+  transition: transform .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.gcard:hover, .gcard.on {
+  transform: translateY(-4px); border-color: var(--accent-line);
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.9), 0 0 0 1px var(--accent-line);
+}
+/* Fixed px, not a ratio: grid row sizing resolves neither percentage padding
+   nor aspect-ratio against an as-yet-unsized column, so a ratio box would
+   collapse the row to the caption's height. */
+.gcard-img { position: relative; height: 246px; background: var(--bg-3); overflow: hidden; }
+.gcard-img img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .35s var(--ease);
+}
+.gcard-img img.loaded { opacity: 1; }
+.gcard-cap {
+  padding: 8px 9px 10px; font-size: 12px; font-weight: 550; color: var(--fg-1);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 42px;
+}
+
+/* skeleton --------------------------------------------------------------- */
+.skeleton {
+  position: absolute; inset: 0;
+  padding: 20px;
+  display: grid; align-content: start; justify-content: center;
+  grid-template-columns: repeat(auto-fill, 164px);
+  grid-auto-rows: min-content;
+  gap: 20px 16px;
+  pointer-events: none;
+}
+.skeleton[hidden] { display: none; }
+.sk-card { border-radius: var(--r); overflow: hidden; }
+.sk-block, .sk-card > i, .sk-line {
+  display: block;
+  background: linear-gradient(100deg, var(--bg-1) 28%, #26262c 42%, var(--bg-1) 56%);
+  background-size: 320% 100%;
+  animation: shimmer 1.25s var(--ease) infinite;
+  border-radius: var(--r-sm);
+}
+.sk-card > i { height: 246px; border-radius: var(--r); }
+.sk-line { height: 9px; margin-top: 8px; }
+.sk-line.short { width: 58%; }
+@keyframes shimmer { from { background-position: 140% 0; } to { background-position: -60% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk-block, .sk-card > i, .sk-line { animation: none; } }
+
+/* empty state ------------------------------------------------------------ */
+.empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 32px;
+}
+.empty[hidden] { display: none; }
+.empty-icon {
+  width: 62px; height: 62px; border-radius: 18px; margin-bottom: 6px;
+  background: radial-gradient(circle at 34% 30%, #23262c, #121215);
+  box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px -22px #000;
+}
+.empty h2 { font-size: 17px; }
+.empty p { color: var(--fg-2); max-width: 46ch; font-size: 13.5px; }
+.empty-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* search status ---------------------------------------------------------- */
+.searchstatus {
+  position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 999px;
+  background: rgba(20,20,23,.92); border: 1px solid var(--line);
+  color: var(--fg-2); font-size: 12px; backdrop-filter: blur(10px);
+  box-shadow: var(--shadow); z-index: 5; pointer-events: none;
+}
+.searchstatus[hidden] { display: none; }
+
+/* =============================== buttons ================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 36px; padding: 0 16px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--fg);
+  font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: background .16s var(--ease), border-color .16s var(--ease),
+              transform .12s var(--ease), box-shadow .16s var(--ease), color .16s var(--ease);
+}
+.btn:hover { background: var(--bg-3); border-color: #35353f; }
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+.btn-sm { height: 29px; padding: 0 11px; font-size: 12px; }
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+  border-color: transparent; color: #fff;
+  box-shadow: 0 6px 18px -8px var(--accent);
+}
+.btn-primary:hover { filter: brightness(1.08); border-color: transparent; }
+.btn-ghost { background: transparent; }
+.btn-ghost:hover { background: var(--bg-2); }
+.btn-danger { background: transparent; border-color: rgba(242,85,90,.4); color: var(--danger); }
+.btn-danger:hover { background: rgba(242,85,90,.12); border-color: var(--danger); }
+.btn.on { border-color: var(--accent-line); color: var(--accent); background: var(--accent-dim); }
+
+.linkish {
+  background: none; border: 0; padding: 0;
+  color: var(--accent); font: inherit; font-size: inherit;
+  cursor: pointer; text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s var(--ease), color .15s var(--ease);
+}
+.linkish:hover { border-bottom-color: var(--accent-line); color: #ff86ac; }
+
+.muted { color: var(--fg-3); font-size: 12.5px; font-weight: 450; }
+.hint { color: var(--fg-3); font-size: 12.5px; margin-top: 8px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--fg-1); font-size: 11.5px; font-weight: 550; white-space: nowrap;
+}
+.chip-accent { background: var(--accent-dim); border-color: var(--accent-line); color: var(--accent); }
+.chip-ok { background: rgba(61,220,151,.12); border-color: rgba(61,220,151,.4); color: var(--ok); }
+
+/* =============================== gate =================================== */
+.gate {
+  position: absolute; inset: 0; z-index: 90;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 34%, #16161a, var(--bg) 70%);
+}
+.gate[hidden] { display: none; }
+.gate-card {
+  width: min(440px, 88vw); text-align: center;
+  padding: 34px 30px;
+  background: rgba(20,20,23,.7); border: 1px solid var(--line);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+}
+.gate-card h2 { font-size: 17px; margin-bottom: 6px; }
+.gate-sub { color: var(--fg-2); font-size: 13px; }
+.gate-list { list-style: none; margin: 18px 0 0; padding: 0; text-align: left;
+             display: grid; gap: 6px; font-family: var(--mono); font-size: 12px; }
+.gate-list li { display: flex; align-items: center; gap: 8px; color: var(--fg-2); }
+.gate-list li b { font-weight: 500; color: var(--fg-1); }
+.gate-list .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fg-3); flex: 0 0 auto; }
+.gate-list li.ok .dot { background: var(--ok); box-shadow: 0 0 8px -1px var(--ok); }
+.gate-list li.ok b { color: var(--fg); }
+.gate-hint { margin-top: 18px; color: var(--fg-3); font-size: 12px; }
+
+.spinner {
+  width: 26px; height: 26px; margin: 0 auto 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+.spinner.sm { width: 14px; height: 14px; border-width: 2px; margin: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================== overlays ================================ */
+.overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: var(--bg);
+  animation: overlay-in .24s var(--ease);
+}
+.overlay[hidden] { display: none; }
+@keyframes overlay-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .overlay { animation: none; } }
+
+.overlay-close {
+  position: absolute; top: 14px; right: 16px; z-index: 12;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(10,10,12,.66); border: 1px solid var(--line);
+  color: var(--fg-1); font-size: 13px; cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background .16s var(--ease), color .16s var(--ease), transform .16s var(--ease);
+}
+.overlay-close:hover { background: var(--bg-3); color: #fff; transform: rotate(90deg); }
+
+/* --------------------------------- detail ------------------------------- */
+.detail-bg { position: absolute; inset: 0; overflow: hidden; }
+.detail-bg img {
+  width: 100%; height: 62vh; object-fit: cover;
+  opacity: 0; transform: scale(1.04);
+  transition: opacity .7s var(--ease);
+  filter: saturate(.9);
+}
+.detail-bg img.loaded { opacity: .34; }
+.detail-bg-fade {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(13,13,15,.45) 0%, rgba(13,13,15,.82) 42%, var(--bg) 68%),
+    linear-gradient(90deg, var(--bg) 0%, rgba(13,13,15,.2) 55%);
+}
+
+.detail-scroll {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 46px 30px 80px;
+}
+.detail-head {
+  display: flex; gap: 28px; align-items: flex-start;
+  max-width: 1180px; margin: 0 auto 34px;
+}
+.d-poster-wrap { position: relative; flex: 0 0 auto; width: 210px; }
+.d-poster {
+  width: 210px; aspect-ratio: 2/3; object-fit: cover;
+  border-radius: var(--r); background: var(--bg-2);
+  box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,.06);
+}
+img.d-poster { opacity: 0; transition: opacity .4s var(--ease); }
+img.d-poster.loaded { opacity: 1; }
+.d-poster-wrap .sk-block.d-poster { position: absolute; inset: 0; width: 100%; }
+
+.d-info { flex: 1 1 auto; min-width: 0; padding-top: 4px; }
+.d-title { font-size: clamp(24px, 3.6vw, 40px); line-height: 1.1; margin-bottom: 10px; }
+.d-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--fg-2);
+          font-size: 13px; margin-bottom: 12px; }
+.d-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-3); }
+.d-meta .imdb { color: var(--warn); font-weight: 650; }
+.d-desc { color: var(--fg-1); font-size: 14.5px; line-height: 1.62; margin: 14px 0 0; max-width: 74ch; }
+.d-cast { margin-top: 12px; color: var(--fg-3); font-size: 12.5px; max-width: 74ch; }
+.d-cast b { color: var(--fg-2); font-weight: 600; }
+.d-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+
+.section-head {
+  display: flex; align-items: baseline; gap: 12px;
+  max-width: 1180px; margin: 0 auto 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line-soft);
+}
+.section-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--fg-2); }
+.section-head .linkish { margin-left: auto; font-size: 12px; }
+
+.d-series, .d-streams { max-width: 1180px; margin: 0 auto 34px; }
+.pills-season { margin-bottom: 14px; flex-wrap: wrap; }
+
+.ep-list { display: grid; gap: 6px; }
+.ep {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 14px; border-radius: var(--r);
+  background: var(--bg-1); border: 1px solid var(--line-soft);
+  cursor: pointer; text-align: left; width: 100%;
+  color: inherit; font: inherit;
+  transition: background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease);
+}
+.ep:hover { background: var(--bg-2); border-color: var(--accent-line); transform: translateX(3px); }
+.ep.on { border-color: var(--accent-line); background: var(--accent-dim); }
+.ep-n { flex: 0 0 auto; width: 34px; color: var(--fg-3); font: 600 12px var(--mono); }
+.ep-main { flex: 1 1 auto; min-width: 0; }
+.ep-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-desc { font-size: 12px; color: var(--fg-3); margin-top: 2px;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-date { flex: 0 0 auto; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+/* streams ---------------------------------------------------------------- */
+.stream-list { display: grid; gap: 7px; }
+.stream {
+  display: flex; align-items: center; gap: 13px;
+  padding: 11px 14px; border-radius: var(--r);
+  background: var(--bg-1); border: 1px solid var(--line-soft);
+  cursor: pointer; text-align: left; width: 100%;
+  color: inherit; font: inherit;
+  transition: background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease);
+}
+.stream:hover { background: var(--bg-2); border-color: var(--accent-line); transform: translateX(3px); }
+.stream-addon {
+  flex: 0 0 auto; min-width: 92px; max-width: 132px;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--accent);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.stream-main { flex: 1 1 auto; min-width: 0; }
+.stream-title { font-size: 13.5px; font-weight: 600; color: var(--fg);
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stream-sub { font-size: 11.5px; color: var(--fg-3); margin-top: 3px;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stream-tags { display: flex; gap: 5px; flex: 0 0 auto; }
+.stream-go { flex: 0 0 auto; color: var(--fg-3); transition: color .15s var(--ease), transform .15s var(--ease); }
+.stream:hover .stream-go { color: var(--accent); transform: translateX(2px); }
+.stream-copy {
+  flex: 0 0 auto; cursor: pointer; white-space: nowrap; user-select: none;
+  font-size: 11.5px; line-height: 1; padding: 5px 8px; border-radius: 7px;
+  border: 1px solid var(--line); color: var(--fg-3); background: rgba(255,255,255,.04);
+  transition: color .12s var(--ease), border-color .12s var(--ease), background .12s var(--ease);
+}
+.stream-copy:hover, .stream-copy:focus-visible {
+  color: var(--accent); border-color: var(--accent-line); background: var(--accent-dim); outline: none;
+}
+
+.note {
+  padding: 14px 16px; border-radius: var(--r);
+  background: var(--bg-1); border: 1px dashed var(--line);
+  color: var(--fg-2); font-size: 13px;
+}
+.note b { color: var(--fg-1); }
+
+/* -------------------------------- settings ------------------------------ */
+.overlay-plain { background: radial-gradient(circle at 50% -10%, #17171b, var(--bg) 60%); }
+.settings-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: 52px 30px 80px; }
+.settings-head { max-width: 860px; margin: 0 auto 34px; }
+.settings-head h1 { font-size: 30px; margin-bottom: 8px; }
+.settings-head p { max-width: 62ch; font-size: 13.5px; }
+.settings-block { max-width: 860px; margin: 0 auto 34px; }
+.settings-block .section-head { max-width: none; }
+
+.addrow { display: flex; gap: 8px; }
+.addrow input, .settings-block input[type="url"] {
+  flex: 1 1 auto; min-width: 0; height: 36px;
+  padding: 0 13px;
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: 8px;
+  color: var(--fg); font: inherit; font-size: 13px; font-family: var(--mono);
+  transition: border-color .16s var(--ease), box-shadow .16s var(--ease), background .16s var(--ease);
+}
+.addrow input::placeholder { font-family: var(--font); color: var(--fg-3); }
+.addrow input:focus {
+  outline: none; background: var(--bg-2);
+  border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.preview-card {
+  margin-top: 14px; padding: 16px;
+  border: 1px solid var(--accent-line); border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(245,56,123,.07), transparent);
+  animation: overlay-in .2s var(--ease);
+}
+.preview-card[hidden] { display: none; }
+.pv-top { display: flex; gap: 14px; align-items: flex-start; }
+.pv-logo { width: 46px; height: 46px; border-radius: 10px; object-fit: cover;
+           background: var(--bg-2); border: 1px solid var(--line); flex: 0 0 auto; }
+.pv-name { font-size: 15px; font-weight: 650; }
+.pv-ver { color: var(--fg-3); font-size: 12px; font-family: var(--mono); }
+.pv-desc { color: var(--fg-2); font-size: 13px; margin-top: 6px; max-width: 62ch; }
+.pv-rows { margin-top: 12px; display: grid; gap: 7px; }
+.pv-row { display: flex; gap: 10px; align-items: center; font-size: 12.5px; }
+.pv-row > span:first-child { color: var(--fg-3); width: 82px; flex: 0 0 auto; }
+.pv-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+.addon-list { display: grid; gap: 8px; }
+
+/* A grid item's automatic minimum size is its MIN-CONTENT size, so a wide flex
+   row (logo + name + url + reorder + Remove) refuses to shrink and runs out of
+   the overlay — 464px inside a 347px column at 375px wide, clipped and
+   unreachable because the body cannot scroll. Opting the items out of that
+   minimum is the fix; the inner ellipsis rules then do their job. */
+.addon-list > *, .stream-list > *, .ep-list > * { min-width: 0; }
+.addon-name { min-width: 0; flex-wrap: wrap; }
+.addon {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 15px; border-radius: var(--r);
+  background: var(--bg-1); border: 1px solid var(--line-soft);
+  transition: border-color .16s var(--ease), background .16s var(--ease);
+}
+.addon:hover { border-color: var(--line); background: var(--bg-2); }
+.addon-logo { width: 40px; height: 40px; border-radius: 9px; object-fit: cover;
+              background: var(--bg-3); flex: 0 0 auto; border: 1px solid var(--line); }
+.addon-main { flex: 1 1 auto; min-width: 0; }
+.addon-name { font-size: 13.5px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.addon-desc { font-size: 12px; color: var(--fg-3); margin-top: 3px;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addon-url { font-family: var(--mono); font-size: 11px; color: var(--fg-3); margin-top: 4px;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addon-tags { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+
+.addon-ord { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; }
+.ordbtn {
+  width: 26px; height: 20px; border-radius: 5px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--fg-2); font: 600 11px/1 var(--font); cursor: pointer;
+  transition: background .14s var(--ease), color .14s var(--ease), border-color .14s var(--ease);
+}
+.ordbtn:hover:not([disabled]) { background: var(--bg-3); color: var(--accent); border-color: var(--accent-line); }
+.ordbtn[disabled] { opacity: .3; cursor: default; }
+
+.datarow { display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
+           padding: 14px 16px; background: var(--bg-1); border: 1px solid var(--line-soft); border-radius: var(--r); }
+.datarow strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.datarow .btn { margin-left: auto; }
+
+/* =============================== toasts ================================= */
+.toasts {
+  position: fixed; right: 16px; bottom: 16px; z-index: 120;
+  display: flex; flex-direction: column-reverse; gap: 8px;
+  max-width: min(380px, calc(100vw - 32px)); pointer-events: none;
+}
+.toast {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px; border-radius: var(--r);
+  background: rgba(24,24,28,.96); border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg); color: var(--fg-1); font-size: 13px;
+  backdrop-filter: blur(12px); pointer-events: auto;
+  animation: toast-in .24s var(--ease);
+  border-left: 3px solid var(--fg-3);
+}
+.toast.err  { border-left-color: var(--danger); }
+.toast.ok   { border-left-color: var(--ok); }
+.toast.info { border-left-color: var(--accent); }
+.toast.out  { animation: toast-out .2s var(--ease) forwards; }
+.toast b { color: var(--fg); font-weight: 650; display: block; margin-bottom: 2px; }
+.toast .toast-x { margin-left: auto; background: none; border: 0; color: var(--fg-3);
+                  cursor: pointer; font-size: 12px; padding: 0 2px; }
+.toast .toast-x:hover { color: var(--fg); }
+@keyframes toast-in  { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes toast-out { to { opacity: 0; transform: translateX(20px); } }
+
+/* ============================== responsive ============================== */
+@media (max-width: 760px) {
+  .detail-scroll { padding: 40px 18px 70px; }
+  .detail-head { flex-direction: column; gap: 18px; align-items: center; text-align: center; }
+  .d-info { text-align: left; width: 100%; }
+  .d-poster, .d-poster-wrap { width: 158px; }
+  .settings-scroll { padding: 46px 18px 70px; }
+  .addrow { flex-direction: column; }
+  .stream-addon { min-width: 62px; }
+}
+
+/* ---------------------- home: DOM row fallback ------------------------- */
+.grid.grid-rows {
+  display: block;
+  padding: 20px 0 40px;
+}
+.grid.grid-rows .row-label {
+  font-size: 13px; font-weight: 650; letter-spacing: .01em;
+  color: var(--fg-1); margin: 0 0 10px; padding: 0 20px;
+}
+.grid.grid-rows .row-label:not(:first-child) { margin-top: 26px; }
+.row-strip {
+  display: flex; gap: 14px;
+  overflow-x: auto; overflow-y: hidden;
+  padding: 0 20px 14px;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 20px;   /* keep the strip's left gutter when snapping */
+}
+.row-strip .gcard { flex: 0 0 164px; scroll-snap-align: start; }
+
+/* views: hide board chrome outside board -------------------------------- */
+#app[data-view="search"] #catalogbar,
+#app[data-view="search"] #continue,
+#app[data-view="home"] #catalogbar,
+#app[data-view="home"] #continue { display: none; }
+#app[data-view="board"] .navbtn[data-nav="board"] { background: var(--accent-dim); color: var(--accent); }
+
+/* =========================================================================
+   THE TRUST LAYER — seals + the honest ledger
+   The product is the verification layer, so this is the loudest thing in the
+   shell. Two rules govern every choice below:
+     1. A seal must stay legible on top of ARBITRARY poster imagery, so every
+        plate is fully OPAQUE — never translucent, never blurred. (No glass.)
+     2. The `demo` lane must read as visibly LESS trusted than the other two.
+        It gets the same silhouette but hollow: no fill dot, dashed glyph,
+        neutral grey ink. A test source must never cosplay as a verified one.
+   Signature move: the NOTCH. Every seal has one punched corner, the way a
+   validated ticket or a customs stamp does — drawn with a two-layer clip-path
+   so the 1px edge survives around the cut. Not a pill, not a side stripe.
+   ========================================================================= */
+:root {
+  /* lane inks — all verified >= 4.5:1 on their own plate AND on --bg      */
+  --lane-v-ink:   #ff5c93;   /* performer-verified : 6.16 on plate         */
+  --lane-v-plate: #2a0d19;
+  --lane-v-edge:  rgba(255,92,147,.5);
+
+  --lane-a-ink:   #b39dff;   /* ai-generated       : 7.64 on plate         */
+  --lane-a-plate: #1a1630;
+  --lane-a-edge:  rgba(179,157,255,.46);
+
+  --lane-d-ink:   #9aa0aa;   /* demo               : 6.86 on plate         */
+  --lane-d-plate: #16161a;
+  --lane-d-edge:  rgba(154,160,170,.4);
+
+  --notch: 7px;
+}
+
+/* ---- the seal ---------------------------------------------------------- */
+.seal {
+  --ink: var(--lane-d-ink);
+  --plate: var(--lane-d-plate);
+  --edge: var(--lane-d-edge);
+  display: inline-block; padding: 1px;          /* the 1px is the edge      */
+  background: var(--edge);
+  clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% var(--notch), 100% 100%, 0 100%);
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+.seal-in {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 7px 3px 6px;
+  background: var(--plate); color: var(--ink);
+  clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% var(--notch), 100% 100%, 0 100%);
+  font: 650 10px/1 var(--mono);
+  letter-spacing: .09em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.seal svg { width: 11px; height: 11px; display: block; flex: 0 0 auto; }
+
+.seal-verified  { --ink: var(--lane-v-ink); --plate: var(--lane-v-plate); --edge: var(--lane-v-edge); }
+.seal-synthetic { --ink: var(--lane-a-ink); --plate: var(--lane-a-plate); --edge: var(--lane-a-edge); }
+.seal-demo      { --ink: var(--lane-d-ink); --plate: var(--lane-d-plate); --edge: var(--lane-d-edge); }
+
+/* demo is deliberately hollow — same silhouette, less authority */
+.seal-demo .seal-in { background: transparent; box-shadow: inset 0 0 0 99px var(--lane-d-plate); }
+.seal-demo svg { opacity: .85; }
+
+/* tiny variant: the corner stamp scale, for use over poster art */
+.seal-xs { --notch: 5px; }
+.seal-xs .seal-in { padding: 2px 5px 2px 4px; font-size: 9px; letter-spacing: .06em; gap: 3px; }
+.seal-xs svg { width: 9px; height: 9px; }
+
+/* ---- the ledger dock --------------------------------------------------- */
+.trustdock {
+  /* The wall reserves CHROME_H = 56px at the bottom of the canvas for its own
+     layout switcher (WALL / HERO / SPIRAL / CATALOG, js/wallview.js:26). Sit
+     ABOVE that strip — a trust surface must never cover another lane's chrome. */
+  position: absolute; left: 14px; bottom: 68px; z-index: 6;
+  width: max-content; max-width: min(430px, calc(100% - 28px));
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: rgba(16,16,19,.97);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  font-size: 12px;
+
+  /* The dock is bottom-anchored and grows UPWARD, and #stage clips its
+     overflow — so on any short stage (a landscape phone, a short desktop
+     window) an open dock grew straight past the top edge and had its own
+     header clipped off, leaving no way to close it. Cap the panel to the stage
+     and let the BODY take the loss: header pinned, content scrolls. */
+  display: flex; flex-direction: column;
+  max-height: calc(100% - 78px);
+}
+.td-toggle { flex: 0 0 auto; }
+.trustdock.open .td-body {
+  min-height: 0; overflow-y: auto;
+
+  /* A capped panel can hide its own last line, and a trust surface that LOOKS
+     finished while it is not is the exact failure this panel exists to prevent.
+     This is the classic pure-CSS scroll shadow, and it switches ITSELF off: the
+     opaque "cover" layer is attached to the CONTENT (local) so it only reaches
+     the bottom edge once you have scrolled to the end — where it covers the
+     "shadow" layer, which is attached to the BOX (scroll). Nothing to detect in
+     JS, and no fade painted over a caveat that is already fully visible. */
+  background:
+    linear-gradient(rgb(16,16,19), rgb(16,16,19)) center bottom / 100% 22px no-repeat local,
+    linear-gradient(rgba(16,16,19,0), rgba(16,16,19,.97)) center bottom / 100% 22px no-repeat scroll;
+}
+.trustdock[hidden] { display: none; }
+
+.td-toggle {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 11px; border: 0; background: none; cursor: pointer;
+  color: var(--fg-1); font: inherit; text-align: left;
+}
+.td-toggle:hover { background: var(--bg-2); }
+.td-title { font-weight: 650; color: var(--fg); letter-spacing: -.005em; white-space: nowrap; }
+.td-counts { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+.td-caret { color: var(--fg-3); display: grid; place-items: center; transition: transform .2s var(--ease); transform: rotate(180deg); }
+.trustdock.open .td-caret { transform: rotate(0deg); }
+
+/* the live pulse — proof the file is being watched, not a decoration */
+.td-pulse {
+  width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--ok); box-shadow: 0 0 0 0 rgba(61,220,151,.55);
+  animation: td-beat 2.4s var(--ease) infinite;
+}
+.td-pulse.stale { background: var(--warn); animation: none; box-shadow: none; }
+.td-pulse.down  { background: var(--danger); animation: none; box-shadow: none; }
+@keyframes td-beat {
+  0%   { box-shadow: 0 0 0 0 rgba(61,220,151,.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(61,220,151,0); }
+  100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); }
+}
+@media (prefers-reduced-motion: reduce) { .td-pulse { animation: none; } }
+
+.td-body { display: none; padding: 2px 11px 11px; border-top: 1px solid var(--line-soft); }
+.trustdock.open .td-body { display: block; }
+
+.td-lede { color: var(--fg-1); font-size: 12px; margin: 9px 0 10px; max-width: 40ch; }
+
+.td-lanes { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.td-lane { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: start; }
+.td-lane-def { min-width: 0; }
+.td-lane-n { color: var(--fg); font-weight: 600; font-size: 12px; }
+.td-lane-n b { color: var(--fg-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+.td-lane-d { color: var(--fg-2); font-size: 11.5px; line-height: 1.45; margin-top: 1px; }
+
+.td-foot { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line-soft); display: grid; gap: 7px; }
+.td-watch { color: var(--fg-2); font-size: 11.5px; }
+.td-watch code, .td-caveat code { font-size: 11px; background: var(--bg-2); color: var(--fg-1); }
+.td-watch b { color: var(--fg-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* skipped rows are a WARNING, never an error — nothing is broken, some rows
+   just could not be read, and hiding that would be the dishonest thing. */
+.td-warn {
+  display: flex; gap: 7px; align-items: flex-start;
+  padding: 7px 9px; border-radius: var(--r-sm);
+  background: rgba(240,180,41,.09);
+  box-shadow: inset 0 0 0 1px rgba(240,180,41,.28);
+  color: var(--warn); font-size: 11.5px; line-height: 1.45;
+}
+.td-warn[hidden] { display: none; }
+.td-warn span { color: #f3c65c; }
+.td-caveat { color: var(--fg-2); font-size: 11px; line-height: 1.45; }
+
+/* empty registry: the dock becomes the invitation ------------------------ */
+.td-invite { margin: 9px 0 2px; display: grid; gap: 8px; }
+.td-invite p { color: var(--fg-2); font-size: 11.5px; line-height: 1.5; }
+.td-invite b { color: var(--fg); font-weight: 600; }
+.td-fmt {
+  margin: 0; padding: 9px 10px; overflow-x: auto;
+  background: var(--bg-deep); border: 1px solid var(--line-soft); border-radius: var(--r-sm);
+  color: var(--fg-1); font: 500 10.5px/1.7 var(--mono); white-space: pre;
+}
+.td-fmt .k { color: var(--accent); }
+/* Phone placement + the bottom-sheet form live in the RESPONSIVE section below. */
+
+/* =========================================================================
+   RESPONSIVE — phone to 4K
+   ------------------------------------------------------------------------
+   Ladder, widest gate last so the narrow rules win by order as well as by
+   media match:
+
+     >= 1700px   roomier content columns (the shell is fluid; the READING
+                 columns were capped for line length and stay capped, just
+                 wider)
+     <= 820px    drop desktop-only affordances (the `/` key hint)
+     <= 640px    board chrome compacts; the honest ledger becomes a bottom
+                 sheet with its own scroll
+     <= 500px    the search field collapses to its icon and expands over the
+                 bar on focus — the topbar cannot fit brand + field + nav at
+                 phone widths without starving the field to ~30px of text
+     <= 380px    last-inch trims (seal scale in the ledger header)
+     short       landscape phones: shrink the fixed chrome bands
+     coarse      >= 44px touch targets; hover-only controls become permanent
+     reduced-motion  everything stops except the loading spinner
+
+   Two invariants hold at every width:
+     1. the page body NEVER scrolls horizontally (html/body are overflow:hidden;
+        every wide strip owns a private overflow-x:auto scroller instead), and
+     2. the honest ledger keeps ALL of its content — the lede, all three lane
+        definitions, the watch line, and the caveat. It may change SHAPE on a
+        phone; it may never be truncated into a half-truth.
+   ========================================================================= */
+
+/* ---- 4K / ultrawide: the reading columns get room, nothing gets stretched -- */
+@media (min-width: 1700px) {
+  .detail-head, .section-head, .d-series, .d-streams { max-width: 1440px; }
+  .settings-head, .settings-block { max-width: 1040px; }
+  .search-wrap { max-width: 760px; }
+  .detail-scroll { padding: 56px 48px 96px; }
+  .settings-scroll { padding: 62px 48px 96px; }
+}
+
+/* ---- true 4K (an unscaled 3840px-wide viewport, not a 2x-scaled one) ------
+   At 3840 CSS px the 56px chrome band is 2.6% of the screen height and the
+   controls read as a strip of confetti. Scale the BANDS and the controls in
+   them — deliberately not the whole type scale, because almost every size in
+   this sheet is an explicit px and a root bump would move some things and not
+   others. The wall itself is canvas and scales on its own terms. */
+@media (min-width: 2400px) {
+  :root { --topbar-h: 66px; --catbar-h: 56px; }
+  .brand { font-size: 17px; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; }
+  #search-input { height: 42px; font-size: 15px; }
+  .navbtn { height: 38px; padding: 0 14px; font-size: 14px; }
+  .pill { height: 34px; font-size: 13.5px; }
+  .trustdock { font-size: 13px; }
+  .td-title { font-size: 13.5px; }
+  .d-title { font-size: clamp(28px, 2.2vw, 52px); }
+}
+
+/* ---- notch / rounded-display safety (viewport-fit=cover is set in <head>) -- */
+#topbar { padding-left: max(16px, env(safe-area-inset-left));
+          padding-right: max(16px, env(safe-area-inset-right)); }
+.catalogbar { padding-left: max(16px, env(safe-area-inset-left));
+              padding-right: max(16px, env(safe-area-inset-right)); }
+.overlay-close { top: max(14px, env(safe-area-inset-top));
+                 right: max(16px, env(safe-area-inset-right)); }
+.toasts { right: max(16px, env(safe-area-inset-right));
+          bottom: max(16px, env(safe-area-inset-bottom)); }
+
+/* ---- scrollers: never chain a strip's scroll to its ancestors ------------ */
+.pills, .cw-row, .row-strip, .detail-scroll, .settings-scroll, .grid, .td-fmt {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================== <= 820px ================================= */
+@media (max-width: 820px) {
+  /* The `/` hint advertises a keyboard shortcut that a touch device has no way
+     to press, and it costs 32px of the field's own text width. */
+  .search-kbd { display: none; }
+  #search-input { padding-right: 36px; }
+}
+
+/* ============================== <= 640px ================================= */
+@media (max-width: 640px) {
+  /* board chrome: same two rows, tighter bands, so the wall keeps the screen */
+  .catalogbar { gap: 8px; padding-top: 6px; padding-bottom: 6px; }
+  .pills { gap: 5px; scroll-padding-inline: 8px; }
+  .cw { padding: 12px 12px 2px; }
+  .cw-card { width: 152px; }
+
+  /* the fallback DOM grid: 12px gutters fit two 164px columns at 375px,
+     where the 20px gutters fit only one and waste half the screen */
+  .grid, .skeleton { padding: 20px 12px; gap: 16px 12px; }
+  .grid.grid-rows { padding: 16px 0 32px; }
+  .grid.grid-rows .row-label, .row-strip { padding-left: 12px; padding-right: 12px; }
+  .row-strip { scroll-padding-left: 12px; }
+
+  /* ---- the honest ledger becomes a bottom sheet ------------------------
+     Collapsed it stays the small anchored plate it is on desktop. OPEN it
+     goes edge-to-edge and caps its own height, so it can never swallow the
+     phone screen the way a 430px floating card does at 375px wide. The body
+     scrolls INSIDE the sheet — every lane, the watch line and the caveat are
+     all still reachable, which is the whole point of the surface.
+     Bottom offset still clears the wall's 56px chrome strip
+     (js/wallview.js:26 CHROME_H) — a trust surface never covers another
+     lane's controls. */
+  .trustdock {
+    left: max(10px, env(safe-area-inset-left));
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    max-width: calc(100% - 20px);
+  }
+  .trustdock.open {
+    left: 0; right: 0;
+    width: auto; max-width: none;
+    border-left: 0; border-right: 0;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .trustdock.open .td-body {
+    max-height: min(46vh, 320px);
+    overflow-y: auto;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+  /* the dock clips its own overflow, so an outset focus ring would be eaten */
+  .td-toggle:focus-visible { outline-offset: -2px; }
+  /* tighter rhythm buys back most of the capped height */
+  .td-lede { margin: 8px 0 9px; }
+  .td-lanes { gap: 8px; }
+  .td-foot { margin-top: 9px; padding-top: 8px; gap: 6px; }
+  .trustdock.open .td-toggle {
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+  .td-lede { max-width: none; }
+
+  /* ---- overlays on a phone --------------------------------------------- */
+  .detail-scroll { padding: 44px 14px calc(80px + env(safe-area-inset-bottom)); }
+  .settings-scroll { padding: 50px 14px calc(80px + env(safe-area-inset-bottom)); }
+  .settings-head h1 { font-size: 24px; }
+  .d-poster, .d-poster-wrap { width: 148px; }
+  .d-desc, .d-cast, .settings-head p, .pv-desc { max-width: none; }
+
+  /* a stream row keeps its tags — they move to their own line instead of
+     squeezing the title to nothing */
+  .stream { flex-wrap: wrap; gap: 10px; padding: 11px 12px; }
+  .stream-main { flex: 1 1 60%; }
+  .stream-tags { order: 3; flex: 1 1 100%; }
+  .ep { gap: 10px; padding: 10px 12px; }
+  .ep-n { width: 26px; }
+  /* the row grows tall once the tags wrap, so the logo tracks the title
+     instead of floating at the vertical middle of a four-line block */
+  .addon { gap: 10px; padding: 12px; align-items: flex-start; }
+  .pv-row > span:first-child { width: 68px; }
+  .datarow { gap: 14px 18px; padding: 12px; }
+  .datarow .btn { margin-left: 0; }
+}
+
+/* ============================== <= 500px ================================= */
+@media (max-width: 500px) {
+  #topbar { gap: 8px; }
+
+  /* Collapsed: a 40px tap plate showing only the magnifier. The field is still
+     the real <input>, so one tap focuses it and the rule below expands it —
+     no JS, no state to keep in sync with another lane's code. */
+  /* 44px, not 40: it is the finger target, and it is also the <input>'s own
+     intrinsic width here — matching them means the field never paints past its
+     own plate on engines that fall back to that intrinsic size. */
+  .search-wrap {
+    flex: 0 0 44px; max-width: 44px; margin: 0 0 0 auto;
+    transition: none;
+  }
+  /* `min-width: 0` because a flex item's automatic minimum size is its intrinsic
+     one, and an <input>'s intrinsic width is its `size` attribute (~44px here) —
+     it would push 4px out of the 40px plate. */
+  /* `flex: 1 1 0` rather than the inherited `width: 100%`: a flex item's base
+     size still falls back to the <input>'s intrinsic width (its `size`
+     attribute) in enough engines to matter, and it pushed 4px out of the 40px
+     plate. A zero flex-basis leaves nothing to fall back to. */
+  #search-input { padding: 0 8px 0 34px; cursor: pointer; min-width: 0; flex: 1 1 0; }
+
+  /* Expanded over the whole bar. `:focus-within` and the has-text rule are
+     written as SEPARATE rules on purpose: a selector list is thrown away whole
+     if any selector in it fails to parse, so an engine without `:has()` must
+     still get the focus behaviour. */
+  .search-wrap:focus-within {
+    position: absolute; inset: 0; z-index: 3;
+    flex-basis: auto; max-width: none; margin: 0;
+    padding: 0 max(10px, env(safe-area-inset-left));
+    background: var(--bg);
+  }
+  /* the wrap now spans the whole 56px bar, so its absolutely-positioned children
+     need an explicit centre — their static position no longer is one */
+  .search-wrap:focus-within .search-icon { left: 21px; top: 50%; transform: translateY(-50%); }
+  .search-wrap:focus-within #search-input { padding: 0 42px 0 34px; }
+  .search-wrap:focus-within .search-clear { right: 18px; top: 50%; transform: translateY(-50%); }
+
+  /* Keep it open while a query is showing, so the clear button stays reachable
+     and the user can see what they searched for. */
+  .search-wrap:has(#search-input:not(:placeholder-shown)) {
+    position: absolute; inset: 0; z-index: 3;
+    flex-basis: auto; max-width: none; margin: 0;
+    padding: 0 max(10px, env(safe-area-inset-left));
+    background: var(--bg);
+  }
+  .search-wrap:has(#search-input:not(:placeholder-shown)) .search-icon { left: 21px; top: 50%; transform: translateY(-50%); }
+  .search-wrap:has(#search-input:not(:placeholder-shown)) #search-input { padding: 0 42px 0 34px; }
+  .search-wrap:has(#search-input:not(:placeholder-shown)) .search-clear { right: 18px; top: 50%; transform: translateY(-50%); }
+
+  .d-actions .btn { flex: 1 1 auto; }
+  .empty { padding: 24px 16px; }
+  .gate-card { padding: 26px 20px; }
+}
+
+/* ============================== <= 380px ================================= */
+@media (max-width: 380px) {
+  /* At 375px the ledger's collapsed header ran 13px past its own box and clipped
+     the caret. The three count seals carry the numbers, so they shrink to the
+     corner-stamp scale rather than being dropped — the counts ARE the honest
+     part of the header. */
+  .td-counts { gap: 4px; }
+  .td-counts .seal { --notch: 5px; }
+  .td-counts .seal-in { padding: 2px 5px 2px 4px; font-size: 9px; letter-spacing: .04em; gap: 3px; }
+  .td-counts .seal svg { width: 9px; height: 9px; }
+  .td-toggle { gap: 7px; padding: 8px 9px; }
+}
+
+/* ============================== <= 360px ================================= */
+@media (max-width: 360px) {
+  /* Even at the corner-stamp scale the three counts cannot share a line with
+     the title at 320px. They wrap to their own line rather than being dropped
+     or clipped — the counts are the header's evidence, and the caret has to
+     stay reachable or the panel cannot be closed. */
+  .td-toggle { flex-wrap: wrap; }
+  .td-caret { order: 1; margin-left: auto; }
+  .td-counts { order: 2; flex: 1 0 100%; margin-left: 0; margin-top: 2px; }
+}
+
+/* ======================= short viewports (landscape) ===================== */
+@media (max-height: 480px) {
+  :root { --topbar-h: 48px; --catbar-h: 40px; }
+  .cw { padding: 8px 12px 0; }
+  .cw-head { margin-bottom: 6px; }
+  .detail-scroll { padding-top: 30px; }
+  .settings-scroll { padding-top: 34px; }
+  .trustdock.open .td-body { max-height: 54vh; }
+}
+
+/* ============================ coarse pointers ============================ */
+@media (pointer: coarse) {
+  /* 44px is the smallest reliable finger target. Anything a finger drives gets
+     it; text and read-only chips do not need it. */
+  .navbtn { height: 44px; padding: 0 12px; }
+  .pill { height: 44px; padding: 0 15px; font-size: 13px; }
+  .btn { height: 44px; }
+  /* `btn-sm` earns its name through padding on touch, not through height —
+     "Load more" and "Clear local data" are both finger targets like any other */
+  .btn-sm { height: 44px; padding: 0 14px; }
+  .overlay-close { width: 44px; height: 44px; font-size: 15px; }
+  #search-input { height: 44px; }
+  .search-clear { width: 30px; height: 30px; right: 6px; font-size: 13px; }
+  .td-toggle { min-height: 48px; }
+  .ordbtn { width: 40px; height: 30px; }
+  .ep, .stream, .addon { min-height: 56px; }
+  .toast .toast-x { padding: 8px 10px; margin: -8px -6px -8px auto; }
+  .linkish { padding: 6px 0; }
+  .cw-card { width: 168px; }
+
+  /* Hover-reveal is invisible to a finger: the remove button and the play
+     scrim would simply never appear. Make them permanent instead. */
+  .cw-x { opacity: 1; width: 32px; height: 32px; font-size: 14px; }
+  .cw-play { opacity: .55; }
+
+  /* No lift on tap — a transform that only a hover can trigger just sticks. */
+  .pill:hover, .gcard:hover, .cw-card:hover { transform: none; }
+  .ep:hover, .stream:hover { transform: none; }
+  .overlay-close:hover { transform: none; }
+}
+
+/* ============================= reduced motion ============================ */
+/* Last block in the sheet so it wins on order as well as on !important. The
+   loading spinner is deliberately exempt: it is the only signal that the app is
+   still working, and a frozen spinner reads as a hang. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .spinner {
+    animation: spin 1.4s linear infinite !important;
+    animation-iteration-count: infinite !important;
+  }
+  .pill:hover, .gcard:hover, .cw-card:hover,
+  .ep:hover, .stream:hover, .overlay-close:hover { transform: none; }
+}

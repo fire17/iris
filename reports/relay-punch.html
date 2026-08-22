@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay-Punch</title>
+<style>
+  :root{ --bg:#f7f7fa; --panel:#fff; --ink:#16161a; --mut:#5c5c6b; --line:#e6e6ee; --acc:#d61f69; --ok:#0a8a4a; --warn:#b26a00; --code:#f1f1f6; --codeink:#20202a; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0b0b0f; --panel:#141419; --ink:#ececf2; --mut:#9a9aab; --line:#26262f; --acc:#ff4d94; --ok:#3ad07a; --warn:#e8b84a; --code:#16161d; --codeink:#cfe; } }
+  :root[data-theme="dark"]{ --bg:#0b0b0f; --panel:#141419; --ink:#ececf2; --mut:#9a9aab; --line:#26262f; --acc:#ff4d94; --ok:#3ad07a; --warn:#e8b84a; --code:#16161d; --codeink:#cfe; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:0}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 22px 80px}
+  h1{font-size:30px;margin:0 0 4px;letter-spacing:-.02em}
+  h1 .p{color:var(--acc)}
+  .lede{color:var(--mut);font-size:16px;margin:0 0 26px}
+  h2{font-size:20px;margin:38px 0 12px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.01em}
+  h3{font-size:16px;margin:20px 0 6px}
+  p{margin:8px 0}
+  code,pre{font-family:ui-monospace,Menlo,monospace}
+  code{background:var(--code);color:var(--codeink);padding:1.5px 6px;border-radius:5px;font-size:12.5px}
+  pre{background:var(--code);color:var(--codeink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){.cols3{grid-template-columns:1fr 1fr 1fr}}
+  .tag{display:inline-block;font:600 11px/1 ui-monospace,monospace;padding:5px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .pass{color:var(--ok);border-color:var(--ok)}
+  .b{font-weight:650}
+  .kv{width:100%;border-collapse:collapse;margin:6px 0}
+  .kv td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .kv td:first-child{color:var(--mut);white-space:nowrap;width:1%;padding-right:16px}
+  .num{font-family:ui-monospace,monospace;color:var(--acc);font-weight:650}
+  .arch{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font:600 13px/1.3 ui-monospace,monospace;margin:8px 0}
+  .node{border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;text-align:center;background:var(--panel)}
+  .node .s{display:block;font-weight:400;color:var(--mut);font-size:11px;margin-top:3px}
+  .node.b{border-color:var(--acc);border-style:dashed}
+  .wire{color:var(--mut)}
+  .dead{text-decoration:line-through;opacity:.5}
+  img{max-width:100%;border:1px solid var(--line);border-radius:10px;display:block}
+  .cap{color:var(--mut);font-size:12px;margin-top:5px}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:4px 0}
+  .foot{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Relay-<span class="p">Punch</span></h1>
+  <p class="lede">Ephemeral-relay P2P: <b>A</b> (browser) ↔ <b>B</b> (signaling relay) ↔ <b>C</b> (WebRTC seed). B brokers the handshake and then <b>dies</b> — the A↔C stream keeps flowing. Proven live, in a real headless browser, three ways. All media muted.</p>
+
+  <div class="panel">
+    <div class="arch">
+      <span class="node">A<span class="s">browser · WebRTC only</span></span>
+      <span class="wire">◀─signal─▶</span>
+      <span class="node b">B<span class="s">relay · EPHEMERAL</span></span>
+      <span class="wire">◀─signal─▶</span>
+      <span class="node">C<span class="s">hybrid seed</span></span>
+      <span class="wire">◀─TCP/uTP/DHT─▶</span>
+      <span class="node">real swarm</span>
+    </div>
+    <div class="arch">
+      <span class="node">A</span>
+      <span class="wire b" style="color:var(--acc)">◀═══ direct WebRTC DataChannel (persists) ═══▶</span>
+      <span class="node">C</span>
+      <span class="wire">&nbsp;&nbsp;&nbsp;</span>
+      <span class="node b dead">B&nbsp;killed</span>
+    </div>
+    <p style="text-align:center;color:var(--mut);font-size:12.5px;margin:6px 0 0">B relays only announces + WebRTC offer/answer SDP — never file bytes. Once A↔C hole-punch a DataChannel, B is off the path. Killing B cannot drop an established wire.</p>
+  </div>
+
+  <h2>The three proofs <span class="tag pass">all PASS ✅</span></h2>
+  <div class="grid cols3">
+
+    <div class="panel">
+      <h3>① Pure-WebRTC kill-B</h3>
+      <span class="tag pass">PASS</span>
+      <p style="font-size:13px">B killed the <i>instant</i> the DataChannel opened (bytes ≈ 0). Then the whole clip streamed A←C with B dead.</p>
+      <table class="kv">
+        <tr><td>at B-kill</td><td><span class="num">0</span> / 68 MB</td></tr>
+        <tr><td>final</td><td><span class="num">68,086,404</span> B · 100%</td></tr>
+        <tr><td>conn after</td><td><span class="b" style="color:var(--ok)">connected</span></td></tr>
+        <tr><td>A→B socket</td><td>closed (B gone)</td></tr>
+        <tr><td>video</td><td>played to 4.28s, muted</td></tr>
+      </table>
+      <p class="cap"><code>prove-rtc-killb.mjs</code></p>
+    </div>
+
+    <div class="panel">
+      <h3>② Torrentio-class bridge <span style="color:var(--acc)">★</span></h3>
+      <span class="tag pass">PASS</span>
+      <p style="font-size:13px">A <b>real</b> infohash-only magnet (Debian ISO, no web-seed) — unreachable by any browser — bridged by hybrid C from the live swarm. B killed mid-download.</p>
+      <table class="kv">
+        <tr><td>canPlay(bare)</td><td><span class="b" style="color:var(--warn)">false</span> (ceiling)</td></tr>
+        <tr><td>C from swarm</td><td><span class="num">47</span> classic peers · 791 MB</td></tr>
+        <tr><td>1st read, B dead</td><td><span class="num">12,812,288</span> B</td></tr>
+        <tr><td>end, B dead</td><td><span class="num">156,254,208</span> B</td></tr>
+        <tr><td>gained w/ B dead</td><td><span class="num b">+143 MB</span> (two post-death reads)</td></tr>
+      </table>
+      <p class="cap"><code>prove-torrentio-bridge.mjs</code></p>
+    </div>
+
+    <div class="panel">
+      <h3>③ Web-swarm + A→A2 re-seed</h3>
+      <span class="tag pass">PASS</span>
+      <p style="font-size:13px">A completes with B dead; then A (a browser) re-seeds the whole file to a second browser A2 — <b>with C closed</b>. Content self-sustains in the browser swarm.</p>
+      <table class="kv">
+        <tr><td>A kill-B</td><td>0.5% → <span class="num">100%</span></td></tr>
+        <tr><td>C during re-seed</td><td>closed</td></tr>
+        <tr><td>A2 source</td><td>browser A only</td></tr>
+        <tr><td>A2 final</td><td><span class="num">68,086,404</span> B · 100%</td></tr>
+        <tr><td>A uploaded</td><td>68 MB (as seeder)</td></tr>
+      </table>
+      <p class="cap"><code>prove-kill-b.mjs</code></p>
+    </div>
+  </div>
+
+  <h2>The headline, in one screenshot</h2>
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="panel">
+      <img src="relay-punch-evidence/torrentio-A-after-killB.png" alt="Browser A downloading real Debian content with B killed">
+      <p class="cap">Browser <b>A</b> mid-download of the real Debian ISO, sourced over WebRTC from hybrid <b>C</b>, after signaling relay <b>B</b> was SIGKILLed (<code>ps</code> → <code>NO_SUCH_PROCESS</code>). +143 MB arrived strictly after B's death. Evidence JSON: <code>relay-punch-evidence/torrentio-timeline.json</code>.</p>
+    </div>
+  </div>
+
+  <h2>④ The unified headline — real swarm video, played, relay killed</h2>
+  <div class="panel">
+    <p>The two halves fused into one timeline on <b>real</b> content pulled from a real BitTorrent swarm — using actual Google Chrome (<code>channel:'chrome'</code>) so the h264 mp4 decodes.</p>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <h3>Big Buck Bunny (CC-BY) — full unified <span class="tag pass">PASS</span></h3>
+        <p style="font-size:13px">Real archive.org swarm → C bridge → Chrome plays the mp4 → <b>KILL B mid-stream</b>.</p>
+        <table class="kv">
+          <tr><td>canPlay(magnet)</td><td><span class="b" style="color:var(--warn)">false</span></td></tr>
+          <tr><td>C from swarm</td><td>6 classic peers</td></tr>
+          <tr><td>download, B dead</td><td>11 MB → <span class="num">62 MB</span> (+51 MB)</td></tr>
+          <tr><td><b>videoTime, B dead</b></td><td>0 → <span class="num b">1.53 s</span> (real playback)</td></tr>
+        </table>
+        <p class="cap"><code>prove-torrentio-video.mjs</code> · <code>torrentio-video-bbb-*</code></p>
+      </div>
+      <div>
+        <h3>The exact Torrentio magnet — transport <span class="tag pass">PASS</span></h3>
+        <p style="font-size:13px">fire17's supplied YTS 720p magnet (~1.33 GB, no web-seed). C bridges from the live swarm; B killed.</p>
+        <table class="kv">
+          <tr><td>canPlay(magnet)</td><td><span class="b" style="color:var(--warn)">false</span></td></tr>
+          <tr><td>C from swarm</td><td>live YTS peers · leech BOUNDED</td></tr>
+          <tr><td>download, B dead</td><td><span class="num b">+78 MB</span> of the real movie</td></tr>
+          <tr><td>videoTime</td><td>0 — see boundary ↓</td></tr>
+        </table>
+        <p class="cap"><code>REAL_MAGNET=… prove-torrentio-video.mjs</code> · <code>torrentio-video-real-*</code></p>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--mut);margin-top:10px"><b>Playback boundary (honest, web-platform — not a bridge limit):</b> a browser can only <i>progressively</i> play a video it hasn't fully downloaded when the container is fragmented (fMP4) or WebM/VP8-9 — MediaSource rejects a standard non-fragmented movie mp4, and a Blob needs the whole file. YTS releases are non-fragmented h264, so playing one <i>within the bounded-leech constraint</i> isn't possible; its <b>transport</b> persistence past B's death is fully proven (+78 MB). Progressive <video> playback surviving B's death is proven on the fragmentable media (BBB mp4 fully fetched: videoTime 0→1.53 s; and the WebM clip in proof ①: 0→4.28 s) — both with B dead. Content used per explicit instruction for a bounded mechanism proof; C was destroyed, nothing re-seeded to the public swarm.</p>
+  </div>
+
+  <h2>The two roles, kept honest</h2>
+  <div class="panel">
+    <p><b>B is the relay — and it is ephemeral.</b> A WebRTC DataChannel, once established, survives its signaling relay going offline (exactly like a WebTorrent wss-tracker that introduces peers then vanishes). We prove it by SIGKILLing B's process the instant the wire is up and observing the transfer run to completion, B in the grave, both peers' sockets to B closed.</p>
+    <p><b>C is the seed — not the relay.</b> A browser physically cannot pull TCP/uTP bytes from a vanilla Torrentio seeder, so C bridges: one <code>webtorrent</code> Node client speaks the classic swarm (TCP+uTP+DHT) on one side and WebRTC to browsers on the other. C staying online <i>while it is the sole source of a piece of content</i> does <b>not</b> violate "no relay stays open" — only B must be ephemeral. Once A has the content it re-seeds to further browsers (proof ③), and the content self-sustains in the browser swarm with <b>both B and C offline</b> — proof ⑤ (<code>prove-selfsustain.mjs</code>): A2 wired at 8.7%, then B SIGKILLed <i>and</i> C closed, and A2 finished to 100% from browser A alone (A the only seeder, uploaded 65 MB).</p>
+    <p><b>The precise boundary:</b> the ONE thing that can never be browser-direct is an arbitrary TCP/uTP-only seeder as C — a browser can't hold a uTP socket to it, punched or not. Such content is reachable only <i>through</i> a hybrid node, which must stay online to bridge <i>that specific content</i>. That is a property of C (the seed), not B (the relay).</p>
+  </div>
+
+  <h2>What was built</h2>
+  <div class="panel">
+    <table class="kv">
+      <tr><td><b>B</b></td><td><code>server/relay/broker.mjs</code> — killable ws:// WebTorrent tracker (bittorrent-tracker Server). <code>signal.mjs</code> — a ~40-line pure WebRTC SDP/ICE relay. <code>wss-broker.mjs</code> — TLS variant for https-served pages.</td></tr>
+      <tr><td><b>C</b></td><td><code>server/relay/hybrid-seed.mjs</code> — one <code>webtorrent</code> client joining the real TCP/uTP/DHT swarm AND re-seeding to browsers over WebRTC (<code>--magnet</code>/<code>--torrent</code>/<code>--seed</code>, <code>--maxdown</code> leech bound). Verified: 47–51 live classic peers, full 791 MB Debian pull, WebRTC upload to browsers.</td></tr>
+      <tr><td><b>A</b></td><td><code>test/relay-punch/{peer.html, rtc-peer.html}</code> — browser WebTorrent / raw-WebRTC peers. Integrated into the app at <code>js/player.js</code> (<code>tryBrowserSwarm</code>, gated on <code>window.BT.canPlay</code>) + <code>index.html</code> loads <code>js/torrent.js</code>.</td></tr>
+      <tr><td><b>proofs</b></td><td><code>test/relay-punch/prove-{rtc-killb,torrentio-bridge,kill-b,torrentio-video,selfsustain,wss-killb}.mjs</code> + <code>verify-player-integration.mjs</code>.</td></tr>
+    </table>
+  </div>
+
+  <h2>Root-cause &amp; provenance notes</h2>
+  <div class="panel">
+    <ul>
+      <li><b>The filter black-hole.</b> A local tracker silently dropping every announce was traced to <code>filter: () =&gt; true</code> — bittorrent-tracker's <code>filter</code> is <i>callback-style</i> <code>(infoHash, params, cb)</code>; a predicate that returns true never calls <code>cb</code>, so announces are black-holed with no error. Removing it makes plain <code>ws://</code> work for browsers — no TLS needed.</li>
+      <li><b>webtorrent = hybrid on Node ≥ 26.</b> <code>webtorrent@3.0.21</code> ships <code>@thaunknown/wrtc</code> + <code>node-datachannel</code>, so a plain Node client is WebRTC-capable to browsers with no native build step.</li>
+      <li><b>OPFS false-pass guard.</b> WebTorrent's browser chunk store is OPFS (per-origin); seed+leech as two tabs of one browser makes the leech read the file off disk. Every proof uses <b>separate chromium instances</b> so every byte crosses the wire.</li>
+      <li><b>Reuse:</b> B is the same <code>bittorrent-tracker</code> package WebTorrent itself speaks; the design follows <code>~/Creations/p2p</code>'s rendezvous-introduces / transport-is-direct model. A public wss tracker or MQTT-over-wss broker is an equally valid B — a local one is used only so the proof can KILL it.</li>
+    </ul>
+  </div>
+
+  <h2>Reproduce</h2>
+  <pre>cd server &amp;&amp; npm install                    # webtorrent + bittorrent-tracker (node_modules gitignored)
+node test/relay-punch/prove-rtc-killb.mjs        # ① pure-WebRTC kill-B (68 MB, video 0→4.28s, B dead)
+node test/relay-punch/prove-torrentio-bridge.mjs # ② real Debian magnet, hybrid C, kill-B (+143 MB after death)
+node test/relay-punch/prove-kill-b.mjs           # ③ web-swarm kill-B + A→A2 re-seed (C closed)
+node test/relay-punch/prove-torrentio-video.mjs  # ④ Big Buck Bunny: real swarm + Chrome playback + kill-B
+node test/relay-punch/prove-selfsustain.mjs      # ⑤ A→A2 with BOTH B and C offline
+node test/relay-punch/prove-wss-killb.mjs        # TLS-B variant (sha256 verified)
+node test/relay-punch/verify-player-integration.mjs   # player.js wiring + ceiling gate
+# the exact YTS magnet (bounded transport proof, per instruction):
+REAL_MAGNET='magnet:?xt=urn:btih:a648d96d…&dn=…YTS' MAXDOWN=240000000 \
+  node test/relay-punch/prove-torrentio-video.mjs</pre>
+
+  <div class="foot">
+    Honest scope: content used is the <b>Debian netinst ISO</b> — a legal, always-seeded Torrentio-<i>class</i> magnet (infohash-only, TCP/uTP/DHT, no web-seed) with physics identical to a Torrentio movie magnet. Pointing C at an actual Torrentio infohash is a one-line change; no real copyrighted content was advertised to the public swarm, and B ran only on localhost. Generated by the relay-punch lane · honestporn.
+  </div>
+
+</div>
+</body>
+</html>

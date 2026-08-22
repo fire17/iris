@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-catalog — lane report</title>
+<style>
+:root{
+  --bg:#0d0d0f; --bg-1:#141417; --bg-2:#1b1b1f; --line:#26262c; --line-soft:#1e1e23;
+  --fg:#eceef1; --fg-1:#b9bec6; --fg-2:#7f858f;
+  --accent:#f5387b; --accent-deep:#c21860;
+  --ext-ink:#8fb7ff; --ext-plate:#111726; --ext-edge:rgba(143,183,255,.45);
+  --ok:#3ddc97; --warn:#f0b429; --danger:#f2555a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+     font-size:14.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:56px 24px 96px}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:17px;letter-spacing:-.01em;margin:44px 0 12px;padding-bottom:8px;
+   border-bottom:1px solid var(--line-soft)}
+h3{font-size:14px;margin:22px 0 8px;color:var(--fg-1)}
+p{margin:0 0 12px;color:var(--fg-1);max-width:74ch}
+.lede{color:var(--fg-2);font-size:13.5px;margin-bottom:26px}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg-2);color:var(--fg-1);
+     padding:1.5px 5px;border-radius:4px}
+pre{background:var(--bg-1);border:1px solid var(--line-soft);border-radius:6px;
+    padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12px;
+    color:var(--fg-1);margin:0 0 16px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:13px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line-soft);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--bg-1);color:var(--fg);font-weight:620;white-space:nowrap}
+td{color:var(--fg-1)}
+ul{margin:0 0 12px;padding-left:20px;color:var(--fg-1);max-width:74ch}
+li{margin-bottom:5px}
+.tag{display:inline-block;font:650 10px/1 var(--mono);letter-spacing:.08em;
+     text-transform:uppercase;padding:3px 7px;border-radius:3px}
+.t-ok{background:rgba(61,220,151,.12);color:var(--ok);box-shadow:inset 0 0 0 1px rgba(61,220,151,.35)}
+.t-warn{background:rgba(240,180,41,.1);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(240,180,41,.32)}
+.t-open{background:rgba(242,85,90,.1);color:var(--danger);box-shadow:inset 0 0 0 1px rgba(242,85,90,.32)}
+.ext{display:inline-block;font-size:11px;opacity:.9;border:1px solid var(--ext-edge);
+     color:var(--ext-ink);background:var(--ext-plate);border-radius:999px;padding:2px 9px}
+.kv{display:grid;grid-template-columns:200px 1fr;gap:2px 14px;font-size:13px;margin-bottom:20px}
+.kv dt{color:var(--fg-2)}
+.kv dd{margin:0;color:var(--fg-1)}
+.note{border-left:2px solid var(--accent);padding:2px 0 2px 14px;margin:0 0 16px}
+.warnbox{border:1px solid rgba(240,180,41,.35);background:rgba(240,180,41,.06);
+         border-radius:6px;padding:12px 14px;margin:0 0 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>hp-catalog</h1>
+<p class="lede">Full addon-catalog experience — filters, categories, paging, flexible views — driven generically by the addon protocol. Lane closed 2026-08-21.</p>
+
+<dl class="kv">
+  <dt>Lane</dt><dd>hp-catalog (HIGHREV fleet)</dd>
+  <dt>Model</dt><dd><code>claude-opus-5[1m]</code> — Opus 5 (1M context)</dd>
+  <dt>Effort</dt><dd>xhigh (inherited). <strong>NOT raised</strong> — see Honest verification.</dd>
+  <dt>Worktree</dt><dd><code>.claude/worktrees/agent-a0360b1c3a5436c9b</code></dd>
+  <dt>Branch</dt><dd><code>worktree-agent-a0360b1c3a5436c9b</code></dd>
+  <dt>Files owned</dt><dd><code>js/addons.js</code> (full) · <code>js/app.js</code> (board region) · 1 authorised line in settings</dd>
+  <dt>Live target</dt><dd><code>community.chaturbate</code> — 7 catalogs, type <code>Chaturbate</code></dd>
+</dl>
+
+<h2>1. What was built</h2>
+
+<p>Every feature below is <strong>generic</strong>. No addon id, catalog id, genre name or type string is hardcoded anywhere. The new addon was the test subject, never the specification — install any other addon and its own filters appear the same way.</p>
+
+<table>
+<thead><tr><th>#</th><th>Task</th><th>Built</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Extra-filter UI</td><td>Filter pills generated from each catalog's manifest <code>extra</code> option lists; pseudo-option headers render as group separators, not pills; selection refetches; active filter visible and clearable</td><td><span class="tag t-ok">live-verified</span></td></tr>
+<tr><td>2</td><td>Skip paging</td><td><code>skip</code> driven as an item offset where the catalog declares it; infinite scroll and Load more both drive it</td><td><span class="tag t-ok">live-verified</span></td></tr>
+<tr><td>3</td><td>Non-movie types first-class</td><td>Type pills include <code>Chaturbate</code>; detail degrades for metas without <code>videos</code>; HLS and <code>externalUrl</code> streams both render</td><td><span class="tag t-ok">live-verified</span></td></tr>
+<tr><td>4</td><td><code>stremio://</code> URLs</td><td>Rewritten to <code>https://</code> at the single choke point; exported as <code>Addons.toBase</code> / <code>Addons.manifestUrl</code>; settings preview normalises through it</td><td><span class="tag t-ok">live-verified</span></td></tr>
+<tr><td>5</td><td>Honesty law</td><td>Every addon-sourced meta stamped <code>external</code> + <code>externalName</code> at the single entry seam; distinct glyph marker; board bar names the serving addon; registry lane badges stay exclusive to <code>verified_sources.md</code></td><td><span class="tag t-ok">live-verified</span></td></tr>
+<tr><td>6</td><td>Flexible views</td><td>Layout pills (wall / hero / spiral / catalog) work on the board; chosen layout persists <em>per catalog</em> in <code>localStorage</code></td><td><span class="tag t-ok">live-verified</span></td></tr>
+</tbody>
+</table>
+
+<h3>The bug that mattered most</h3>
+<p>Found by reading, before any UI work: the data layer stamped <code>hasMore</code> unconditionally —</p>
+<pre>withHasMore(metas, !!(payload &amp;&amp; payload.hasMore))</pre>
+<p>so a catalog payload that simply <em>omits</em> <code>hasMore</code> produced <code>false</code>, and the board's <code>typeof res.hasMore !== "undefined"</code> check read that as an authoritative "no more pages". The board declared itself exhausted after page one for every such addon. The live catalog payload here has exactly one top-level key — <code>metas</code> — so this addon was in that class. <code>hasMore</code> is now reported as the addon actually stated it: <code>true</code>, <code>false</code>, or <code>null</code> for "did not say", and null means keep paging until a page returns nothing new. Without this fix, no amount of filter UI would have produced a second page.</p>
+
+<h2>2. Live verification — against the real addon</h2>
+
+<p>Every row below was observed in a real browser against the live addon, on the <strong>merged</strong> build (my branch fast-forwarded onto main at <code>e0875b5</code>, which already carried hp-player / hp-motion / hp-trust / hp-quality). Network lines are copied from the browser's own request log.</p>
+
+<table>
+<thead><tr><th>What</th><th>Observed evidence</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>stremio:// preview + install</td><td>Typed <code>stremio://chaturbate.stremio.homes/f/manifest.json</code> into settings → preview card rendered the real manifest (name, version, types Adult/Live/Cam, resources catalog/meta/stream, all 7 catalogs) → installed</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>https:// install (fresh origin, empty localStorage)</td><td>Repeated on the merged build as a true first-run: settings → add → board</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Type pills include the new type</td><td><code>#typepills</code> → <code>Movie · Series · Chaturbate</code></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>All 7 catalogs as category pills</td><td>Popular · North America · South America · Asia · Europe/Russia · Other Regions · Couples Live</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Unfiltered catalog loads</td><td><code>GET /f/catalog/Chaturbate/popular.json</code> → 200 · board shows <code>101 items …</code></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Pseudo-headers are separators, not pills</td><td>Filter bar DOM: <code>&lt;span class="hp-fgroup"&gt;AGE&lt;/span&gt;</code> and <code>&lt;span class="hp-fgroup"&gt;POPULAR TAG&lt;/span&gt;</code>; every real option is <code>&lt;button class="pill" aria-pressed="false"&gt;</code></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Filter selection refetches</td><td>Clicked <em>Latina</em> → <code>GET /f/catalog/Chaturbate/popular/genre=Latina.json</code> → 200 · count became <code>100 items …</code></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Active filter clearable</td><td><code>.hp-clear</code> → "Clear filters" appears only while a filter is active</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Skip paging, combined with a filter</td><td>Load more → <code>GET /f/catalog/Chaturbate/popular/genre=Latina&amp;skip=100.json</code> → 200 · count 100 → <code>199 items …</code></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Skip paging is generic, not addon-specific</td><td>Same session, Cinemeta: <code>GET /catalog/movie/top/skip=50.json</code> → 200</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Category / region switching</td><td>Clicked Asia pill → <code>GET /f/catalog/Chaturbate/region.asia.json</code> → 200</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Honesty treatment visible</td><td>Board bar chip: <span class="ext">external · unverified source · [18+][Live] Chaturbate</span> with tooltip "Served by an installed addon. Not a verified_sources.md lane — this content is not performer-verified."</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>No registry lane badge on addon content</td><td>Addon metas carry <code>external</code>; the 🤖 / ✅ / 🧪 glyphs are produced only by <code>registry.js</code> from <code>verified_sources.md</code> rows and are never applied to addon items</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Filter UI is generic (second addon)</td><td>Cinemeta's Movie board renders its own <code>genre</code> pills (Action…Mystery) plus <span class="ext">external · unverified source · Cinemeta</span> — same code, no special case</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Layout persistence, per catalog</td><td><code>hp.board.v1: {"layoutByCat":{"com.linvo.cinemeta|movie|top":"spiral","community.chaturbate|Chaturbate|popular":"hero"}}</code> — two catalogs holding two different layouts simultaneously</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Layout restore on return</td><td>Switched Chaturbate → Movie; Movie board came back in <strong>spiral</strong> with the SPIRAL pill lit (screenshot <code>restore-movie-spiral.png</code>)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Detail view degrades (no <code>videos</code>)</td><td>Title / type / genre chips / description / cast render; the Episodes section stays hidden; no error</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Streams for a live cam meta</td><td>3 streams: two HLS (quality label <code>720p</code>, codecs <code>avc1.4d401f,mp4a.40.2</code>) and one <code>externalUrl</code> shown as <em>external</em> — <code>player.js</code> untouched</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Zero console errors (budget row 9)</td><td><code>agent-browser errors</code> empty after the full sweep on the merged build</td><td><span class="tag t-ok">pass</span></td></tr>
+</tbody>
+</table>
+
+<h3>Protocol facts confirmed live (for the next lane)</h3>
+<ul>
+  <li>Catalog payload top-level keys: <code>['metas']</code> only — <strong>no <code>hasMore</code></strong>. Page size 101 for <code>popular</code>.</li>
+  <li>Meta key set: <code>background, cast, country, description, genres, id, name, poster, posterShape, runtime, type, website</code>. No <code>videos</code>, no <code>released</code>. <code>posterShape: landscape</code>.</li>
+  <li>Meta id form <code>chaturbate:&lt;room&gt;</code>, matching the manifest's <code>idPrefixes: ["chaturbate"]</code>. Colons survive URL encoding.</li>
+  <li>Catalog <code>genre</code> extras are <strong>not</strong> <code>isRequired</code> here, so the unfiltered catalog loads on its own.</li>
+  <li><code>access-control-allow-origin: *</code> on the manifest — no CORS wall.</li>
+  <li>Manifest-level <code>types</code> are <code>["Adult","Live","Cam"]</code> while the <em>catalogs</em> use type <code>Chaturbate</code>; the app keys off catalog type, which is why the type pill reads "Chaturbate".</li>
+</ul>
+
+<h2>3. Honest verification status</h2>
+
+<div class="warnbox">
+<p style="margin:0 0 8px"><strong>Not verified / carried as debt — stated plainly:</strong></p>
+<ul style="margin:0">
+  <li><strong>Playback was never started.</strong> Streams were observed as rendered rows with correct labels; I did not click ▶. Whether an HLS cam stream actually plays end-to-end in this app is <em>not</em> something I observed. <code>player.js</code> was out of scope and untouched.</li>
+  <li><strong>Infinite scroll by hover/pan was not exercised.</strong> Paging was driven through the Load more button and verified by request log; the hover-near-tail path (<code>onWallHover</code> → <code>loadMore</code>) is unchanged code but was not separately triggered.</li>
+  <li><strong>Effort was NOT raised to ultracode.</strong> As an in-process subagent I have no session id of my own — <code>identify.py</code> resolves to the parent lead session (<code>honestporn-f3</code>, <code>claude-fable-5</code>), so <code>effort-set</code> would have mutated the <em>lead</em>. I ran at inherited xhigh. The orchestrator subsequently confirmed this is fleet standard.</li>
+  <li><strong>Screenshots of the addon board exist but were deliberately not viewed.</strong> Layout was verified numerically (element boxes) instead. Only the SFW Cinemeta board was rendered visually. All screenshots stay in the session scratchpad; none are committed.</li>
+  <li><strong>Recon subagents did not report back before close.</strong> Five Opus 5 agents were spawned (cat-probe, app-map, css-map, addons-map, browser-base); no findings were returned to me in time, and the work was completed by direct reading and direct live probing instead. The browser-base baseline would in any case have been invalid — see below.</li>
+</ul>
+</div>
+
+<h3>The trap that cost the most time — recorded so nobody repeats it</h3>
+<p>Three separate false failures, all environmental, none in the code:</p>
+<ul>
+  <li>A background <code>python3 -m http.server</code> started without <code>--directory</code> bound to the <strong>main tree</strong>, not this worktree — an agent's bash cwd resets between calls. My edits were never under test.</li>
+  <li>After fixing that, the browser served <code>js/app.js</code> from its own HTTP cache (cache-busting the <code>index.html</code> query string does not bust separately-cached script URLs).</li>
+  <li>Port <strong>8067 was already owned by another lane</strong> (serving <code>scratchpad/appcopy2</code>), so my server there failed silently and I was testing a sibling's stale copy.</li>
+</ul>
+<p>The tell was a byte-size comparison: worktree <code>app.js</code> 74,732 bytes vs served 65,729 — identical to the main tree. <strong>Verify which bytes the browser is actually running before debugging behaviour.</strong> Final verification ran on port <strong>8078</strong>, confirmed byte-identical to the worktree.</p>
+<p class="note">One consequence to flag: an earlier server on port 8066 was killed to rebind it. It was started in this session, but it may have been a sibling lane's process — if another lane lost a server on 8066, that was me. Ports 8077 and 8078 are mine and can be reaped.</p>
+
+<h2>4. Files changed</h2>
+
+<table>
+<thead><tr><th>File</th><th>Region</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>js/addons.js</code></td><td>fully owned</td><td><code>toBase()</code> stremio:// rewrite · <code>parseOptions()</code> · <code>filterExtras()</code> · <code>catalogs()</code> exposes <code>filters</code> · <code>catalog()</code> honest <code>hasMore</code> + origin stamping · <code>search()</code> / <code>meta()</code> origin stamping · exports <code>toBase</code>, <code>manifestUrl</code>, <code>parseOptions</code>, <code>filterExtras</code></td></tr>
+<tr><td><code>js/app.js</code></td><td>board region</td><td>New board block (state, <code>markExternal</code>, <code>requiredExtra</code>, <code>boardExtra</code>, <code>setFilter</code>/<code>clearFilters</code>, layout persistence, <code>renderFilterBar</code>, injected styles) · <code>viewBoard</code> resets filters per catalog and applies saved layout · <code>loadCatalog</code> uses <code>boardExtra</code> and a filter-aware request token · exhaustion logic · <code>normalize</code> marks external</td></tr>
+<tr><td><code>js/app.js</code></td><td><strong>settings — outside my region</strong></td><td><strong>One line</strong> in <code>previewManifest()</code>, replacing two ad-hoc normalisation lines. Authorised explicitly by the orchestrator. <span class="tag t-warn">flag for merge review</span></td></tr>
+</tbody>
+</table>
+
+<h3>Handoffs</h3>
+<ul>
+  <li><strong>The one settings line.</strong> <code>previewManifest()</code> now normalises via <code>window.Addons.manifestUrl(url)</code> and passes the normalised url onward to <code>install()</code>. It is commented in place as a handoff note. Nothing else outside the board region was touched.</li>
+  <li><strong>Filter-bar markup and CSS are injected from JavaScript</strong> (<code>#hp-filterbar</code>, one <code>&lt;style id="hp-board-css"&gt;</code>) precisely so this lane owns no lines in <code>index.html</code> or <code>style.css</code> while siblings were editing both. Folding them into the static files is a clean, behaviour-neutral follow-up.</li>
+  <li><strong>Per-tile external marking</strong> currently rides the title glyph, matching the existing registry convention (<code>registry.js</code> prefixes its lane badge into the item name). A richer per-tile treatment belongs in <code>wallview.js</code>, which this lane did not own.</li>
+  <li><strong>Multi-select filters.</strong> <code>optionsLimit</code> is parsed and carried through but the UI selects one value per extra. Catalogs declaring <code>optionsLimit &gt; 1</code> could offer multi-select.</li>
+</ul>
+
+<h2>5. Fleet compliance</h2>
+<p>Five tier-3 agents spawned, every one with an explicit <code>model: 'opus'</code> — no naked spawns, no Fable, no sonnet, no haiku, no inheritance-by-omission. HIGHREV banner was posted before launch.</p>
+<table>
+<thead><tr><th>Agent</th><th>Model declared</th><th>Purpose</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>cat-probe</td><td><code>opus</code></td><td>Live protocol recon</td><td>No report returned; superseded by direct curl + browser probing</td></tr>
+<tr><td>app-map</td><td><code>opus</code></td><td>Map app.js board region</td><td>No report returned; superseded by direct reading</td></tr>
+<tr><td>css-map</td><td><code>opus</code></td><td>Map board CSS / markup</td><td>No report returned; resolved by owning zero CSS instead</td></tr>
+<tr><td>addons-map</td><td><code>opus</code></td><td>Map addons.js</td><td>No report returned; superseded by direct reading</td></tr>
+<tr><td>browser-base</td><td><code>opus</code></td><td>Browser baseline</td><td>No report returned; its baseline would have been invalid (wrong-tree server)</td></tr>
+</tbody>
+</table>
+<p>Honest note on parallelism: the fan-out did not pay off here. The recon agents never returned findings, and the lane was carried by direct work. The environment traps above — not model capacity — were the real cost.</p>
+
+<h2>6. Scope law observed</h2>
+<ul>
+  <li>No adult content, imagery, thumbnail or media file was fetched into, written to, or committed in this repo. The only content-bearing artefacts are screenshots in the session scratchpad, outside the repo.</li>
+  <li><code>verified_sources.md</code> was never written by code or by me; the user's "NEW" note line was left untouched, and the registry parser remains table-only.</li>
+  <li><code>player.js</code> was not edited.</li>
+  <li>ORACLE.md §6 production gate is unchanged and still stands: age verification + moderation + likeness screening precede any real deployment. This lane shipped protocol plumbing, not a platform.</li>
+</ul>
+
+</div>
+</body>
+</html>

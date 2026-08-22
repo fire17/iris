@@ -1,0 +1,280 @@
+{
+  "clipSize": 68086404,
+  "tracker": "ws://127.0.0.1:61932",
+  "atKill": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A61932",
+    "infoHash": "f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6",
+    "progress": 0.00529,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 360448,
+    "uploaded": 606,
+    "downloadSpeed": 76369,
+    "length": 68086404,
+    "done": false,
+    "videoTime": 0,
+    "videoPaused": true,
+    "muted": true,
+    "error": null
+  },
+  "finalA": {
+    "role": "leech",
+    "ok": true,
+    "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A61932",
+    "infoHash": "f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6",
+    "progress": 1,
+    "numPeers": 1,
+    "wires": 1,
+    "downloaded": 68086404,
+    "uploaded": 80195,
+    "downloadSpeed": 13632308,
+    "length": 68086404,
+    "done": true,
+    "videoTime": 0.08,
+    "videoPaused": false,
+    "muted": true,
+    "error": null
+  },
+  "samples": [
+    {
+      "t": 6088,
+      "progress": 0.03056,
+      "downloaded": 2080768,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 420708
+    },
+    {
+      "t": 6240,
+      "progress": 0.11069,
+      "downloaded": 7536640,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 1512749
+    },
+    {
+      "t": 6392,
+      "progress": 0.19491,
+      "downloaded": 13271040,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 2660539
+    },
+    {
+      "t": 6544,
+      "progress": 0.27529,
+      "downloaded": 18743296,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 3755858
+    },
+    {
+      "t": 6697,
+      "progress": 0.36528,
+      "downloaded": 24870912,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 4982354
+    },
+    {
+      "t": 6849,
+      "progress": 0.41221,
+      "downloaded": 28065792,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 5621837
+    },
+    {
+      "t": 7002,
+      "progress": 0.49547,
+      "downloaded": 33734656,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 6756509
+    },
+    {
+      "t": 7154,
+      "progress": 0.57343,
+      "downloaded": 39043072,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 7819032
+    },
+    {
+      "t": 7306,
+      "progress": 0.66127,
+      "downloaded": 45023232,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 9016016
+    },
+    {
+      "t": 7458,
+      "progress": 0.73851,
+      "downloaded": 50282496,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 10068703
+    },
+    {
+      "t": 7611,
+      "progress": 0.81551,
+      "downloaded": 55525376,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 11118111
+    },
+    {
+      "t": 7763,
+      "progress": 0.89685,
+      "downloaded": 61063168,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 12226548
+    },
+    {
+      "t": 7915,
+      "progress": 0.97602,
+      "downloaded": 66453504,
+      "wires": 1,
+      "videoTime": 0,
+      "speed": 13305471
+    },
+    {
+      "t": 8066,
+      "progress": 1,
+      "downloaded": 68086404,
+      "wires": 1,
+      "videoTime": 0.08,
+      "speed": 13632308
+    }
+  ],
+  "timeline": [
+    {
+      "t": 0,
+      "wall": "2026-08-21T14:20:32.811Z",
+      "event": "clip-ready",
+      "bytes": 68086404
+    },
+    {
+      "t": 4,
+      "wall": "2026-08-21T14:20:32.815Z",
+      "event": "static-server-up",
+      "port": 61930
+    },
+    {
+      "t": 92,
+      "wall": "2026-08-21T14:20:32.903Z",
+      "event": "broker-up",
+      "port": 61932,
+      "pid": 7126,
+      "tracker": "ws://127.0.0.1:61932"
+    },
+    {
+      "t": 759,
+      "wall": "2026-08-21T14:20:33.570Z",
+      "event": "C-seeding",
+      "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&…"
+    },
+    {
+      "t": 817,
+      "wall": "2026-08-21T14:20:33.628Z",
+      "event": "A-added-magnet"
+    },
+    {
+      "t": 5959,
+      "wall": "2026-08-21T14:20:38.770Z",
+      "event": "A-C-WIRE-UP",
+      "progress": 0.00529,
+      "wires": 1,
+      "numPeers": 1
+    },
+    {
+      "t": 5961,
+      "wall": "2026-08-21T14:20:38.772Z",
+      "event": "broker-process-exit",
+      "code": null
+    },
+    {
+      "t": 6087,
+      "wall": "2026-08-21T14:20:38.898Z",
+      "event": "B-KILLED",
+      "pid": 7126,
+      "alive": false,
+      "ps": "NO_SUCH_PROCESS",
+      "progressAtKill": 0.00529
+    },
+    {
+      "t": 8066,
+      "wall": "2026-08-21T14:20:40.877Z",
+      "event": "A-final",
+      "progress": 1,
+      "done": true,
+      "downloaded": 68086404,
+      "wires": 1,
+      "videoTime": 0.08,
+      "bAlive": false
+    },
+    {
+      "t": 8196,
+      "wall": "2026-08-21T14:20:41.007Z",
+      "event": "broker-restarted-for-reseed",
+      "port": 62190,
+      "pid": 7838
+    },
+    {
+      "t": 8805,
+      "wall": "2026-08-21T14:20:41.616Z",
+      "event": "A-reseeded-on-new-broker",
+      "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&…"
+    },
+    {
+      "t": 8812,
+      "wall": "2026-08-21T14:20:41.623Z",
+      "event": "C-closed (only browser-A can serve A2 now)"
+    },
+    {
+      "t": 14148,
+      "wall": "2026-08-21T14:20:46.959Z",
+      "event": "A2-wired",
+      "wired": true
+    },
+    {
+      "t": 20538,
+      "wall": "2026-08-21T14:20:53.349Z",
+      "event": "A2-final",
+      "role": "leech",
+      "ok": true,
+      "magnet": "magnet:?xt=urn:btih:f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6&dn=relay-clip.webm&tr=ws%3A%2F%2F127.0.0.1%3A62190&tr=ws%3A%2F%2F127.0.0.1%3A61932",
+      "infoHash": "f5d34b5ff4bf27de09aa1804ace99dde6d2dc3c6",
+      "progress": 1,
+      "numPeers": 1,
+      "wires": 1,
+      "downloaded": 68086404,
+      "uploaded": 80195,
+      "downloadSpeed": 13027954,
+      "length": 68086404,
+      "done": true,
+      "videoTime": 0,
+      "videoPaused": false,
+      "muted": true,
+      "error": null
+    },
+    {
+      "t": 20538,
+      "wall": "2026-08-21T14:20:53.349Z",
+      "event": "A-as-seeder",
+      "uploaded": 68161542,
+      "wires": 1
+    }
+  ],
+  "reseed": {
+    "attempted": true,
+    "pass": true,
+    "note": "A2 completed via browser web-swarm (C closed); browser A uploaded 68161542 B",
+    "uploadedByA": 68161542
+  },
+  "HEADLINE_PASS": true
+}

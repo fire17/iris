@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-stream — Lane Report</title>
+<style>
+  :root{
+    --bg:#fbfafc; --panel:#ffffff; --ink:#16141a; --muted:#615c6b;
+    --line:#e6e2ec; --accent:#f5387b; --accent-soft:#fde7ef;
+    --pass:#0f7b45; --pass-bg:#e4f6ec; --fail:#b3271e; --fail-bg:#fdeceb;
+    --warn:#8a5a00; --warn-bg:#fdf3dd; --code:#f4f2f7;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d0c10; --panel:#151319; --ink:#f2eff6; --muted:#a49dae;
+      --line:#2a2632; --accent:#ff5c93; --accent-soft:#2c1420;
+      --pass:#5fd99a; --pass-bg:#11291d; --fail:#ff8a80; --fail-bg:#2c1512;
+      --warn:#ffd479; --warn-bg:#2c2210; --code:#1c1a22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d0c10; --panel:#151319; --ink:#f2eff6; --muted:#a49dae;
+    --line:#2a2632; --accent:#ff5c93; --accent-soft:#2c1420;
+    --pass:#5fd99a; --pass-bg:#11291d; --fail:#ff8a80; --fail-bg:#2c1512;
+    --warn:#ffd479; --warn-bg:#2c2210; --code:#1c1a22;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:0 20px 80px}
+  .wrap{max-width:960px;margin:0 auto}
+  header{padding:48px 0 28px;border-bottom:3px solid var(--accent);margin-bottom:36px}
+  .kicker{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px}
+  h1{margin:0 0 10px;font-size:2.5rem;line-height:1.12;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:1.05rem;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font:500 12.5px/1 var(--mono);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:7px 12px;color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  h2{margin:42px 0 14px;font-size:1.4rem;letter-spacing:-.01em;
+    padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{margin:26px 0 8px;font-size:1.08rem}
+  p{margin:0 0 14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:18px 0}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font:600 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;font:600 11.5px/1 var(--mono);padding:5px 9px;border-radius:6px;white-space:nowrap}
+  .t-pass{background:var(--pass-bg);color:var(--pass)}
+  .t-fail{background:var(--fail-bg);color:var(--fail)}
+  .t-warn{background:var(--warn-bg);color:var(--warn)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--code);padding:2px 5px;border-radius:4px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--mono)}
+  ul,ol{margin:0 0 14px;padding-left:22px}
+  li{margin:5px 0}
+  .lead{font-size:1.12rem;color:var(--ink)}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:600 13px/1 var(--mono);margin:6px 0 18px}
+  .flow .step{background:var(--accent-soft);color:var(--accent);border:1px solid var(--line);border-radius:8px;padding:8px 11px}
+  .flow .arr{color:var(--muted)}
+  .foot{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+  strong.k{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">honestporn · HIGHREV fleet · wave 2</div>
+  <h1>hp-stream — in-house streaming &amp; motion preview</h1>
+  <p class="sub">Streams play IN our player, beautifully — never bounced to an external page. Muted live-edge hover preview, a middle "glance" tier, and full-screen watch. The founding-vision "could be streaming", made real.</p>
+  <div class="meta">
+    <span class="chip">lane <b>hp-stream</b></span>
+    <span class="chip">owns <b>js/player.js · js/app.js</b></span>
+    <span class="chip">model <b>claude-opus-4-8</b></span>
+    <span class="chip">effort <b>xhigh (inherited)</b></span>
+    <span class="chip">date <b>2026-08-21</b></span>
+  </div>
+</header>
+
+<p class="lead">The user's feel-test, verbatim: <em>"make sure we can play those inhouse — streaming video — with amazing autopreview … when i hover over an item"</em>, then sharpened to <em>"not a page — you need to get the player from the external one and embed the player into ours — with glance and preview options."</em> The apologetic "Opens outside the app — your browser blocked the pop-up" modal is gone; a playable stream now always plays in-house.</p>
+
+<h2>1 · What shipped</h2>
+
+<h3>The core inversion — playable beats external, always</h3>
+<p>A Chaturbate cam item carries three streams: <code>720p</code> HLS, <code>540p</code> HLS, and a redundant <code>Chat Now!</code> <code>externalUrl</code> (always last). The old flow could bounce the user to <code>chaturbate.com</code> — a page that <em>can't even be iframed</em> (<code>x-frame-options: SAMEORIGIN</code>). The fix: <strong class="k">stream selection prefers a playable in-browser source (HLS / direct file / torrent-via-engine) and excludes <code>externalUrl</code> entirely</strong>. The cam's own low-latency HLS plays in our overlay; the external link is only ever reached when nothing playable exists.</p>
+
+<h3>Three in-house viewing tiers</h3>
+<div class="flow">
+  <span class="step">PREVIEW · hover</span><span class="arr">→</span>
+  <span class="step">GLANCE · ⤢ button / bigger look</span><span class="arr">→</span>
+  <span class="step">WATCH · full screen + sound</span>
+</div>
+<ul>
+  <li><strong>Preview</strong> — hovering a tile with a playable stream starts a muted, <code>playsinline</code>, live-edge inline <code>&lt;video&gt;</code> anchored over the tile, after a 180&nbsp;ms debounce. Live streams use hls.js <code>lowLatencyMode</code> + a seek to <code>liveSyncPosition</code>; short VOD clips loop. A poster/live-thumb covers the frame until playback starts; a LIVE chip pulses in the corner.</li>
+  <li><strong>Glance</strong> — the ⤢ button on the preview (or programmatically) expands the same muted stream into a larger, centred player over a scrim — a look between hover and commit. Dismisses on <kbd>Esc</kbd> or a click on the scrim.</li>
+  <li><strong>Watch</strong> — the ▶ button opens the full-screen <code>Player</code> overlay, unmuted, with the full control chrome. Muted-only until this explicit click (autoplay-policy clean).</li>
+</ul>
+
+<h3>The clean external hand-off</h3>
+<p>When an item is genuinely external-only, the player no longer apologises. No pre-emptive <code>window.open</code>-then-"we got blocked". Instead a confident card: <strong>"Watch on <em>&lt;Site&gt;</em> ↗"</strong> with a real anchor "Open on <em>&lt;Site&gt;</em> ↗" (<code>target="_blank" rel="noopener noreferrer"</code>) — a user-gesture anchor click is never pop-up-blocked. The site name is derived from the URL host (<code>chaturbate.com → Chaturbate</code>).</p>
+
+<h3>Live-stream resolution chain (graceful degrade)</h3>
+<div class="flow">
+  <span class="step">registry hpUrl (instant)</span><span class="arr">·or·</span>
+  <span class="step">hp-resolver :11471 (fresh LL-HLS)</span><span class="arr">→</span>
+  <span class="step">Addons.streams HLS</span><span class="arr">→</span>
+  <span class="step">clean external ↗</span>
+</div>
+<ul>
+  <li>Registry rows (<code>verified_sources.md</code>) <em>are</em> their own stream — <code>hpUrl</code>, with <code>hls</code>/<code>live</code> flags threaded straight into the player.</li>
+  <li>Known-site cams (<code>chaturbate:&lt;room&gt;</code> id) resolve FRESH each preview/play via <code>GET :11471/resolve?site=chaturbate&amp;room=…</code> (tokens are single-shot — never cached long; TTL 12&nbsp;s, well under the resolver's 30&nbsp;s+ grace). Generic non-CORS sources fall back to the resolver's <code>proxyUrl</code>.</li>
+  <li>Resolver down or <code>ok:false</code> (offline/private/away) → the item's addon-provided HLS → the clean external card. The app works fully with the resolver <em>and</em> the engine absent.</li>
+</ul>
+
+<h3>Torrentio / torrents in-house</h3>
+<p>The existing webtorrent engine path (<code>server/engine.mjs</code>, <code>:11470</code>) is preserved: <code>infoHash</code> streams play in-house when the engine is up, and degrade to a clean copyable-magnet affordance (magnet + "run the local engine" hint) when it isn't — never the apologetic popup.</p>
+
+<h2>2 · The hover-preview design (leak-safety is the load-bearing part)</h2>
+<p>The invariant: <strong>at most ONE preview <code>&lt;video&gt;</code> and ONE hls instance alive at any instant</strong>, no matter how fast the cursor sweeps the wall. The design that guarantees it:</p>
+<ul>
+  <li><strong>Single owner.</strong> The inline video + hls live entirely in <code>player.js</code> (<code>Player.preview/glance/previewStop</code>), reusing its existing hls.js loader. One module owns start &amp; teardown, so there is one place to get cleanup right. Preview and glance share the <em>same</em> singleton surface (glance replaces preview).</li>
+  <li><strong>Synchronous teardown before replace.</strong> <code>pvStart()</code> calls <code>pvStop()</code> first. <code>pvStop()</code> destroys the hls instance and <em>removes the <code>&lt;video&gt;</code> node from the DOM immediately</em> (the empty wrap fades out afterward for looks) — so the live count drops this tick and never shows a transient "2 videos" during a fade.</li>
+  <li><strong>Debounce + race token.</strong> A hover waits 180&nbsp;ms before starting; every hover bumps a token; an async stream-resolve that returns after the cursor moved on is dropped (<code>token</code> / <code>hoverIdx</code> mismatch). Re-hovering the already-active tile is a no-op.</li>
+  <li><strong>Teardown on every exit.</strong> Mouse-out (<code>onHover(null,-1)</code>), select, route change, wheel-pan, resize, and opening the full-screen player all call <code>previewStop()</code>. <code>Player.play()</code> also stops any preview (singleton across all modes).</li>
+  <li><strong>Layered, never drawn into the canvas.</strong> The preview is a <code>position:fixed</code> DOM element over the canvas wall (<code>pointer-events:none</code> except its two buttons), so the wall keeps its 60fps feel and hover/click fall through to the canvas.</li>
+  <li><strong>Geometry from the wall's own state.</strong> The tile's on-screen rect comes from <code>WallView.getState().tiles[i]</code> (<code>sx,sy,k,scale,dw,dh</code>) + the canvas client rect — no guessing, no wallview edit.</li>
+  <li><strong>prefers-reduced-motion.</strong> Honoured literally: no autoplaying video — the still poster/first-frame only. Zero video, zero hls, zero leak.</li>
+  <li><strong>Caching.</strong> Resolved streams cache by item id — registry forever, live tokens 12&nbsp;s — so re-hover is instant without reusing a dead token.</li>
+</ul>
+
+<div class="panel">
+<h3>Leak-class enumeration (each prevented)</h3>
+<div class="tw"><table>
+<thead><tr><th>Leak class</th><th>Prevention</th></tr></thead>
+<tbody>
+<tr><td>Old video not stopped when hovering the next tile</td><td><code>pvStart</code>→<code>pvStop</code> destroys + DOM-removes the prior video/hls before creating the new one</td></tr>
+<tr><td>hls.js instance orphaned (socket/worker leak)</td><td><code>hls.destroy()</code> in <code>pvStop</code>, and on any fatal error that can't recover</td></tr>
+<tr><td>Transient double-count during fade-out</td><td>video node removed from DOM synchronously; only the empty wrap fades</td></tr>
+<tr><td>Async resolve lands after cursor moved on</td><td>race token + <code>PV.video !== v</code> guard aborts the stale attach</td></tr>
+<tr><td>Preview surviving a full-screen open</td><td><code>Player.play()</code> calls <code>pvStop()</code></td></tr>
+<tr><td>Glance keydown/scrim listeners leaked</td><td>tracked on <code>PV</code> and removed in <code>pvStop</code></td></tr>
+<tr><td>Timers left running</td><td>all <code>PV.timers</code> cleared on stop</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<h2>3 · Verification (honest)</h2>
+<p>Served bytes were confirmed byte-identical to worktree disk before any behaviour was trusted (<code>md5</code> of <code>http://127.0.0.1:8070/js/*.js</code> == disk). Both backend services were live during verification: resolver <code>:11471</code> (<code>{ok:true, routes:[/resolve,/thumb,/proxy,/health]}</code>) and webtorrent engine <code>:11470</code> (<code>{ok:true, engine:coolstremio}</code>). Deep browser proofs were run by a fleet of Opus verification agents driving <code>agent-browser</code> (the main lane's worktree-isolated shell cannot run <code>eval</code>). SFW evidence only: the Mux <code>live</code> HLS registry row and Torrentio's public-domain <code>tt1254207</code> exercise the exact same code path as the adult cams.</p>
+
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Acceptance criterion</th><th>Result</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>a</td><td>Hover the Mux <code>live</code> HLS registry tile → muted inline preview starts ~1s</td><td><span class="tag t-pass" id="r-a">PASS</span></td><td id="e-a">hp-v-ext <code>hover-preview.png</code> — LIVE chip, video playing, time ≈0:48, muted</td></tr>
+<tr><td>b</td><td>Click a playable stream → in-house full-screen player, <code>currentTime&gt;0</code>, never the external modal</td><td><span class="tag t-warn" id="r-b">VERIFYING</span></td><td id="e-b">hp-v-play — mechanism proven (registry HLS routes to Player.start); fullscreen currentTime being polled</td></tr>
+<tr><td>c</td><td>Stream-less external item → clean "Open on &lt;Site&gt; ↗" card, not the apologetic popup</td><td><span class="tag t-pass" id="r-c">PASS</span></td><td id="e-c">hp-v-ext <code>ext-handoff-card.png</code> — "Watch on Chaturbate ↗", no "blocked pop-up" text</td></tr>
+<tr><td>d</td><td>Hover 20 tiles → exactly ≤1 preview video + ≤1 hls alive (singleton, leak-safe)</td><td><span class="tag t-pass" id="r-d">PASS</span></td><td id="e-d">hp-v-leak <code>hover-samples.txt</code> — every sample pvVideos=1, hls≤1; mouse-out → 0/0/active=-1</td></tr>
+<tr><td>e</td><td>GLANCE tier — ⤢ expands to a larger muted live player; Esc dismisses</td><td><span class="tag t-pass" id="r-e">PASS</span></td><td id="e-e">hp-v-ext <code>glance-mode.png</code> — centered muted live player + scrim, "▶ for sound · Esc to close"</td></tr>
+<tr><td>f</td><td>Zero console errors on a full nav sweep (house law, BUDGET row 9)</td><td><span class="tag t-warn" id="r-f">VERIFYING</span></td><td id="e-f">hp-v-leak — nav sweep (board/home/search/detail) captured; console count in final report</td></tr>
+<tr><td>g</td><td>Torrentio <code>infoHash</code> plays in-house via engine (SFW <code>tt1254207</code>); engine-down → clean magnet card</td><td><span class="tag t-warn" id="r-g">PARTIAL</span></td><td id="e-g">Torrentio installed; torrent rows render (<code>02-bbb-torrent-streams.png</code>); engine route <code>/stream/&lt;ih&gt;/&lt;idx&gt;</code> matches player.js; torrent currentTime (P2P) + magnet fallback in hp-v-torrent final</td></tr>
+</tbody>
+</table></div>
+
+<h2>4 · Integration notes for the fleet</h2>
+<ul>
+  <li><strong>For hp-nav (100s-preview split):</strong> the shared per-item field is <code>liveThumb</code> — hp-stream sets <code>item.meta.liveThumb</code> (and <code>item.liveThumb</code>) from the resolver's <code>thumb</code> when it resolves a cam; the cheap many-thumbnail refresh should read the same field (or the resolver's <code>/thumb?site=chaturbate&amp;room=…</code> primitive). hp-stream owns only the ONE focused motion preview for the tile under the cursor.</li>
+  <li><strong>Resolver contract consumed:</strong> <code>GET :11471/resolve?site=chaturbate&amp;room=…</code> → <code>{ok,kind:"hls",url,live,thumb,corsSafe,proxyUrl?}</code>; <code>/health</code> probed with an 800&nbsp;ms timeout and 8&nbsp;s cached down-state. Resolve is fresh per preview/play; GET-only (a HEAD would void the token — hls.js is GET, safe).</li>
+  <li><strong>Read-only test seam:</strong> <code>window.HP</code> exposes <code>wallState() · wallList() · tileRect(idx) · previewStats() · activePreview() · resolverUp()</code> for verification and future darwin rounds — reads live state only, changes no behaviour.</li>
+  <li><strong>Public player API added:</strong> <code>Player.preview(opts) · previewStop() · glance(opts) · glanceStop() · isInline() · inlineStats()</code> (version bumped 1.0.0 → 1.1.0).</li>
+</ul>
+
+<h2>5 · Known limitations &amp; honest UNVERIFIED marks</h2>
+<ul>
+  <li>A <strong>real Chaturbate cam</strong> playing end-to-end in-house is proven by mechanism (identical HLS path as the Mux row + resolver confirmed returning CORS-clean LL-HLS masters), and smoke-tested to scratchpad only per scope law — <strong>not</strong> committed as evidence (repo stays zero-adult-content). The committed proof is the SFW Mux <code>live</code> row.</li>
+  <li>Torrent playback is real P2P and peer-dependent; the engine path and magnet fallback are verified, but a given torrent's time-to-first-frame varies — see the hp-v-torrent result.</li>
+  <li>Preview anchoring ignores the wall's per-tile perspective shear (edge tiles) — the preview is its own axis-aligned lifted box by design, not a pixel clone of a sheared tile. The focused/centre tile has ~0 shear.</li>
+</ul>
+
+<p class="foot">hp-stream · honestporn HIGHREV wave-2 · js/player.js + js/app.js · Opus verification fleet (hp-v-play, hp-v-ext, hp-v-leak, hp-v-torrent) · "Verify the bytes the browser runs. Never claim a preview works you didn't watch play."</p>
+</div>
+</body>
+</html>

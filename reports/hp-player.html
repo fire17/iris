@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-player — Lane Report</title>
+<style>
+  :root{
+    --bg:#fbfafc; --panel:#ffffff; --ink:#16141a; --muted:#615c6b;
+    --line:#e6e2ec; --accent:#f5387b; --accent-soft:#fde7ef;
+    --pass:#0f7b45; --pass-bg:#e4f6ec; --fail:#b3271e; --fail-bg:#fdeceb;
+    --warn:#8a5a00; --warn-bg:#fdf3dd; --code:#f4f2f7;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d0c10; --panel:#151319; --ink:#f2eff6; --muted:#a49dae;
+      --line:#2a2632; --accent:#ff5c93; --accent-soft:#2c1420;
+      --pass:#5fd99a; --pass-bg:#11291d; --fail:#ff8a80; --fail-bg:#2c1512;
+      --warn:#ffd479; --warn-bg:#2c2210; --code:#1c1a22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d0c10; --panel:#151319; --ink:#f2eff6; --muted:#a49dae;
+    --line:#2a2632; --accent:#ff5c93; --accent-soft:#2c1420;
+    --pass:#5fd99a; --pass-bg:#11291d; --fail:#ff8a80; --fail-bg:#2c1512;
+    --warn:#ffd479; --warn-bg:#2c2210; --code:#1c1a22;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:0 20px 80px}
+  .wrap{max-width:960px;margin:0 auto}
+  header{padding:48px 0 28px;border-bottom:3px solid var(--accent);margin-bottom:36px}
+  .kicker{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px}
+  h1{margin:0 0 10px;font-size:2.5rem;line-height:1.12;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:1.05rem;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font:500 12.5px/1 var(--mono);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:7px 12px;color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  h2{margin:42px 0 14px;font-size:1.4rem;letter-spacing:-.01em;
+    padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{margin:26px 0 8px;font-size:1.08rem}
+  p{margin:0 0 14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:18px 0}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font:600 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;font:600 11.5px/1 var(--mono);padding:5px 9px;border-radius:6px;white-space:nowrap}
+  .t-pass{background:var(--pass-bg);color:var(--pass)}
+  .t-fail{background:var(--fail-bg);color:var(--fail)}
+  .t-warn{background:var(--warn-bg);color:var(--warn)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--code);
+    padding:2px 5px;border-radius:4px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.55;margin:14px 0}
+  pre code{background:none;padding:0}
+  .call{border-left:4px solid var(--accent);background:var(--accent-soft);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0}
+  .call.bad{border-left-color:var(--fail);background:var(--fail-bg)}
+  .call.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+  .call p:last-child{margin-bottom:0}
+  ul,ol{margin:0 0 14px;padding-left:22px}
+  li{margin-bottom:7px}
+  .foot{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">honestporn · HIGHREV fleet · lane report</div>
+  <h1>hp-player</h1>
+  <p class="sub">Click-to-play on registry sources — diagnosis, fixes, and an honest account of what is verified and what is not.</p>
+  <div class="meta">
+    <span class="chip">lane <b>hp-player</b></span>
+    <span class="chip">date <b>2026-08-21</b></span>
+    <span class="chip">owned path <b>js/app.js</b></span>
+    <span class="chip">branch <b>worktree-agent-aa7ac5e16e1a592a6</b></span>
+    <span class="chip">commit <b>5d2fcf4</b></span>
+    <span class="chip">server <b>localhost:8061</b></span>
+  </div>
+</header>
+
+<h2>The headline</h2>
+
+<div class="call">
+  <p><b>Click-to-play works, and it was never broken.</b> The defect handed to this lane — "canvas click on a flown-to registry tile did NOT open the player overlay" — is a <b>verification-harness artifact</b>, not an application bug. A real mouse click on a registry tile opens the player and starts playback. Two <i>genuine</i> defects surfaced during the investigation, and both live outside this lane's owned file; both were escalated rather than patched.</p>
+</div>
+
+<h3>Why the original verification failed</h3>
+<p>The suggested drive sequence was <code>App.state().wall.focusIndex(0)</code> to fly to a tile, then click it. But <code>focusIndex(n)</code> <i>selects</i> the tile as part of flying to it, and the wall treats a click on an already-selected tile as a <b>deselect</b>, not a select. So the click toggled the selection off and flew the camera home instead of firing <code>onSelect</code>. Measured directly:</p>
+<pre><code>focusIndex(4)  -> selected: 4,    cam {x:200, y:-660, zoom:1.346}
+real click     -> selected: null, cam {x:0, y:0, zoom:1}
+                  onSelect fired: 0    player opened: false</code></pre>
+<p>A second, compounding artifact wasted time early on and is worth recording: <b>reading the DOM in the same synchronous tick as the click reports a false negative.</b> The player overlay mounts asynchronously, so <code>document.querySelector('.plr-root')</code> immediately after a select returns <code>null</code> even when the player opens correctly milliseconds later. Any future verification of this app must poll or use a <code>MutationObserver</code>, never a same-tick check.</p>
+
+<h3>Proof that the path is sound</h3>
+<p>With nothing pre-selected and a real synthetic mouse click on a visible registry tile, the full chain fires end to end: wall click → <code>onSelect</code> → <code>onWallSelect</code> → <code>it.meta.hpUrl</code> detected → <code>playRegistry</code> → <code>window.Player.play</code> → overlay open with the right title and a live video element.</p>
+<pre><code>click (640,317) on registry tile "Mux HLS test stream"
+  -> onSelect fired: 1
+  -> Player.isOpen(): true      .plr-root.plr-in present: true
+  -> title: "Mux HLS test stream"
+  -> currentTime 6.29s, readyState 4, duration 634.6s, 90s buffered</code></pre>
+
+<h2>Budget rows — honest status</h2>
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Budget</th><th>Threshold</th><th>Observed</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>click → player overlay visible</td><td>≤ 150 ms</td><td><b>410 ms</b> (MP4 tile), <b>388 ms</b> (HLS tile), measured click-to-<code>.plr-in</code> in-page</td><td><span class="tag t-fail">FAIL</span></td></tr>
+<tr><td>2</td><td>click → <code>currentTime &gt; 0</code></td><td>≤ 2.5 s</td><td>MP4 rows never start: <code>networkState 3</code>, <code>error.code 4</code></td><td><span class="tag t-fail">FAIL</span></td></tr>
+<tr><td>5</td><td>HLS source plays, currentTime advances</td><td>plays</td><td>Mux HLS: <code>currentTime 6.29s</code>, <code>readyState 4</code>, 90 s buffered, no error</td><td><span class="tag t-pass">PASS</span></td></tr>
+<tr><td>9</td><td>zero console errors, any view</td><td>0</td><td><code>agent-browser errors</code> and <code>console</code> both empty after home + search + player + continue-watching sweep</td><td><span class="tag t-pass">PASS</span></td></tr>
+<tr><td>10</td><td>registry items appear in search results</td><td>title substring hits</td><td>"sintel" → 19 results, <code>hp:1tawx0e</code> + <code>hp:1vmickj</code> first; "mux" → 20 results, <code>hp:6n6hxw</code> first</td><td><span class="tag t-pass">PASS</span></td></tr>
+<tr><td>—</td><td>registry item lands in continue-watching</td><td>saves + replays</td><td>saved as <code>hp:6n6hxw</code> @ 15.1 s / 634.6 s; row carries <code>hpUrl</code>; replays through the player</td><td><span class="tag t-pass">PASS</span></td></tr>
+<tr><td>—</td><td>continue-watching restores <i>position</i></td><td>resume at saved offset</td><td>reopened and played, but from <b>0</b>, not 15.1 s</td><td><span class="tag t-fail">FAIL</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Defect 1 — <code>crossorigin</code> blocks every non-CORS source</h2>
+<div class="call bad">
+  <p><b>Not my file. Escalated and routed to lane hp-motion (owner of <code>js/player.js</code>). Deliberately NOT shimmed here</b> — the orchestrator and I agreed that two lanes patching one symptom in two files is how a wrong guess becomes load-bearing.</p>
+</div>
+<p><code>js/player.js</code> hard-sets <code>crossorigin="anonymous"</code> on the <code>&lt;video&gt;</code> element it creates. That forces a CORS-mode media fetch. Any source whose host omits <code>Access-Control-Allow-Origin</code> is then refused by the browser and never plays.</p>
+<pre><code>&lt;video playsinline webkit-playsinline preload="metadata"
+       crossorigin="anonymous"
+       src="https://test-videos.co.uk/.../Sintel_720_10s_5MB.mp4"&gt;
+
+networkState 3 (NETWORK_NO_SOURCE) · error.code 4 (MEDIA_ERR_SRC_NOT_SUPPORTED)
+readyState 0 · currentTime 0 · duration null</code></pre>
+<p>Every registry host was probed directly. All are <b>alive</b> — this is emphatically <i>not</i> ORACLE §5 stream-rot, and swapping URLs would be the wrong fix:</p>
+<pre><code>206 video/mp4            no-cors-header   test-videos.co.uk .../Big_Buck_Bunny_720_10s_5MB.mp4
+206 video/mp4            no-cors-header   test-videos.co.uk .../Sintel_720_10s_5MB.mp4
+206 video/mp4            no-cors-header   test-videos.co.uk .../Jellyfish_720_10s_5MB.mp4
+206 video/mp4            no-cors-header   media.w3.org/2010/05/sintel/trailer.mp4
+206 audio/mpegurl        ACAO: *          test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+206 application/x-mpegURL no-cors-header   devstreaming-cdn.apple.com/.../master.m3u8</code></pre>
+<p>Corroborating signal: a page-context <code>fetch()</code> of the same MP4 returns "Failed to fetch" while <code>curl</code> returns 206 — the signature of a CORS rejection, not a dead host. Codec support was ruled out separately (<code>canPlayType</code> for H.264 returns <code>"probably"</code>).</p>
+<p><b>Why this outlives the demo data.</b> ORACLE §4 already states the rule correctly — "MP4 <code>&lt;video src&gt;</code> does NOT need CORS — only HLS does" — but the player currently forces CORS mode on MP4 anyway. So <i>any</i> real curated source the founder later adds from a host that omits ACAO will silently fail. The fix is to scope <code>crossorigin</code> to the hls.js path or make it opt-in through the <code>Player.play</code> opts, not to remove it blindly: subtitle fetching or canvas thumbnail capture may depend on it, and that audit belongs to the file's owner.</p>
+
+<h2>Defect 2 — registry lane rows render off-screen at the wall's home camera</h2>
+<div class="call warn">
+  <p><b>Not my file (wall layout lives in <code>js/wallview.js</code>). Reported, not patched.</b></p>
+</div>
+<p>On <code>#home</code> with the camera at its home position <code>{x:0, y:0, zoom:1}</code>, the six registry tiles are laid out <i>above</i> the viewport and are not visible:</p>
+<pre><code>tiles[0] = { i:0, sx:640, sy:-241, vis:false }
+first visible indices = [6, 7, 8, 9, 10, 46, ...]   // all addon items</code></pre>
+<p>Mouse-wheel panning did not move the camera either (<code>panLockedX</code> appears in wall state), so at present a user landing on home cannot reach the registry rows by scrolling. This matters more than a layout nit: <code>buildHomeGroups()</code> deliberately puts the registry first because, in the project's own words, "the registry IS the product" — and right now the product's headline rows are the ones you cannot see. Worth a decision from whoever owns the wall layout.</p>
+
+<h2>What this lane built</h2>
+<p>All changes are confined to <code>js/app.js</code>. Nothing else was touched.</p>
+
+<h3>1 · Registry sources in search (budget row 10)</h3>
+<p>Added <code>registryMatches(q)</code> — a plain case-insensitive substring match over each registry row's title, display name, and notes. The registry is a handful of curated rows, not a corpus, so anything cleverer would only add surprise.</p>
+<p>The merge itself was placed in <code>paintResults()</code> rather than <code>runSearch()</code>, for two reasons worth recording: <code>paintResults</code> is the single choke point for all three search paths (exact cache hit, stale-prefix preview, and the network reply), so registry rows appear on every one of them; and because the merge runs at paint time it always reflects the <i>current</i> registry, even when the addon half of the result set came from cache. Registry hits are placed ahead of addon hits, with a defensive de-dupe by id (registry ids are <code>hp:</code>-prefixed and cannot collide today).</p>
+<p><b>A second bug was found and fixed while verifying this.</b> The first attempt still painted zero registry results, because the cold search path painted an empty wall and waited on the network — if no addon ever answered, <code>paintResults</code> was never called and registry hits never appeared at all. That path now paints the local registry matches immediately, and deliberately keeps the loading stage when nothing in the registry matches, so an empty registry never masquerades as "no results" while addons are still in flight.</p>
+
+<h3>2 · Registry items in continue-watching</h3>
+<p>A registry source has no addon behind it, so the <code>#detail</code> route dead-ends on it. The Continue Watching group now hands back the live <code>Registry</code> meta when a saved id resolves to a registry row, so the item carries <code>hpUrl</code> and <code>onWallSelect</code> replays it through <code>playRegistry</code>. Records whose source has since left the registry still render from the saved record rather than silently vanishing from the user's history.</p>
+<pre><code>Continue Watching item after playback:
+  { id:"hp:6n6hxw", name:"🧪 Mux HLS test stream", hasHpUrl:true }
+  wall item meta carries hpUrl: true</code></pre>
+
+<h2>Verification status — honest</h2>
+<div class="tw">
+<table>
+<thead><tr><th>Claim</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Registry rows appear in search, registry-first</td><td><span class="tag t-pass">LIVE-VERIFIED</span> in the running app, two distinct queries</td></tr>
+<tr><td>Real mouse click on a registry tile opens the player</td><td><span class="tag t-pass">LIVE-VERIFIED</span> with a synthetic CDP mouse down/up, not a programmatic call</td></tr>
+<tr><td>HLS registry source plays and advances</td><td><span class="tag t-pass">LIVE-VERIFIED</span> — Mux row, currentTime 6.29 s, readyState 4</td></tr>
+<tr><td>Registry playback writes continue-watching under the registry id</td><td><span class="tag t-pass">LIVE-VERIFIED</span> — <code>hp:6n6hxw</code> @ 15.1 s in localStorage <code>cw</code></td></tr>
+<tr><td>Continue-watching item replays through the player</td><td><span class="tag t-pass">LIVE-VERIFIED</span> — reopened and played</td></tr>
+<tr><td>Continue-watching restores the saved <i>position</i></td><td><span class="tag t-fail">VERIFIED BROKEN</span> — resumed at 0, not 15.1 s; cause is in <code>js/player.js</code>, unowned by this lane and <b>not yet diagnosed</b></td></tr>
+<tr><td>Zero console errors introduced</td><td><span class="tag t-pass">LIVE-VERIFIED</span> — empty after the full sweep</td></tr>
+<tr><td>MP4 registry rows play</td><td><span class="tag t-fail">VERIFIED BROKEN</span> — blocked by defect 1, awaiting hp-motion</td></tr>
+<tr><td>Budget row 1 (≤150 ms) after the player.js fix</td><td><span class="tag t-warn">NOT YET LIVE-VERIFIED</span> — 410/388 ms measured today; re-measure after the fix lands</td></tr>
+<tr><td>Apple HLS registry row</td><td><span class="tag t-warn">NOT LIVE-TESTED</span> — host sends no ACAO, so it is predicted to fail; prediction not confirmed by a click</td></tr>
+<tr><td>Registry search behaviour under a <i>live</i> edit to verified_sources.md</td><td><span class="tag t-warn">NOT TESTED</span> — the merge reads the registry at paint time, so it should follow, but this was not exercised</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="call warn">
+  <p><b>On budget row 1 (410 ms vs a 150 ms budget).</b> The latency is not spent in <code>playRegistry</code> or in the player's mount. The wall defers its <code>onSelect</code> callback until its fly-to animation completes, so the overlay cannot appear before the animation ends. Meeting a 150 ms budget therefore requires a change in <code>js/wallview.js</code> (fire select on commit rather than on animation end, or shorten the fly-to) — outside this lane's owned path. Reported, not attempted.</p>
+</div>
+
+<h2>Fleet: workflows run and models verified</h2>
+<p>No <code>Workflow</code> tool exists in this environment — <code>ToolSearch</code> surfaces only <code>EnterWorktree</code> — so the density law was met through concurrent Agent-tool spawns instead, every one carrying an explicit <code>model: 'opus'</code>. The <code>workflow-model-guard</code> skill was loaded before any spawn and its HIGHREV banner printed. No Fable, Opus 4.8, Sonnet, or Haiku anywhere in this lane.</p>
+<div class="tw">
+<table>
+<thead><tr><th>Agent</th><th>Model declared</th><th>Effort</th><th>Assignment</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td><code>wall-click-forensics</code></td><td><code>opus</code></td><td>xhigh</td><td>Map wallview.js pointer→select pipeline, guards, fly-to flags, hit-test</td><td>Superseded — root cause was established faster by direct live instrumentation; report not consumed</td></tr>
+<tr><td><code>app-surface-map</code></td><td><code>opus</code></td><td>high</td><td>Map app.js registry, search, continue-watching surfaces</td><td>Superseded — the same ground was covered by targeted reads; report not consumed</td></tr>
+<tr><td><code>player-contract-map</code></td><td><code>opus</code></td><td>high</td><td>Map Player.play contract, progress/resume keys, Registry item shape</td><td>Superseded — contracts read directly off the live objects; report not consumed</td></tr>
+</tbody>
+</table>
+</div>
+<p><b>Stated plainly rather than dressed up:</b> the fan-out did not pay for itself here. Live instrumentation of the running app answered every question faster and with higher confidence than static reading could have, and the three agents were drained without their reports being used. The honest lesson for the fleet is that for a defect reproducible in a running app, a browser probe beats a code-reading swarm. Per the orchestrator's rapid-close order, they were drained and not refilled.</p>
+
+<h2>Lane discipline and escalations</h2>
+<ul>
+  <li><b>Owned path respected.</b> Only <code>js/app.js</code> was modified; <code>git status</code> shows a single modified file. Both defects found outside it were escalated, not patched.</li>
+  <li><b>Relayed the user's mid-session order.</b> fire17 asked twice that the main agent be told about a new source in <code>verified_sources.md</code>; it was sent as a direct message with the exact diff. The line is <code>stremio://chaturbate.stremio.homes/f/manifest.json</code> — a Stremio addon manifest, not a registry table row, requiring addon-layer work. The orchestrator confirmed it was already routed to lane hp-catalog and that the manifest host sends <code>access-control-allow-origin: *</code>.</li>
+  <li><b>Declined to shim.</b> Offered the orchestrator a lane-local workaround for the <code>crossorigin</code> bug and recommended against it; the orchestrator agreed and routed the real fix to hp-motion.</li>
+  <li><b>Scratchpad collision observed.</b> A shared <code>probe.sh</code> in the session scratchpad was rewritten mid-run by another lane to target its own browser session. The other lane's file was left untouched and this lane moved to uniquely-named scripts. Worth a fleet convention: lane-prefix every shared-scratchpad filename.</li>
+</ul>
+
+<h2>Handoffs</h2>
+<ol>
+  <li><b>hp-motion (<code>js/player.js</code>)</b> — scope <code>crossorigin</code> to the hls.js path or make it opt-in via <code>Player.play</code> opts. Audit first for subtitle/canvas dependencies before any blanket removal. This lane will re-verify budget rows 2 and 5 against the fix, including the Apple HLS row.</li>
+  <li><b>hp-motion (<code>js/player.js</code>)</b> — continue-watching resume does not restore the saved offset. Progress is written correctly (<code>hp:6n6hxw</code> @ 15.1 s), and the item replays, but starts at 0. Suspect the resume seek is applied on a <code>loadedmetadata</code> path that the hls.js blob source misses; this was <b>not</b> diagnosed, only observed.</li>
+  <li><b>Wall-layout owner (<code>js/wallview.js</code>)</b> — two items: registry lane rows render above the viewport at the home camera and are unreachable by wheel pan; and <code>onSelect</code> fires only after the fly-to animation, which is what puts budget row 1 at ~400 ms.</li>
+  <li><b>Whoever writes ORACLE §8</b> — two entries earn their place: <i>a same-tick DOM check after a click is a false negative, the overlay mounts asynchronously</i>; and <i>focusIndex() selects, so a following click deselects — never drive click-to-play through focusIndex</i>. The orchestrator said it would log both.</li>
+  <li><b>Fleet convention</b> — lane-prefix shared-scratchpad filenames to prevent the collision described above.</li>
+</ol>
+
+<div class="foot">
+  <p>Lane hp-player · honestporn HIGHREV fleet · 2026-08-21 · worktree <code>agent-aa7ac5e16e1a592a6</code> · commit <code>5d2fcf4</code>.<br>
+  All figures in this report were observed in the running application at <code>http://localhost:8061</code>. Where something was not observed, it is labelled as such rather than assumed.</p>
+</div>
+
+</div>
+</body>
+</html>

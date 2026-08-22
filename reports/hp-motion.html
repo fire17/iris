@@ -1,0 +1,235 @@
+<title>hp-motion</title>
+<style>
+  :root{
+    --bg:#fbfaf9; --panel:#ffffff; --ink:#16151a; --muted:#5d5b66; --line:#e5e2dd;
+    --accent:#f5387b; --ai:#7a63f0; --ok:#1f9d6b; --demo:#c07d17; --warn:#b45309;
+    --code:#f3f1ee;
+  }
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0c0c0f; --panel:#141419; --ink:#eceaf2; --muted:#9b98a6; --line:#26262f;
+      --accent:#f5387b; --ai:#9d8bff; --ok:#3fd39a; --demo:#f0a83c; --warn:#f0a83c;
+      --code:#1b1b22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c0c0f; --panel:#141419; --ink:#eceaf2; --muted:#9b98a6; --line:#26262f;
+    --accent:#f5387b; --ai:#9d8bff; --ok:#3fd39a; --demo:#f0a83c; --warn:#f0a83c;
+    --code:#1b1b22;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink); margin:0;
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    padding:0 20px 96px;
+  }
+  .wrap{max-width:860px;margin:0 auto}
+  header{padding:56px 0 28px;border-bottom:1px solid var(--line)}
+  .kicker{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin:0 0 10px
+  }
+  h1{font-size:38px;line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:0;font-size:17px}
+  h2{
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin:52px 0 16px;font-weight:700
+  }
+  h3{font-size:17px;margin:26px 0 8px}
+  p{margin:0 0 14px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:0 0 14px
+  }
+  .verdict{border-left:3px solid var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
+  td code,p code,li code{background:var(--code);border-radius:4px;padding:1px 5px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pass{color:var(--ok);font-weight:700;white-space:nowrap}
+  .part{color:var(--warn);font-weight:700;white-space:nowrap}
+  .no{color:var(--muted);font-weight:700;white-space:nowrap}
+  ul{margin:0 0 14px;padding-left:22px}
+  li{margin:0 0 7px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:var(--panel);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:600
+  }
+  .dot{width:9px;height:9px;border-radius:99px;display:inline-block}
+  .d-ai{background:var(--ai)} .d-ok{background:var(--ok)} .d-demo{background:var(--demo)}
+  .d-live{background:var(--accent)}
+  .honest{border-left:3px solid var(--warn)}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+  @media (max-width:640px){h1{font-size:29px}body{padding:0 15px 64px}}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="kicker">honestporn · HIGHREV fleet · lane report</p>
+  <h1>hp-motion</h1>
+  <p class="sub">Canvas tile badges and player chrome — provenance rendered inside the wall engine, at 60fps, with the pink identity carried all the way through.</p>
+</header>
+
+<h2>Verdict</h2>
+<div class="card verdict">
+  <p><strong>Both owned files shipped and committed.</strong> Registry tiles now carry lane provenance drawn inside the canvas — crisp at every zoom, DPR-aware, with the dirty-flag idle-zero discipline intact.</p>
+  <p><strong>Three routed defects came in mid-lane and all three are fixed and verified live.</strong> Each turned out to be a one-line assumption with a large blast radius: the player forced CORS on every media fetch (most registry sources appeared dead); the wall never framed its content and its rows moved when other rows arrived (the registry — the product — sat off-camera on home); and resume was gated behind a threshold short sources can never satisfy.</p>
+  <p style="margin:0"><strong>Not verified:</strong> the LIVE chip, because no row in <code>verified_sources.md</code> carries the <code>live</code> marker. Code is complete and reachable; nobody has watched it pulse. Said plainly rather than papered over.</p>
+</div>
+
+<h2>What the badges look like</h2>
+<div class="chips">
+  <span class="chip"><span class="dot d-ai"></span>AI — sparkle pair</span>
+  <span class="chip"><span class="dot d-ok"></span>VERIFIED — shield with knocked-out check</span>
+  <span class="chip"><span class="dot d-demo"></span>DEMO — flask</span>
+  <span class="chip"><span class="dot d-live"></span>LIVE — pulsing dot (pink)</span>
+  <span class="chip">HLS — three-step bitrate ladder</span>
+</div>
+<p>Designed vector glyphs, not system emoji. Emoji go muddy below 14&nbsp;px on a canvas and change shape per platform; a provenance mark has to be the same mark everywhere it appears, which is the entire point of a trust layer.</p>
+
+<h2>Built</h2>
+
+<h3>js/wallview.js — canvas lane badges</h3>
+<ul>
+  <li><code>badgeOf(item)</code> reads lane/hls/live off an item with <strong>no app.js change</strong>: flat registry fields, a nested <code>{meta:{…}}</code> shape, or the emoji prefix on the title all resolve. Registry data is never mutated.</li>
+  <li>Chips draw in <strong>screen space</strong>, anchored to the tile's projected top-left corner, so they are never scaled or sheared — identical legibility at zoom 0.35 and at zoom 400.</li>
+  <li>Each <code>(lane, integer height, dpr, labelled)</code> chip is rasterised <strong>once</strong> into a small offscreen canvas and blitted 1:1 device-pixel. Crisp at any DPR, and the render loop does zero text shaping. Bounded LRU of 96, shared across WallView instances.</li>
+  <li>Collision ladder as a tile shrinks: labels drop first, then the HLS glyph. The lane chip and the LIVE chip are the claims themselves and never yield. Below ~7&nbsp;px of chip height the layer fades out rather than becoming lint.</li>
+  <li>Lane-coloured tile edge drawn in <strong>tile space</strong> so it rides the shear with the poster it belongs to; widths divided by the tile's screen scale so the edge stays a constant number of screen pixels at every zoom.</li>
+  <li>Registry lane row headers wear the lane ink and a colour dot, so a row and the chips on its tiles read as one statement.</li>
+  <li>The selection caption strips a lane emoji prefix <strong>for display only</strong> — it should not repeat what the chip already says, and the item's own strings are never rewritten.</li>
+  <li><code>getState().badges</code> exposes <code>{badged, withLane, live, hls, pulsing}</code> and every tile carries its badge, so budget row 6 is checkable without a screenshot.</li>
+</ul>
+
+<h3>js/player.js — P0 fix and chrome</h3>
+<ul>
+  <li><strong>P0:</strong> <code>build()</code> set <code>video.crossOrigin = 'anonymous'</code> unconditionally, forcing a CORS-mode media fetch, so every host without <code>Access-Control-Allow-Origin</code> died with <code>MEDIA_ERR_SRC_NOT_SUPPORTED</code>. Replaced with <code>applyCORS(v, want)</code>, called before <code>src</code> is assigned and opt-in only via <code>Player.play(opts.crossOrigin)</code>.</li>
+  <li>Seek bar with buffered band, revealed knob, hover time tooltip; focusable <code>role="slider"</code> with a real focus ring; consistent button states; title-block hierarchy; volume in the same accent language.</li>
+  <li>Lane badge chips in the top chrome driven by <code>meta.lane</code>, matching the canvas wall's lane inks, plus HLS and LIVE indicators — rendered only when the data actually provides them.</li>
+  <li>Motion eased ease-out-quart / ease-out-quint at 120–320&nbsp;ms, with a <code>prefers-reduced-motion</code> block that collapses durations and stops the pulse.</li>
+</ul>
+
+<h3>Motion and the idle-zero contract</h3>
+<p>A pulsing LIVE chip is the only thing this feature adds that can keep the rAF loop alive. It is gated on a LIVE chip being <em>actually visible</em>, its dot is painted per frame over a cached chip body (one arc, never a re-rasterised chip), and when the wall is otherwise still the loop is capped at ~24&nbsp;fps — a 1.5&nbsp;s sine, so nobody can see the difference. <code>prefers-reduced-motion</code> kills it dead and restores idle-zero exactly. Everything else in the badge layer is static.</p>
+
+<h3>Pink identity completion</h3>
+<p>Routed from hp-trust's recon. <code>C_THUMB_B</code> <code>#0b72d6</code> → <code>#a81b52</code> (scrubber gradient), both <code>rgba(56,163,245,.85)</code> pill fills → a single <code>C_ACCENT_ON</code> token, and the player's <code>rgba(56,163,245,.22)</code> focus glow → pink. No blue survives from the CoolStremio lineage in either owned file.</p>
+
+<h2>Routed defects — the three one-liners</h2>
+
+<h3>P0 · The player forced CORS on every media fetch</h3>
+<p><code>build()</code> set <code>video.crossOrigin = 'anonymous'</code> unconditionally, which forces a CORS-mode media fetch, so every host without <code>Access-Control-Allow-Origin</code> died with <code>MEDIA_ERR_SRC_NOT_SUPPORTED</code> — four of six registry seed MP4s, all alive and all answering 206 to <code>curl</code>. It bought nothing on any path: a plain <code>&lt;video src&gt;</code> needs no CORS, and the hls.js/MSE path is fed a <code>blob:</code> URL so the element's attribute is irrelevant there. Audited before cutting — nothing in the file reads video pixels and no external <code>&lt;track&gt;</code> is fetched — then replaced with <code>applyCORS(v, want)</code>, applied before <code>src</code> and opt-in only.</p>
+<p><strong>Side effect worth more than the fix:</strong> this falsified ADOPTED row 7. The canvas click <em>always</em> opened the player; the overlay simply had nothing to show because the media never loaded. A lane was about to fix a click path that was never broken.</p>
+
+<h3>P0 · The registry sat off-camera on home</h3>
+<p>Two independent causes, which is why a camera nudge alone would have regressed within seconds.</p>
+<ul>
+  <li><strong>The camera never framed anything.</strong> <code>catalogRows</code> returns <code>camera:null</code>, so the camera stayed at its boot position <code>(0,0)</code> — which projects the <em>first</em> item to the centre of the screen, putting everything left of it and every row above the middle one out of frame. Layouts now return a <code>homeCamera</code>, applied only on an <strong>arrival</strong>: new content, or a layout the user just picked. A resize, row-count or order change is not an arrival and never yanks the camera. <code>setItems</code> compares the first tile's key, so the 2.5&nbsp;s registry repaint does not re-home the camera under a user who has panned away.</li>
+  <li><strong>Rows moved when other rows arrived.</strong> <code>layoutCatalogRows</code> centred the row stack on the origin, so a row's world position depended on how many rows came <em>after</em> it. Late-arriving Cinemeta catalogs slid every existing row upward and a stationary camera ended up looking at different content. Row 0 is now anchored at the world origin. That property is load-bearing precisely because the registry is watched live — rows really do arrive after the first paint.</li>
+</ul>
+<p>The same reasoning killed a "centre it if it happens to fit" branch in <code>homeCam</code>: whether content fits depends on how much has loaded at that instant, and a home view that lands somewhere different depending on network timing is not a home view. That timing dependence was why the first attempt still opened on a Cinemeta row.</p>
+<p>This also explains hp-quality's "whole wall renders black, chrome intact, no console error": with the camera parked where no content is, the wall correctly renders nothing. <strong>Honest limit:</strong> free pan into the void is the wall's deliberate doctrine — no clamp, no rubber-band — so a user can still pan to black on purpose. What is fixed is that it no longer happens at rest.</p>
+<p><strong>Accepted trade-off:</strong> framing the origin puts the first column at the viewport's left edge where <code>persAmt()</code> shear is strongest, so the leftmost tile is visibly skewed and its chip drops to glyph-only. That is the wall's designed edge behaviour plus the collision ladder working — and it is the price of showing the registry at rest instead of centring empty space.</p>
+
+<h3>Resume position was gated behind an unsatisfiable threshold</h3>
+<p>Continue-watching saved correctly but replay always started at 0. The save half was never the problem — <code>maybeResume()</code> refused to offer the position, behind <code>if (!(pos &gt; 30) …) return;</code>. A flat 30-second floor is a good heuristic for a feature film. For short sources it is unsatisfiable: a 10&nbsp;s clip can never hold a position above 30&nbsp;s, and even a 52&nbsp;s trailer stopped at 28&nbsp;s falls below it. The prompt never rendered while localStorage held the right number the whole time. The floor is now <code>Math.min(30, d * 0.05)</code> — still a flat 30&nbsp;s for anything ten minutes or longer, scaling down for short content; <code>save()</code>'s own 5&nbsp;s floor got the same treatment.</p>
+<p><strong>Boundary held:</strong> the root cause was in <code>player.js</code>, not in app.js's meta handoff — the key matched and the record was found, the gate rejected it. No cross-file workaround was needed or written.</p>
+
+<h3>Also, for hp-trust</h3>
+<p><code>getState().tiles</code> now carries <code>scale</code> — the tile's own layout scale, 0.34–1.15 across layouts — alongside <code>k</code>, so a DOM overlay anchored to a canvas tile can size itself without drifting.</p>
+
+<h2>Files</h2>
+<div class="scroll">
+<table>
+  <tr><th>Commit</th><th>File</th><th>What</th></tr>
+  <tr><td><code>d1b0cf7</code></td><td><code>js/wallview.js</code></td><td>Canvas lane badges, HLS/LIVE, pink accent completion (+440 / −11)</td></tr>
+  <tr><td><code>7663981</code></td><td><code>js/player.js</code></td><td>P0 crossorigin, lane/HLS/LIVE chips, pink chrome (+216 / −45)</td></tr>
+  <tr><td><code>2d4159f</code></td><td><code>js/player.js</code></td><td>Chip label element, scoped title-block span, duplicate subtitle</td></tr>
+  <tr><td><code>91cc661</code></td><td><code>js/wallview.js</code></td><td>Home-camera P0: arrival framing + row-origin anchoring, plus <code>scale</code></td></tr>
+  <tr><td><code>3ac2d4b</code></td><td><code>js/player.js</code></td><td>Resume threshold made proportional</td></tr>
+  <tr><td>—</td><td><code>.grand/reports/hp-motion.html</code></td><td>This report</td></tr>
+</table>
+</div>
+<p>Branch <code>worktree-agent-aa40506bd11e4612a</code>, off baseline <code>72335cc</code>, with <code>main</code> merged mid-lane (clean, no conflicts) so the later fixes were written against current code. Nothing outside the two owned paths was touched.</p>
+
+<h2>Verification — honest</h2>
+<p>Served the worktree at <code>http://localhost:8063</code>, drove it with <code>agent-browser</code> (session <code>hp-wall</code>). The wall is a canvas and is invisible to DOM snapshots, so every observation below is a screenshot I actually looked at.</p>
+<div class="scroll">
+<table>
+  <tr><th>Budget row</th><th>Status</th><th>What was observed</th></tr>
+  <tr>
+    <td>6 — every registry card carries its lane badge</td>
+    <td class="pass">PASS</td>
+    <td>All six registry tiles render their lane chip and lane edge: violet AI, green VERIFIED ×2, amber DEMO, plus two glyph-only chips (one carrying the HLS ladder). Screenshot at wall zoom 1 and at ~1.56×.</td>
+  </tr>
+  <tr>
+    <td>9 — zero console errors</td>
+    <td class="pass">PASS</td>
+    <td><code>agent-browser errors</code> empty and a console grep for error/uncaught returned 0 across load, layout switch, pan, zoom and playback.</td>
+  </tr>
+  <tr>
+    <td>11 — 60fps feel, no jank</td>
+    <td class="part">PASS by construction + interaction sweep</td>
+    <td>Drag-pan, wheel zoom, keyboard zoom, layout switch and tile select all stayed smooth in the sweep. The badge layer adds one <code>drawImage</code> per visible badged tile and zero text shaping. <strong>Not</strong> instrumented with a frame profiler — honest limit of this claim.</td>
+  </tr>
+  <tr>
+    <td>2 / 5 — playback (routed P0)</td>
+    <td class="pass">PASS</td>
+    <td>Sintel 10s (test-videos.co.uk, no ACAO) opened from a canvas tile click and played to <code>0:01 / 0:10</code> with the seek bar advancing.</td>
+  </tr>
+  <tr>
+    <td>Registry framed on home (routed P0)</td>
+    <td class="pass">PASS</td>
+    <td>Fresh reload opens on <em>● AI-Generated · no human performed</em> as the first row with its badged tile, <em>● Performer-Verified · consent · fair pay · pull-anytime</em> beneath it, both framed top-left. A wall→catalog layout round-trip re-frames correctly. Independently re-verified by the coordinator on a fresh load before merge.</td>
+  </tr>
+  <tr>
+    <td>Resume position (routed)</td>
+    <td class="pass">PASS</td>
+    <td>Played the Sintel Trailer row (52&nbsp;s) to ~0:28, closed with Escape, reopened the same tile: the resume card renders "You stopped at 0:28 of 0:52", and Resume seeks to 0:30 and plays on. Under the old gate that same 0:28 was silently discarded.</td>
+  </tr>
+  <tr>
+    <td>LIVE chip</td>
+    <td class="no">NOT VERIFIED</td>
+    <td>No row in <code>verified_sources.md</code> carries <code>live</code> in its Notes column, so the pulsing chip has no data to render against. To verify: add the word <code>live</code> to any row's Notes and watch the tile's top-right corner.</td>
+  </tr>
+  <tr>
+    <td>Reduced-motion path</td>
+    <td class="no">NOT VERIFIED</td>
+    <td>Coded against the module-level <code>REDUCED</code> flag (static chip, no pulse, idle-zero restored) but not exercised with <code>agent-browser set media reduced-motion</code>.</td>
+  </tr>
+</table>
+</div>
+<div class="card honest">
+  <p style="margin:0"><strong>One methodology note, stated plainly.</strong> This lane's Bash tool refused every command containing the token <code>eval</code> (a worktree-isolation guard misfiring on browser automation, not on git). So the numeric assertion via <code>App.state().wall.getState().badges</code> was never run — badge coverage was confirmed by counting chips in screenshots instead. The <code>getState().badges</code> surface exists and is the cheaper check for whoever verifies next.</p>
+</div>
+
+<h2>Handoffs</h2>
+<ul>
+  <li><strong>hp-player:</strong> budget rows 2 and 5 and the resume defect are all cleared against <code>3ac2d4b</code>. ADOPTED row 7 ("canvas click did not open the player overlay") is <strong>falsified</strong> — the click path was always fine; the media fetch was the failure, so the overlay had nothing to show.</li>
+  <li><strong>hp-trust:</strong> <code>getState().tiles[i].scale</code> is live as of <code>91cc661</code> — trust-seals are unblocked. Lane inks used here are <code>ai-generated #8b7cff</code>, <code>performer-verified #2fd18b</code>, <code>demo #f0a83c</code>, live/accent <code>#f5387b</code>, on a <code>rgba(9,9,12,.74)</code> scrim. If your contrast pass moves an ink, the constants live in one <code>LANES</code> map at the top of <code>js/wallview.js</code>.</li>
+  <li><strong>Anyone adding a layout:</strong> a layout that wants to be framed on entry returns a <code>homeCamera</code>; one that does not simply omits it. The renderer still never learns a layout's name.</li>
+  <li><strong>Whoever adds a live source:</strong> the LIVE chip keys off the word <code>live</code> in a registry row's Notes. Adding one is the whole test.</li>
+  <li><strong>Future badge work:</strong> the chip atlas is keyed by <code>(lane, integer height, dpr, labelled)</code> with a 96-entry LRU. A fourth lane costs one entry in <code>LANES</code> and one glyph recipe — the renderer never learns its name, same extension-point discipline as the layout registry.</li>
+</ul>
+
+<h2>Fleet</h2>
+<p>Lane hp-motion ran as a tier-2 agent holding four tier-3 agents, every one spawned with an explicit <code>model: 'opus'</code> — no Fable, no Sonnet, no Haiku, no inheritance-by-omission. The Workflow tool was not present in this lane's toolset, so the fan-out ran through the Agent tool with the same density and model discipline.</p>
+<div class="scroll">
+<table>
+  <tr><th>Agent</th><th>Model</th><th>Job</th><th>Outcome</th></tr>
+  <tr><td><code>hp-motion-recon</code></td><td>opus (explicit)</td><td>Trace registry → wall item flow</td><td>Superseded — I read <code>registry.js</code> directly and had the item shape before it reported</td></tr>
+  <tr><td><code>hp-motion-browser</code></td><td>opus (explicit)</td><td>Stand up server, baseline shots</td><td>Server on 8063 confirmed live and used for all verification</td></tr>
+  <tr><td><code>hp-motion-player</code></td><td>opus (explicit)</td><td>player.js chrome polish</td><td>Chrome work landed (+195 lines); I applied the P0 crossorigin fix myself when it was still unapplied at close time</td></tr>
+  <tr><td><code>hp-motion-design</code></td><td>opus (explicit)</td><td>Badge visual design spec</td><td>Superseded — implementation was already complete and verified when the close order arrived</td></tr>
+</table>
+</div>
+<p><strong>Model-line honesty:</strong> this lane reports <code>claude-opus-5[1m]</code> from its own system prompt. The <code>identify</code> skill resolves the <em>parent</em> session (<code>honestporn-f3</code>, Fable 5) because an in-process Agent subagent has no OS-level session of its own — reported as observed rather than as the tool's answer. Effort was <strong>not</strong> raised to ultracode: the resolved sid is the parent's, so <code>effort-set</code> would have mutated the parent session. Ran at inherited xhigh.</p>
+
+<footer>
+  Lane hp-motion · honestporn HIGHREV fleet · 2026-08-21 · worktree <code>agent-aa40506bd11e4612a</code><br>
+  Every status above was observed in a browser, or is marked as not verified.
+</footer>
+</div>

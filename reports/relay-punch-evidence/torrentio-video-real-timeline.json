@@ -1,0 +1,24 @@
+{
+  "_provenance": "Observed LIVE in run 1 (2026-08-21 ~17:40). The exact YTS swarm is time-variable: a later re-capture attempt found 0 reachable classic peers (C never buffered), so these are the run-1 observed values, transcribed from the harness stdout. The bytes themselves were never committed (leech bounded, C destroyed, nothing re-seeded).",
+  "mode": "REAL_MAGNET (bounded transport proof, per explicit instruction)",
+  "infoHash": "a648d96d5b4a163f72edc3574a6370bc41d062d0",
+  "name": "Spider-Man: No Way Home 2021 720p WEBRip (YTS)",
+  "file": "Spider-Man.No.Way.Home.2021.720p.WEBRip.x264.AAC-[YTS.MX].mp4",
+  "torrentLengthBytes": 1427353597,
+  "maxdownBoundBytes": 260000000,
+  "canPlayBareInBrowser": false,
+  "C_from_real_swarm": { "classicPeers": 2, "downloadedBytes": 99532800, "bounded": true },
+  "kill_B": {
+    "downloadedAtCutBytes": 4915200,
+    "B_process": "SIGKILL -> NO_SUCH_PROCESS (DEAD)",
+    "downloaded_firstReadAfterBdeadBytes": 19251200,
+    "downloaded_endBytes": 97484800,
+    "gainedStrictlyAfterBdeadBytes": 78233600,
+    "A_C_wiresAfterKill": 1,
+    "videoTime": 0
+  },
+  "playbackNote": "videoTime stayed 0: a non-fragmented 1.43GB movie mp4 cannot be progressively played in-browser (MediaSource requires fragmented mp4; a Blob needs the whole file), and downloading 1.43GB violates the bounded-leech constraint. TRANSPORT persistence past B's death is fully proven (+78,233,600 B with B dead). Progressive <video> playback surviving B's death is proven on fragmentable media: BBB mp4 (torrentio-video-bbb-timeline.json, videoTime 0->1.53s) and the WebM clip (rtc-timeline.json, 0->4.28s).",
+  "transportPass": true,
+  "playbackAdvanced": false,
+  "PASS": true
+}

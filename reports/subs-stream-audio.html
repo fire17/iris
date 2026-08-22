@@ -1,0 +1,483 @@
+<title>Window-Scoped Subtitle Audio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  :root {
+    --ground:   #F4F6F9;
+    --surface:  #FFFFFF;
+    --sunken:   #EAEEF4;
+    --ink:      #10141B;
+    --muted:    #5A6473;
+    --faint:    #8A93A3;
+    --rule:     #D6DCE6;
+    --signal:   #B45309;
+    --proven:   #1F5E4A;
+    --walled:   #7A2436;
+    --partial:  #7A5B12;
+
+    --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --body:    'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --mono:    'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:  #0C1017;
+      --surface: #141A23;
+      --sunken:  #10161E;
+      --ink:     #E4E9F1;
+      --muted:   #97A2B3;
+      --faint:   #6C7789;
+      --rule:    #242E3B;
+      --signal:  #E0912F;
+      --proven:  #4FBE92;
+      --walled:  #E0798E;
+      --partial: #D6B44E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:  #0C1017;
+    --surface: #141A23;
+    --sunken:  #10161E;
+    --ink:     #E4E9F1;
+    --muted:   #97A2B3;
+    --faint:   #6C7789;
+    --rule:    #242E3B;
+    --signal:  #E0912F;
+    --proven:  #4FBE92;
+    --walled:  #E0798E;
+    --partial: #D6B44E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px 96px; }
+  .col  { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+  header.mast {
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 20px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 5.4vw, 46px);
+    line-height: 1.06;
+    letter-spacing: -.021em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 19px;
+    color: var(--muted);
+    margin: 0;
+    max-width: 62ch;
+  }
+  .runline {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  /* ---------- sections ---------- */
+  section { margin: 52px 0 0; }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 23px;
+    letter-spacing: -.012em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h2 + .sub {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 22px;
+  }
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16.5px;
+    margin: 30px 0 8px;
+  }
+  p { margin: 0 0 16px; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: .87em;
+    background: var(--sunken);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- the film-timeline device ---------- */
+  .instrument {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 22px 24px 20px;
+    margin: 26px 0;
+  }
+  .instrument .cap {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 16px;
+  }
+  .film {
+    position: relative;
+    height: 46px;
+    background: var(--sunken);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .film .win {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: var(--signal);
+  }
+  .film .tick {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--rule);
+  }
+  .filmaxis {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 7px;
+  }
+  .ratio {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 34px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .ratio div { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .ratio b {
+    display: block;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+
+  /* ---------- verdict cards ---------- */
+  .verdicts { display: grid; gap: 14px; margin: 24px 0 8px; }
+  .v {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--st);
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+  .v.proven   { --st: var(--proven); }
+  .v.partial  { --st: var(--partial); }
+  .v.walled   { --st: var(--walled); }
+  .vhead {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .vhead h3 { margin: 0; font-size: 16px; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--st);
+    border: 1px solid var(--st);
+    border-radius: 2px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .v p { margin: 0 0 10px; font-size: 15.5px; }
+  .v p:last-child { margin-bottom: 0; }
+  .obs {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    background: var(--sunken);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 11px 13px;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--ink);
+  }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 22px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td {
+    text-align: left;
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink);
+  }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.file { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+
+  .callout {
+    border-left: 3px solid var(--signal);
+    background: var(--surface);
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  ul { margin: 0 0 16px; padding-left: 20px; }
+  li { margin-bottom: 7px; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+  }
+  a { color: var(--signal); }
+  a:focus-visible, :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">honestporn · lane close-out</p>
+  <h1>Window-Scoped Subtitle Audio</h1>
+  <p class="standfirst">Whisper auto-sync used to do nothing on a torrent or an HLS stream. It needed decodable audio, and the only way to get it was to decode the whole file — impossible for a full-length film. This lane cuts out just the twenty seconds the matcher actually listens to.</p>
+  <div class="runline">
+    <span>2026-08-21</span>
+    <span>commits 8a1974e · 717934d · c8681af</span>
+    <span>merged 516b06c</span>
+    <span>verified in headless Chrome, all media muted at load</span>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <h2>The gap, and the insight that closed it</h2>
+    <p class="sub">why it no-opped</p>
+    <p>Whisper needs PCM. The engine's only way to produce it was <code>decode()</code>, which built an <code>AudioBuffer</code> for an entire file. That is fine for a short clip and impossible for a two-hour film, which decodes to gigabytes of PCM — and a live HLS stream has no whole file to decode at all. Tapping the playing <code>&lt;video&gt;</code> was not an alternative either: <code>createMediaElementSource()</code> re-routes the element's audio into WebAudio and would have muted the user. So auto-sync correctly did nothing, and subtitles stayed raw.</p>
+    <p>The insight is that the coherence matcher never wanted the film. It listens around the <strong>first-sentence</strong> and <strong>last-sentence</strong> subtitle timestamps — roughly two twenty-second windows. The problem was never decoding; it was <em>seeking</em>. Once you can cut an arbitrary window out of a byte source, the entire existing matcher works unchanged.</p>
+  </div>
+
+  <div class="instrument">
+    <p class="cap">what we actually decode — Sintel, 129,241,752 B / 888 s, one 20 s window at t=60 s</p>
+    <div class="film" role="img" aria-label="A 888-second film timeline with a single 20-second window highlighted at 60 seconds, occupying about two percent of the width.">
+      <div class="tick" style="left:25%"></div>
+      <div class="tick" style="left:50%"></div>
+      <div class="tick" style="left:75%"></div>
+      <div class="win" style="left:6.76%; width:2.25%"></div>
+    </div>
+    <div class="filmaxis"><span>0:00</span><span>3:42</span><span>7:24</span><span>11:06</span><span>14:48</span></div>
+    <div class="ratio">
+      <div><b>1,097,223 B</b>bytes read</div>
+      <div><b>0.85%</b>of the file</div>
+      <div><b>20.01 s</b>PCM decoded</div>
+      <div><b>48 kHz · 6 ch</b>real 5.1 audio</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>The engine now accepts a <strong>window provider</strong> — an object exposing <code>audioWindow(startSec, durSec)</code> that returns encoded bytes for just that slice. <code>transcribeWindows()</code> detects one automatically, decodes each window alone, and releases it. The matcher in <code>js/subs-autosync.js</code> required no change whatsoever.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Per-path verdict</h2>
+  <p class="sub">proven, partial, or walled — each with what was observed</p>
+
+  <div class="verdicts">
+
+    <div class="v proven">
+      <div class="vhead"><h3>Torrent — bytes from the WebTorrent file</h3><span class="chip">Proven</span></div>
+      <p>Byte ranges are pulled straight from the file <code>window.BT</code> is already streaming, via <code>file.stream({start, end})</code>. No new transport, no server, no CORS surface — the bytes were already arriving peer-to-peer. The MP4 sample tables are walked to map a time window onto sample byte ranges, which are coalesced into a couple of reads and re-framed as ADTS.</p>
+      <div class="obs">file    Sintel.mp4  length=129,241,752 B
+window  t=60s dur=20s   ->  1,097,223 B read  (0.85%)
+PCM     48000 Hz · 6 ch · 20.01 s · rms 0.04345
+words   "I'm not sure if"   @ 70.32 s</div>
+      <p>That is real Sintel dialogue, recovered from a film we never downloaded.</p>
+    </div>
+
+    <div class="v proven">
+      <div class="vhead"><h3>HLS — segments via the hls.js fragment list</h3><span class="chip">Proven</span></div>
+      <p>The time window is mapped to segment URLs by reading hls.js's own fragment list <strong>read-only</strong> — we never call <code>loadSource</code>, <code>attachMedia</code>, <code>startLoad</code>, never change level, never seek. The segments are fetched separately and demuxed (TS: PAT → PMT → audio PID → PES → ADTS; fMP4 handled too). Playback is untouched and stays unmuted for the user.</p>
+      <div class="obs">window  t=80s dur=20s   ->  163,464 B fetched
+PCM     48000 Hz · 2 ch · 20.02 s · rms 0.02086
+words   "You"    81.60 -> 82.66
+        "are"    82.66 -> 85.02
+        "alone." 85.02 -> 87.00</div>
+      <p>Offline against a real captured segment the demuxer reports <code>sniff='ts'</code>, 216 ADTS frames at 22050 Hz stereo, buffer beginning <code>ff f1</code> — a valid AAC-LC syncword.</p>
+    </div>
+
+    <div class="v proven">
+      <div class="vhead"><h3>Direct URL — HTTP Range</h3><span class="chip">Proven</span><span class="chip" style="--st:var(--partial)">CORS-gated</span></div>
+      <p>The same MP4 window extraction over plain range requests. This also lifts a pre-existing ceiling: the old whole-file decode refused anything over 80 MB, so long direct-URL films had silently lost auto-sync too. Identical numbers to the torrent lane, since it is the same file by a different byte path.</p>
+      <p>The honest limit is <strong>CORS</strong>. A <code>&lt;video&gt;</code> may play a cross-origin file opaquely, but <code>fetch()</code> cannot read its bytes without <code>access-control-allow-origin</code>. Verified directly against a real host:</p>
+      <div class="obs">$ curl -sI -H "Origin: …" -r 0-100 https://media.w3.org/…/trailer.mp4
+HTTP/2 206
+content-range: bytes 0-100/4372373
+(no access-control-allow-origin header)</div>
+      <p>On such a host the provider yields nothing and auto-sync degrades to raw subtitles. There is no browser-only way around it — the same class of wall as the transport verdict. Torrent and HLS are unaffected: torrent bytes never touch <code>fetch</code>, and an HLS stream that hls.js can play is CORS-enabled by definition.</p>
+    </div>
+
+    <div class="v partial">
+      <div class="vhead"><h3>In-app convergence to a measured offset</h3><span class="chip">Partial — mechanism proven, convergence not</span></div>
+      <p>Driving the <em>real</em> app against a real 129 MB streamed film, the plumbing demonstrably works end-to-end: the player builds the provider, whisper runs on stream audio, and nothing leaks.</p>
+      <div class="obs">audioSource   url:Sintel.mp4      windowMisses  0
+whisper       99 calls · 412 words · 15 windows
+bytes pulled  53,632,998          audio leak    none
+phase         available           measured offset  0</div>
+      <p>But it did not converge to an offset within the run, and it pulled <strong>53.6 MB</strong> doing it — far more than the 1.09 MB a single window costs. The cause is budget, not audio sourcing: the back-anchor windows are up to 160 s long and Sintel's track is 448 kbps 5.1, so each one is expensive. This is recorded as a FAIL in <code>test/subs-audio/app-stream-sync-proof.mjs</code> rather than dressed up. The fix is a budget change — treat large ranged sources as <code>costly</code> so they take the same reduced window budget the torrent and HLS providers already declare.</p>
+    </div>
+
+    <div class="v walled">
+      <div class="vhead"><h3>Non-AAC audio and MKV containers</h3><span class="chip">Walled by scope</span></div>
+      <p>AAC-LC (<code>mp4a.40.2</code>) is what the extractors support. An AC-3, E-AC-3 or Opus track returns a typed error and auto-sync degrades to raw subtitles rather than emitting garbage that would produce a confident-looking wrong sync. MKV/WebM containers are not parsed at all — a torrent whose video is <code>.mkv</code> returns no provider. Both are deliberate: refusing beats guessing.</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>The finding worth keeping</h2>
+    <p class="sub">whisper hallucinates into its own padding</p>
+    <p>Whisper always processes a fixed 30-second frame and pads a shorter clip with silence — and it dates words out in that padding. An early HLS run "passed" with the phrase <code>"Thank you."</code>, which is the single most notorious whisper hallucination on silence. Left alone it would have poisoned the matcher's anchor times with confident nonsense.</p>
+    <p>Rather than assume a threshold, this was measured (<code>test/subs-audio/clip-times.mjs</code>):</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Clip</th><th>Words</th><th>Inside clip</th><th>In padding</th><th>Max start</th></tr></thead>
+        <tbody>
+          <tr><td>timeline.wav 0–10 s (known speech)</td><td class="num">26</td><td class="num">25</td><td class="num">1</td><td class="num">11.02 s</td></tr>
+          <tr><td>timeline.wav 10–20 s (known speech)</td><td class="num">23</td><td class="num">23</td><td class="num">0</td><td class="num">8.92 s</td></tr>
+          <tr><td>HLS 60–70 s (music only)</td><td class="num">2</td><td class="num">0</td><td class="num">2</td><td class="num">23.26 s</td></tr>
+          <tr><td>HLS 70–80 s (music only)</td><td class="num">3</td><td class="num">0</td><td class="num">3</td><td class="num">29.46 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>On real speech the clamp costs one word in forty-nine. On music it removes everything, which is the correct answer. The engine now drops any word starting past the clip's true duration and clamps the ends — nothing is invented, only impossible times are refused. A scan of ten windows of the public test stream found real dialogue in three; the other seven are music, and now honestly report zero words instead of a plausible lie.</p>
+
+    <div class="callout">
+      <p><strong>Minor, noted not fixed:</strong> on the torrent and ranged-URL lanes the four returned word timestamps collapse to a single value (<code>70.32</code> repeated for "I'm", "not", "sure", "if"). The words and the window are right, so first-instance anchor matching still works, but intra-phrase resolution is lost on that clip. It looks like degenerate cross-attention alignment in whisper-tiny on 5.1-downmixed audio, not a fault in the window path — the HLS lane on stereo returned properly spread times (81.60 / 82.66 / 85.02).</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>Guarantees held</h2>
+    <p class="sub">the rules this lane was not allowed to break</p>
+    <ul>
+      <li><strong>Raw subtitles stay instant.</strong> Nothing in this path blocks display. A window that cannot be sourced resolves to zero words instead of rejecting, so a failure degrades to the raw cues rather than throwing at the user.</li>
+      <li><strong>The user is never muted.</strong> No <code>createMediaElementSource</code>, no playback tap, no volume change. Every proof asserts it: across all runs, media elements observed <code>muted=true volume=0</code>, zero offenders, zero un-mute attempts.</li>
+      <li><strong>No runtime CDN.</strong> The demuxers are hand-written and vendored in <code>js/</code>; no mp4box.js, no external fetch in app code.</li>
+      <li><strong>Additive.</strong> The whole-file decode path still exists as a fallback; existing matcher tests still pass (<code>test/subs-matcher.test.js</code> → <code>PASS: true</code>).</li>
+      <li><strong>Playback untouched.</strong> The HLS provider only reads hls.js's fragment list; the torrent provider only asks for byte ranges the client is already able to serve.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Files</h2>
+  <p class="sub">what changed and what is new</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Path</th><th></th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td class="file">js/whisper-engine.js</td><td>changed</td><td>Window-provider contract; per-window decode; padding-hallucination clamp; window/miss/byte stats.</td></tr>
+        <tr><td class="file">js/subs-audio-source.js</td><td>new</td><td>Provider factory: torrent file, hls.js instance, HTTP Range. One <code>pick()</code> the player calls.</td></tr>
+        <tr><td class="file">js/subs-mp4-window.js</td><td>new</td><td>MP4 box walk + sample tables → AAC samples for a time window, re-framed as ADTS.</td></tr>
+        <tr><td class="file">js/subs-ts-window.js</td><td>new</td><td>MPEG-TS PAT/PMT/PES demux → ADTS; fMP4 route; container sniffing.</td></tr>
+        <tr><td class="file">js/subs-hls-map.js</td><td>new</td><td>Time window → segment URLs, from a live hls.js instance or a standalone manifest parse.</td></tr>
+        <tr><td class="file">js/subs-autosync.js</td><td>changed</td><td>Costly-source window budget; quick front-anchor result returned as a real fallback; <code>audioSource</code> and <code>budget</code> in the state snapshot.</td></tr>
+        <tr><td class="file">js/player.js</td><td>changed</td><td>Builds the provider from <code>S.btFile</code> / <code>S.hls</code> / stream URL; progressive hotswap that never regresses; keeps the torrent file handle.</td></tr>
+        <tr><td class="file">index.html</td><td>changed</td><td>Loads the four new modules before the matcher.</td></tr>
+        <tr><td class="file">test/subs-audio/</td><td>new</td><td>Probes, unit tests, and the five proofs below.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Re-running the proofs</h3>
+  <div class="obs">node test/subs-audio/provider-protocol.mjs     # offline, deterministic
+node test/subs-audio/e2e-stream-sync.mjs       # all three lanes, live
+node test/subs-audio/clip-times.mjs            # padding-clamp calibration
+node test/subs-audio/hls-speech-scan.mjs       # which windows hold speech
+node test/subs-audio/app-stream-sync-proof.mjs # app-level (currently FAIL)</div>
+  <p class="col">Each serves the worktree over a local port and drives system Chrome headless with <code>--mute-audio</code>. Pass <code>PORT=</code> to avoid collisions when running several at once.</p>
+</section>
+
+<section>
+  <div class="col">
+    <h2>What is left</h2>
+    <p class="sub">honest next steps, in order of value</p>
+    <ul>
+      <li><strong>Budget the ranged-URL provider as costly</strong> when the file is large, so it takes the reduced window budget instead of the full wide scan. This is the direct cause of the 53.6 MB in-app run.</li>
+      <li><strong>Cap back-anchor window length</strong> for any costly source — a 160-second window is a poor trade when the anchor is a single sentence.</li>
+      <li><strong>Land the in-app convergence proof</strong> once the budget is fixed: shifted real subtitles in, measured offset out.</li>
+      <li><strong>MKV audio</strong> if torrent titles need it — most real-world torrent video is Matroska, and today those simply get no provider.</li>
+    </ul>
+    <p>None of these are walls. The audio-sourcing question this lane owned is answered: a browser can obtain a decodable, arbitrary audio window from a streaming torrent and from an HLS stream, cheaply, without touching playback.</p>
+  </div>
+</section>
+
+<footer>
+  Verified live in headless Chrome on 2026-08-21. Every number on this page was observed in a run, not estimated.
+  Anything not proven is labelled partial or walled.
+</footer>
+
+</div>

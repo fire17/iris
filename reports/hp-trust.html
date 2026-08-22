@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-trust — lane report</title>
+<style>
+:root{
+  --bg:#0d0d0f; --bg-1:#141417; --bg-2:#1b1b1f; --line:#26262c; --line-soft:#1e1e23;
+  --fg:#eceef1; --fg-1:#b9bec6; --fg-2:#7f858f;
+  --accent:#f5387b; --accent-deep:#c21860;
+  --lane-v-ink:#ff5c93; --lane-v-plate:#2a0d19; --lane-v-edge:rgba(255,92,147,.5);
+  --lane-a-ink:#b39dff; --lane-a-plate:#1a1630; --lane-a-edge:rgba(179,157,255,.46);
+  --lane-d-ink:#9aa0aa; --lane-d-plate:#16161a; --lane-d-edge:rgba(154,160,170,.4);
+  --ok:#3ddc97; --warn:#f0b429; --danger:#f2555a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+     font-size:14.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:56px 24px 96px}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:17px;letter-spacing:-.01em;margin:44px 0 12px;padding-bottom:8px;
+   border-bottom:1px solid var(--line-soft)}
+h3{font-size:14px;margin:22px 0 8px;color:var(--fg-1)}
+p{margin:0 0 12px;color:var(--fg-1);max-width:74ch}
+.lede{color:var(--fg-2);font-size:13.5px;margin-bottom:26px}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg-2);color:var(--fg-1);
+     padding:1.5px 5px;border-radius:4px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:13px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line-soft);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--bg-1);color:var(--fg);font-weight:620;white-space:nowrap}
+td{color:var(--fg-1)}
+ul{margin:0 0 12px;padding-left:20px;color:var(--fg-1);max-width:74ch}
+li{margin-bottom:5px}
+.tag{display:inline-block;font:650 10px/1 var(--mono);letter-spacing:.08em;
+     text-transform:uppercase;padding:3px 7px;border-radius:3px}
+.t-ok{background:rgba(61,220,151,.12);color:var(--ok);box-shadow:inset 0 0 0 1px rgba(61,220,151,.35)}
+.t-warn{background:rgba(240,180,41,.1);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(240,180,41,.32)}
+.t-open{background:rgba(242,85,90,.1);color:var(--danger);box-shadow:inset 0 0 0 1px rgba(242,85,90,.32)}
+/* the seal, reproduced exactly as shipped */
+.seal{--ink:var(--lane-d-ink);--plate:var(--lane-d-plate);--edge:var(--lane-d-edge);--notch:7px;
+  display:inline-block;padding:1px;background:var(--edge);border-radius:2px;
+  clip-path:polygon(0 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,0 100%)}
+.seal-in{display:flex;align-items:center;gap:5px;padding:3px 7px 3px 6px;
+  background:var(--plate);color:var(--ink);font:650 10px/1 var(--mono);
+  letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;
+  clip-path:polygon(0 0,calc(100% - var(--notch)) 0,100% var(--notch),100% 100%,0 100%)}
+.seal svg{width:11px;height:11px;display:block}
+.s-v{--ink:var(--lane-v-ink);--plate:var(--lane-v-plate);--edge:var(--lane-v-edge)}
+.s-a{--ink:var(--lane-a-ink);--plate:var(--lane-a-plate);--edge:var(--lane-a-edge)}
+.s-d .seal-in{background:transparent;box-shadow:inset 0 0 0 99px var(--lane-d-plate)}
+.seals{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 20px}
+.sw{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;
+    margin-right:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
+figcaption{color:var(--fg-2);font-size:12.5px;margin-top:7px}
+.note{border-left:2px solid var(--accent);padding:2px 0 2px 14px;margin:16px 0;color:var(--fg-1)}
+.note.warn{border-left-color:var(--warn)}
+.hdr{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.meta{color:var(--fg-2);font-size:12.5px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <h1>hp-trust</h1>
+  <span class="tag t-ok">shipped</span>
+</div>
+<p class="meta">honestporn HIGHREV fleet · lane hp-trust · 2026-08-21 · commit <code>d55a55b</code> · branch <code>worktree-agent-a62239efe7ab6143e</code></p>
+<p class="lede">Objective: make the trust layer <em>visible</em>. The product is the verification layer, not the content — so the badge system had to stop being an emoji prefix on a label and become the loudest, most deliberate thing in the shell.</p>
+
+<h2>What shipped</h2>
+
+<h3>1 · The seal system</h3>
+<div class="seals">
+  <span class="seal s-v"><span class="seal-in"><svg viewBox="0 0 16 16"><path d="M2.8 8.7l3.3 3.3L13.2 4.9" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13.4" cy="2.6" r="1.5" fill="currentColor"/></svg><span>Verified</span></span></span>
+  <span class="seal s-a"><span class="seal-in"><svg viewBox="0 0 16 16"><path d="M8 1.4l1.55 5.05L14.6 8l-5.05 1.55L8 14.6l-1.55-5.05L1.4 8l5.05-1.55z" fill="currentColor"/></svg><span>Synthetic</span></span></span>
+  <span class="seal s-d"><span class="seal-in"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.7 2.5" stroke-linecap="round"/></svg><span>Demo</span></span></span>
+</div>
+<p>The signature move is <strong>the notch</strong> — every seal has one punched corner, the way a validated ticket or a customs stamp does, drawn with a two-layer <code>clip-path</code> so the 1px edge survives around the cut. Not a pill, not glass, not a side stripe.</p>
+<ul>
+  <li><strong>Opaque by law.</strong> A seal has to stay legible on top of arbitrary poster art, so every plate is fully opaque — never translucent, never blurred.</li>
+  <li><strong>Demo is deliberately lesser.</strong> Same silhouette, but hollow, grey, and a dashed glyph. A test source must never cosplay as a verified one. That asymmetry is the honesty law expressed in CSS.</li>
+  <li>Glyphs are inline SVG strokes in <code>currentColor</code>. Zero assets, zero webfonts, no CDN.</li>
+</ul>
+
+<h3>2 · The honest ledger dock</h3>
+<p>The legend and the registry status are one surface, not two widgets — what the badges <em>mean</em> and what is actually being <em>watched</em> belong in the same breath. Always visible bottom-left, collapsed to a title plus a live seal per populated lane; one click expands the full definitions.</p>
+<figure>
+  <img src="../shot-expanded.png" alt="The honest ledger dock expanded over the honestporn wall, showing three lane seals with definitions and live counts">
+  <figcaption>Expanded ledger on the real worktree: lane counts 2 verified / 1 synthetic / 3 demo, live watch line, and the standing caveat that badges reflect a hand-curated column rather than a signed attestation.</figcaption>
+</figure>
+
+<h3>3 · Skipped rows, surfaced as a warning</h3>
+<p>Malformed rows are counted and shown, styled amber rather than red: nothing is broken, some rows just could not be read, and hiding that would be the dishonest thing. The copy also says how to fix one.</p>
+<figure>
+  <img src="../shot-skipped.png" alt="The ledger dock showing an amber warning that two rows could not be read">
+  <figcaption>Two deliberately malformed rows in a sandbox fixture: counts drop to 2 sources, the synthetic lane reads &ldquo;none yet&rdquo;, and the amber warning explains the minimum a row needs.</figcaption>
+</figure>
+
+<h3>4 · Empty-state invitation</h3>
+<figure>
+  <img src="../shot-empty.png" alt="The ledger dock turned into an invitation teaching the registry row format">
+  <figcaption>Zero valid rows: the dock opens itself and becomes an invitation that teaches the row format inline. It states plainly that the file belongs to the user and the app only reads it.</figcaption>
+</figure>
+
+<h2>The accent tokens (for hp-motion, at merge)</h2>
+<p>The pink rebrand was only half-done: the derived accent tokens were still CoolStremio blue, so every focus ring, active nav pill and hover border rendered blue under a pink brand. These are the values now in <code>style.css</code> — canvas colors should match them.</p>
+<table>
+<tr><th>Token</th><th>Was</th><th>Now</th><th>Feeds</th></tr>
+<tr><td><code>--accent</code></td><td>#f5387b</td><td><span class="sw" style="background:#f5387b"></span>#f5387b <em>(unchanged)</em></td><td>brand, active text</td></tr>
+<tr><td><code>--accent-deep</code></td><td>#0b72d6 <em>(blue)</em></td><td><span class="sw" style="background:#c21860"></span>#c21860</td><td>primary-button gradient bottom</td></tr>
+<tr><td><code>--accent-dim</code></td><td>rgba(56,163,245,.16)</td><td>rgba(245,56,123,.16)</td><td>pill fills, focus glow, selection</td></tr>
+<tr><td><code>--accent-line</code></td><td>rgba(56,163,245,.42)</td><td>rgba(245,56,123,.42)</td><td>every hover/focus border</td></tr>
+<tr><td>brand-mark plate</td><td>#1a2733 → #101318</td><td>#2b1220 → #121016</td><td>topbar mark</td></tr>
+<tr><td><code>.linkish:hover</code></td><td>#6cbcff <em>(blue)</em></td><td><span class="sw" style="background:#ff86ac"></span>#ff86ac</td><td>inline links</td></tr>
+</table>
+<p>Lane palette, if the canvas ever draws seals itself:</p>
+<table>
+<tr><th>Lane</th><th>Ink</th><th>Plate</th><th>Edge</th><th>Contrast (ink on plate)</th></tr>
+<tr><td>performer-verified</td><td><span class="sw" style="background:#ff5c93"></span>#ff5c93</td><td>#2a0d19</td><td>rgba(255,92,147,.5)</td><td>6.16 : 1</td></tr>
+<tr><td>ai-generated</td><td><span class="sw" style="background:#b39dff"></span>#b39dff</td><td>#1a1630</td><td>rgba(179,157,255,.46)</td><td>7.64 : 1</td></tr>
+<tr><td>demo</td><td><span class="sw" style="background:#9aa0aa"></span>#9aa0aa</td><td>#16161a</td><td>rgba(154,160,170,.4)</td><td>6.86 : 1</td></tr>
+</table>
+
+<h2>Files changed</h2>
+<table>
+<tr><th>File</th><th>Change</th></tr>
+<tr><td><code>index.html</code></td><td>Ledger dock markup inside <code>#stage</code>; title, description, <code>referrer: no-referrer</code>; favicon redrawn as the notched seal.</td></tr>
+<tr><td><code>style.css</code></td><td>Accent tokens de-blued; the trust block appended (seal system, dock, warning, invitation), ~160 lines.</td></tr>
+<tr><td><code>js/registry.js</code></td><td>Lane table extended with seal/label/title/def/mark; <code>changedAt</code>/<code>ok</code>/<code>err</code> state; fetch-failure path distinguished from &ldquo;no rows&rdquo;; API additions; the dock renderer as a second IIFE.</td></tr>
+</table>
+<p>Nothing outside those three paths was touched. <code>verified_sources.md</code> was never written — not by the app, and not by me while testing.</p>
+
+<h2>Verification status (honest)</h2>
+<table>
+<tr><th>Claim</th><th>Status</th><th>How</th></tr>
+<tr><td>Zero console errors (BUDGETS row 9)</td><td><span class="tag t-ok">verified</span></td><td><code>agent-browser --session hp-trust errors</code> and <code>console</code> both empty after load and interaction on :8062.</td></tr>
+<tr><td>Trust legend always visible, three lanes at a glance</td><td><span class="tag t-ok">verified</span></td><td>Screenshots, collapsed and expanded, on the real worktree.</td></tr>
+<tr><td>Registry status: file, count, skipped, last change</td><td><span class="tag t-ok">verified</span></td><td>Live watch line reads <em>verified_sources.md · 6 sources · last change just now</em>.</td></tr>
+<tr><td>Skipped rows visible as a warning</td><td><span class="tag t-ok">verified</span></td><td>Sandbox fixture with two malformed rows; amber warning rendered, counts adjusted.</td></tr>
+<tr><td>Empty state invitation</td><td><span class="tag t-ok">verified</span></td><td>Sandbox fixture with zero valid rows; dock auto-opened into the invitation.</td></tr>
+<tr><td>Live-watch still works after my changes</td><td><span class="tag t-ok">verified</span></td><td>Editing the fixture on disk updated the dock with no reload.</td></tr>
+<tr><td>Devmode badge does not collide</td><td><span class="tag t-ok">verified</span></td><td>Dock is bottom-left; the badge and toasts are bottom-right. Visible together in every shot.</td></tr>
+<tr><td>Body-text contrast &ge; 4.5:1</td><td><span class="tag t-ok">verified</span></td><td>Computed, not eyeballed. <code>--fg-2</code> 5.23:1, <code>--accent</code> 5.30:1, lane inks 6.16&ndash;7.64:1. <code>--fg-3</code> is 2.93:1 and is used for decoration only.</td></tr>
+<tr><td><strong>Per-card seal on the canvas wall</strong> (BUDGETS row 6, strict reading)</td><td><span class="tag t-warn">partial</span></td><td>Every registry card still carries its lane glyph in the label the canvas draws, which is what row 6&rsquo;s own test asserts. But the DOM <em>seal</em> is not painted per tile — see the open item below.</td></tr>
+<tr><td>Contrast of seals over real poster art</td><td><span class="tag t-warn">computed, not photographed</span></td><td>Worst case modelled numerically (plate over white). Not yet observed against a bright poster in situ, because the seals are not on tiles yet.</td></tr>
+</table>
+
+<h2>The one open item — and why I stopped instead of guessing</h2>
+<div class="note warn">
+<p><strong>Exact per-tile DOM seals are not achievable from the public wall API.</strong> <code>WallView.getState()</code> returns <code>tiles:[{i,sx,sy,k,dw,dh,vis,src}]</code>, where <code>sx</code>/<code>sy</code> are the tile centre in CSS pixels. But the on-screen half-width is <code>dw * scale * k * 0.5</code> (<code>js/wallview.js:848</code>) and <strong><code>scale</code> is not exposed</strong>. The layouts set it anywhere from <strong>0.34 to 1.15</strong> (<code>js/wallview.js:118,147</code>), so a badge positioned from <code>dw*k</code> alone would sit visibly off its tile, worse the further down a row it is.</p>
+<p>Shipping badges that drift off their cards would have been worse than shipping none, and it is exactly the kind of wrong guess that becomes load-bearing. So I built the seal system where the geometry is exact and handed the canvas half over.</p>
+</div>
+<h3>Handoff to hp-motion (canvas owner)</h3>
+<p>Either of these unblocks per-tile seals in an afternoon:</p>
+<ul>
+  <li><strong>Cheapest:</strong> add <code>scale: t.scale</code> to the object returned inside <code>getState().tiles</code>. One property. A DOM overlay can then compute exact rects and I can position seals from outside the canvas.</li>
+  <li><strong>Better:</strong> expose <code>getTileRects()</code> returning <code>{i, x, y, w, h}</code> in CSS pixels for visible tiles only, so consumers never have to re-derive the projection.</li>
+  <li><strong>Or draw them natively</strong> in the canvas using the lane palette above — the plate/ink/edge triples and the three glyph paths are all in <code>js/registry.js</code>&rsquo;s <code>LANES</code> table, ready to read.</li>
+</ul>
+<p class="note">Note for whoever takes it: do not subscribe to <code>WallView.onSelect</code> or <code>onHover</code> from a second module — those are single-slot callbacks (<code>cbSelect = cb</code>), and <code>js/app.js:360-361</code> already owns both. Registering again silently clobbers the app&rsquo;s handlers. <code>onLayout</code> appears unclaimed.</p>
+
+<h2>Also found, outside this lane</h2>
+<ul>
+  <li><strong>Blue survives in two files I do not own</strong> — <code>js/wallview.js:32</code> (<code>C_THUMB_B = "#0b72d6"</code>), <code>js/wallview.js:1030</code> and <code>:1063</code> (<code>rgba(56,163,245,0.85)</code> scrollbar fills), and <code>js/player.js:66</code> (<code>rgba(56,163,245,.22)</code> focus glow). Reported to the orchestrator and routed to hp-motion.</li>
+  <li><strong>Collision I introduced and fixed:</strong> the wall reserves <code>CHROME_H = 56px</code> at the canvas bottom for its layout switcher. My first dock placement covered it completely. The dock now sits at <code>bottom: 68px</code>. Worth knowing for anyone else placing chrome over the stage.</li>
+</ul>
+
+<h2>Fleet discipline</h2>
+<table>
+<tr><th>Agent</th><th>Model requested</th><th>Role</th><th>Outcome</th></tr>
+<tr><td>wall-hooks-recon</td><td><code>opus</code></td><td>Wall/app API recon</td><td>Superseded — I read <code>getState()</code> directly and reached the finding first.</td></tr>
+<tr><td>css-surface-recon</td><td><code>opus</code></td><td>CSS token/selector map</td><td>Superseded — I greped the blue literals and computed contrast myself.</td></tr>
+<tr><td>design-directions</td><td><code>opus</code></td><td>Badge design directions</td><td>Not returned before the rapid-close order; design decided in-lane.</td></tr>
+<tr><td>verify-harness</td><td><code>opus</code></td><td>Server + browser bring-up</td><td>Server on :8062 confirmed serving the worktree; I drove agent-browser directly.</td></tr>
+<tr><td>copy-craft</td><td><code>opus</code></td><td>UI copy</td><td>Not returned before the rapid-close order; copy written in-lane.</td></tr>
+</table>
+<p>Five tier-3 agents, every one spawned with an explicit <code>model: 'opus'</code>. No Fable, no 4.8, no sonnet, no haiku anywhere in this lane. Honest note: the rapid-close order landed before three of them reported, so their findings did not feed the build — I reached the load-bearing conclusions first-hand and cite file:line for each. The parallelism bought less here than it cost; on a lane this tightly scoped, direct reading beat fan-out.</p>
+<p class="meta">Effort: xhigh (inherited). Not self-raised — this lane runs as an in-process subagent with no session id of its own, so <code>effort-set</code> would have mutated the parent lead.</p>
+
+</div>
+</body>
+</html>

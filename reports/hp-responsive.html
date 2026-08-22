@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-responsive — lane report</title>
+<style>
+:root{
+  --bg:#0d0d0f; --bg-1:#141417; --bg-2:#1b1b1f; --line:#26262c; --line-soft:#1e1e23;
+  --fg:#eceef1; --fg-1:#b9bec6; --fg-2:#7f858f;
+  --accent:#f5387b; --accent-deep:#c21860;
+  --lane-v-ink:#ff5c93; --lane-v-plate:#2a0d19; --lane-v-edge:rgba(255,92,147,.5);
+  --lane-a-ink:#b39dff; --lane-a-plate:#1a1630; --lane-a-edge:rgba(179,157,255,.46);
+  --lane-d-ink:#9aa0aa; --lane-d-plate:#16161a; --lane-d-edge:rgba(154,160,170,.4);
+  --ok:#3ddc97; --warn:#f0b429; --danger:#f2555a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+     font-size:14.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:56px 24px 96px}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:17px;letter-spacing:-.01em;margin:44px 0 12px;padding-bottom:8px;
+   border-bottom:1px solid var(--line-soft)}
+h3{font-size:14px;margin:22px 0 8px;color:var(--fg-1)}
+p{margin:0 0 12px;color:var(--fg-1);max-width:74ch}
+.lede{color:var(--fg-2);font-size:13.5px;margin-bottom:26px}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg-2);color:var(--fg-1);
+     padding:1.5px 5px;border-radius:4px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:13px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line-soft);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--bg-1);color:var(--fg);font-weight:620;white-space:nowrap}
+td{color:var(--fg-1)}
+ul{margin:0 0 12px;padding-left:20px;color:var(--fg-1);max-width:74ch}
+li{margin-bottom:5px}
+.tag{display:inline-block;font:650 10px/1 var(--mono);letter-spacing:.08em;
+     text-transform:uppercase;padding:3px 7px;border-radius:3px}
+.t-ok{background:rgba(61,220,151,.12);color:var(--ok);box-shadow:inset 0 0 0 1px rgba(61,220,151,.35)}
+.t-warn{background:rgba(240,180,41,.1);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(240,180,41,.32)}
+.t-open{background:rgba(242,85,90,.1);color:var(--danger);box-shadow:inset 0 0 0 1px rgba(242,85,90,.32)}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--line);border-radius:10px;display:block;background:var(--bg-1)}
+figcaption{color:var(--fg-2);font-size:12.5px;margin-top:7px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 0 22px}
+.pair figure{margin:0}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin:14px 0 22px}
+.gal figure{margin:0}
+.note{border-left:2px solid var(--accent);padding:2px 0 2px 14px;margin:16px 0;color:var(--fg-1)}
+.note.warn{border-left-color:var(--warn)}
+.hdr{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.meta{color:var(--fg-2);font-size:12.5px;font-family:var(--mono)}
+@media (max-width:760px){ .pair{grid-template-columns:1fr} .wrap{padding:36px 16px 72px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <h1>hp-responsive</h1>
+  <span class="tag t-ok">sub-820px gap closed</span>
+</div>
+<p class="meta">
+  lane hp-responsive &middot; 2026-08-21 &middot; commit <code>23d5d3f</code> on
+  <code>worktree-agent-a697b31cb3104b727</code> (merged from <code>main</code> @ 759d7ee)<br>
+  files touched: <code>style.css</code> only &middot; <code>index.html</code> unchanged &middot;
+  no <code>js/*</code> touched
+</p>
+
+<p class="lede">
+  hp-showcase explicitly did not sweep below 820px. This lane did. The app now holds
+  from a 320px phone to a 3840px 4K viewport, with zero horizontal document overflow
+  at every width measured, and the honest ledger keeps every word of its content in
+  every form it takes.
+</p>
+
+<h2>Verdict</h2>
+<p>
+  Before this lane, <code>style.css</code> carried four narrow media queries
+  (<code>700</code>, <code>620</code>, <code>820</code>, <code>760</code>) that hid a
+  few labels. Nothing below that had been designed. Three genuine breakages were live
+  at 375px, and one of them was a desktop bug wearing a phone costume.
+</p>
+<p>
+  Every fix below was found by driving the real app in a real browser at the width it
+  broke, and every number quoted is one that was measured, not estimated.
+</p>
+
+<h2>What was broken</h2>
+
+<table>
+<tr><th>#</th><th>Symptom</th><th>Measured</th><th>Root cause</th><th>Status</th></tr>
+<tr>
+  <td>1</td>
+  <td>Search field unusable on a phone</td>
+  <td>At 375px the field was 132px wide carrying 100px of its own padding &mdash; about
+      32px of usable text, with a <code>/</code> keyboard hint occupying 32px of it</td>
+  <td>Topbar is a three-item flex row; brand and nav are <code>flex: 0 0 auto</code>,
+      so the field absorbed the entire shortfall</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Ledger dock swallowed the phone screen</td>
+  <td>Open at 375&times;667 it was 375px tall &mdash; 56% of the screen, over the wall</td>
+  <td>A 430px desktop floating card was the only form the dock had</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>Ledger header clipped its own caret</td>
+  <td>Collapsed at 375px: <code>scrollWidth 366</code> vs <code>clientWidth 353</code>;
+      caret painted to <code>right: 377</code> on a 375px viewport</td>
+  <td>Title (<code>nowrap</code>) plus three full-size count seals plus caret exceeded
+      the plate</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><strong>Ledger unclosable on any short stage</strong></td>
+  <td>At 667&times;375 the open dock's box ran from y=69 to y=307 while
+      <code>#stage</code> starts at y=147 &mdash; its entire header sat 78px above the
+      clipping edge and was invisible</td>
+  <td>The dock is bottom-anchored and grows upward; <code>#stage</code> clips its
+      overflow. Nothing capped the panel to the stage. <em>This reproduced on desktop
+      in a short window &mdash; it was never a phone-only bug.</em></td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>Settings overlay content clipped and unreachable</td>
+  <td>At 375px <code>.settings-scroll</code> reported
+      <code>scrollWidth 478</code> vs <code>clientWidth 375</code>; the offender was a
+      single <code>.addon</code> row at 464px inside a 347px column</td>
+  <td>A grid item's automatic minimum size is its <em>min-content</em> size, so the
+      addon flex row refused to shrink. The body cannot scroll, so the excess was
+      clipped rather than reachable</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>No coarse-pointer tier at all</td>
+  <td>Nav 32px, pills 30px, ledger toggle 34px, reorder buttons 26&times;20px; the
+      continue-watching remove button and play scrim were hover-only, so a finger could
+      never reveal them</td>
+  <td>No <code>@media (pointer: coarse)</code> existed in the sheet</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>Reduced motion only partly honoured</td>
+  <td>Three narrow blocks covered the skeleton shimmer, the overlay entrance and the
+      ledger pulse. Every <code>transition</code> in the sheet, the toast animations and
+      the preview-card entrance were uncovered</td>
+  <td>Per-rule opt-outs instead of a sweep</td>
+  <td><span class="tag t-ok">fixed</span></td>
+</tr>
+</table>
+
+<h3>Before and after, 375&times;667</h3>
+<div class="pair">
+  <figure>
+    <img src="../shots/responsive/before-375-boardbar.png" alt="Board view at 375px before the sweep: search field clipped to the word Sear">
+    <figcaption><strong>Before.</strong> The field reads &ldquo;Sear&rdquo;. The
+      <code>/</code> hint still occupies the right side of a field nobody can type in.</figcaption>
+  </figure>
+  <figure>
+    <img src="../shots/responsive/after-375-board.png" alt="Board view at 375px after: search collapsed to a magnifier plate, tighter board chrome">
+    <figcaption><strong>After.</strong> The field is a 44px magnifier plate; the board
+      chrome lost 8px of band padding and the wall gained the room.</figcaption>
+  </figure>
+</div>
+<div class="pair">
+  <figure>
+    <img src="../shots/responsive/before-375-dock-open.png" alt="Trust dock open at 375px before: a floating card covering most of the screen">
+    <figcaption><strong>Before.</strong> The open ledger is a 375px-tall floating card
+      &mdash; 56% of the screen, cornered by the viewport rather than shaped for it.</figcaption>
+  </figure>
+  <figure>
+    <img src="../shots/responsive/after-375-dock.png" alt="Trust dock open at 375px after: an edge-to-edge bottom sheet with an internal scroll">
+    <figcaption><strong>After.</strong> A bottom sheet: edge to edge, capped, scrolling
+      inside itself, header pinned, caveat intact below the fade.</figcaption>
+  </figure>
+</div>
+
+<h2>What was built</h2>
+
+<p>
+  One documented section at the end of <code>style.css</code>, ordered widest-gate-last
+  so the narrow rules win by source order as well as by media match. Two invariants are
+  stated in the sheet itself and hold at every width:
+</p>
+<ul>
+  <li>the page body never scrolls horizontally &mdash; <code>html</code>/<code>body</code>
+      are <code>overflow: hidden</code>, and every wide strip owns a private
+      <code>overflow-x: auto</code> scroller instead;</li>
+  <li>the honest ledger keeps <em>all</em> of its content &mdash; the lede, all three lane
+      definitions, the watch line and the caveat. It may change shape on a phone; it may
+      never be truncated into a half-truth.</li>
+</ul>
+
+<table>
+<tr><th>Gate</th><th>What it does</th></tr>
+<tr><td><code>min-width: 1700px</code></td>
+    <td>Reading columns widen (detail 1180&rarr;1440, settings 860&rarr;1040), search
+        field 640&rarr;760. The shell was already fluid; only the capped columns move.</td></tr>
+<tr><td><code>min-width: 2400px</code></td>
+    <td>True-4K tier. Chrome bands and their controls scale
+        (<code>--topbar-h</code> 56&rarr;66, <code>--catbar-h</code> 48&rarr;56, field 42px,
+        nav 38px, pills 34px). Deliberately not a root type-scale bump: nearly every size
+        in this sheet is an explicit px, so a root bump would move some things and not others.</td></tr>
+<tr><td><code>max-width: 820px</code></td>
+    <td>Drops the <code>/</code> keyboard hint and reclaims its 32px of field padding.</td></tr>
+<tr><td><code>max-width: 640px</code></td>
+    <td>Board chrome compacts; the DOM-grid gutters go 20px&rarr;12px (which fits two 164px
+        columns at 375px where 20px fit one); the ledger becomes a bottom sheet; the
+        overlays get phone padding; stream rows wrap their tags to a line of their own
+        instead of squeezing the title to nothing.</td></tr>
+<tr><td><code>max-width: 500px</code></td>
+    <td>The search field collapses to a 44px plate and expands over the whole bar on
+        focus, or while a query is showing.</td></tr>
+<tr><td><code>max-width: 380px</code> / <code>360px</code></td>
+    <td>Ledger count seals drop to the corner-stamp scale; below 360px they wrap to their
+        own line with the caret held on the first line by <code>order</code>. The counts
+        are the header's evidence &mdash; they wrap, they are never dropped.</td></tr>
+<tr><td><code>max-height: 480px</code></td>
+    <td>Landscape phones: <code>--topbar-h</code> 56&rarr;48, <code>--catbar-h</code>
+        48&rarr;40, overlay top padding trimmed, ledger body capped at 54vh.</td></tr>
+<tr><td><code>pointer: coarse</code></td>
+    <td>&ge;44px targets throughout; hover-only controls (the continue-watching remove
+        button, the play scrim) become permanent; hover lift transforms are removed,
+        since a transform only a hover can trigger simply sticks after a tap.</td></tr>
+<tr><td><code>prefers-reduced-motion: reduce</code></td>
+    <td>Universal collapse of animation and transition duration, with the loading spinner
+        deliberately exempt &mdash; it is the only signal the app is still working, and a
+        frozen spinner reads as a hang.</td></tr>
+</table>
+
+<h3>Three decisions worth defending</h3>
+
+<p><strong>The search collapse is CSS only.</strong> The collapsed plate <em>is</em> the
+real <code>&lt;input&gt;</code>, so a tap focuses it and <code>:focus-within</code>
+expands it over the bar. A second rule keeps it open while a query is showing, via
+<code>:has(#search-input:not(:placeholder-shown))</code>, so the clear button stays
+reachable. The two are written as <em>separate rules</em> on purpose: a selector list is
+discarded whole if any selector in it fails to parse, so an engine without
+<code>:has()</code> must still get the focus behaviour. <code>index.html</code> needed no
+change and no JS lane was touched.</p>
+
+<p><strong>The ledger cap is structural, not a media query.</strong> The dock is now a flex
+column with <code>max-height: calc(100% - 78px)</code> against <code>#stage</code>: the
+header is <code>flex: 0 0 auto</code> and the body takes the loss. That is what fixes the
+short-stage bug at <em>every</em> width rather than only on phones, and it is why the
+landscape case came right without a landscape-specific dock rule.</p>
+
+<p><strong>The scroll affordance switches itself off.</strong> A capped panel can hide its
+own last line, and a trust surface that looks finished while it is not is the exact failure
+this panel exists to prevent. Rather than a fade that is always painted, the body uses the
+pure-CSS scroll shadow: an opaque cover layer attached to the <em>content</em>
+(<code>local</code>) over a shadow layer attached to the <em>box</em>
+(<code>scroll</code>). Scrolled to the end, the cover lands on the shadow and hides it. No
+JS, and no fade ever painted over a caveat that is already fully visible &mdash; verified in
+both states (present at 375px where the body overflows by 26px, absent at 1440px where it
+does not).</p>
+
+<h2>Breakpoints tested</h2>
+
+<p>
+  Every row was driven live in Chromium via <code>agent-browser --session hp-responsive</code>
+  against this worktree served on <code>:8067</code>, screenshotted, and measured through
+  the DOM. &ldquo;h-overflow&rdquo; compares
+  <code>document.documentElement.scrollWidth</code> against <code>clientWidth</code>. The
+  overflow scan ignores content inside a private scroller, since a wide pill strip inside
+  <code>overflow-x: auto</code> is the design, not a bug.
+</p>
+
+<table>
+<tr><th>Viewport</th><th>h-overflow</th><th>Escaping elements</th><th>Chrome bands</th>
+    <th>Ledger open</th><th>Caveat + 3 lanes</th><th>Clearance to wall chrome</th><th>Shot</th></tr>
+<tr><td>320 &times; 568</td><td>none (320 = 320)</td><td>0</td><td>56 + 172</td>
+    <td>262px, 46% &mdash; sheet, header wrapped to 58px</td><td>yes</td><td>8px</td>
+    <td><code>after-320-*</code></td></tr>
+<tr><td>375 &times; 667</td><td>none (375 = 375)</td><td>0</td><td>56 + 135</td>
+    <td>343px, 51% &mdash; sheet, body scrolls 26px</td><td>yes</td><td>8px</td>
+    <td><code>after-375-*</code></td></tr>
+<tr><td>667 &times; 375 (landscape)</td><td>none (667 = 667)</td><td>0</td><td>48 + 99</td>
+    <td>150px, 40% &mdash; capped to stage, header pinned</td><td>yes</td><td>12px</td>
+    <td><code>after-landscape-*</code></td></tr>
+<tr><td>768 &times; 1024</td><td>none (768 = 768)</td><td>0</td><td>56 + 99</td>
+    <td>360px, 35% &mdash; desktop card, no internal scroll</td><td>yes</td><td>12px</td>
+    <td><code>after-768-*</code></td></tr>
+<tr><td>1024 &times; 768</td><td>none (1024 = 1024)</td><td>0</td><td>56 + 99</td>
+    <td>360px, 47% &mdash; desktop card</td><td>yes</td><td>12px</td>
+    <td><code>after-1024-*</code></td></tr>
+<tr><td>1440 &times; 900</td><td>none (1440 = 1440)</td><td>0</td><td>56 + 99</td>
+    <td>360px, 40% &mdash; desktop card</td><td>yes</td><td>12px</td>
+    <td><code>after-1440-*</code></td></tr>
+<tr><td>3840 &times; 2160 (4K)</td><td>none (3840 = 3840)</td><td>0</td><td>66 + 107</td>
+    <td>363px, 17% &mdash; desktop card</td><td>yes</td><td>12px</td>
+    <td><code>after-4k-*</code></td></tr>
+</table>
+
+<h3>Screens</h3>
+<div class="gal">
+  <figure><img src="../shots/responsive/after-375-search-focus.png" alt="Search expanded over the topbar at 375px">
+    <figcaption>375px &mdash; search expanded on focus, covering the bar.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-375-search-blurred-with-query.png" alt="Search still expanded at 375px after blur because a query is showing">
+    <figcaption>375px &mdash; blurred but still open, because a query is showing.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-375-settings.png" alt="Settings overlay at 375px">
+    <figcaption>375px &mdash; settings overlay, addon row now shrinks and ellipsises.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-375-detail.png" alt="Detail overlay at 375px">
+    <figcaption>375px &mdash; detail overlay, poster 148px, actions share a row.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-375-detail-bottom.png" alt="Detail overlay scrolled to the bottom at 375px">
+    <figcaption>375px &mdash; detail scrolled to its end; last block reachable.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-375-player.png" alt="Player chrome at 375px">
+    <figcaption>375px &mdash; player chrome (verified, not rebuilt; owned by hp-player).</figcaption></figure>
+  <figure><img src="../shots/responsive/after-393-coarse-probe.png" alt="Coarse pointer layout probe at 393px">
+    <figcaption>393px &mdash; the coarse-pointer rules applied via a CSSOM probe.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-landscape-detail.png" alt="Detail overlay scrolled on a 667 by 375 short screen">
+    <figcaption>667&times;375 &mdash; detail overlay scrolled to its end on a short screen.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-landscape-settings.png" alt="Settings overlay on a 667 by 375 short screen">
+    <figcaption>667&times;375 &mdash; settings overlay, same short screen.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-landscape-dock.png" alt="Ledger dock at 667 by 375 landscape">
+    <figcaption>667&times;375 &mdash; ledger capped to the stage, header pinned.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-1440-dock.png" alt="Ledger dock at 1440 by 900">
+    <figcaption>1440px &mdash; desktop card unchanged, no fade over the caveat.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-768-dock.png" alt="Ledger dock at 768 by 1024">
+    <figcaption>768px &mdash; desktop form, full ledger, 35% of the screen.</figcaption></figure>
+  <figure><img src="../shots/responsive/after-4k-board.png" alt="Board view at 3840 by 2160">
+    <figcaption>3840px &mdash; chrome bands scaled; wall camera framing is hp-motion's.</figcaption></figure>
+</div>
+
+<h2>Verification status (honest)</h2>
+
+<h3>Verified live</h3>
+<ul>
+  <li><strong>Zero horizontal document overflow at all seven viewports</strong> &mdash;
+      <code>scrollWidth</code> equals <code>clientWidth</code> in every case, and the
+      scroller-aware overflow scan returns 0 escaping elements at each.</li>
+  <li><strong>The ledger keeps its content at every width</strong> &mdash; three lanes
+      rendered and the <code>.td-caveat</code> node present in all seven measurements,
+      including both sheet widths.</li>
+  <li><strong>The ledger never covers the wall's chrome strip</strong> &mdash; measured
+      clearance to <code>CHROME_H = 56px</code> (<code>js/wallview.js:26</code>) was 8px at
+      320/375 and 12px everywhere else. Never negative.</li>
+  <li><strong>Coarse-pointer targets</strong> &mdash; nav 44, pills 44 (all 24 of them),
+      buttons 44 including <code>.btn-sm</code>, ledger toggle 48. Topbar and catalog bar
+      both confirmed unclipped with the larger controls in place
+      (<code>scrollHeight</code> &le; <code>clientHeight</code>), and no horizontal overflow.</li>
+  <li><strong>Reduced motion</strong> &mdash; with the media feature emulated,
+      <code>matchMedia</code> reports true and every probed
+      <code>transition-duration</code> computes to <code>1e-05s</code>, the ledger pulse
+      animation is <code>none</code>, and the spinner is still
+      <code>spin 1.4s infinite</code>. The exemption works.</li>
+  <li><strong>The sheet parses cleanly</strong> &mdash; 314 top-level rules, 17
+      <code>@media</code> blocks and 1 <code>@supports</code> block present in the CSSOM,
+      and all four <code>:has()</code> rules survived parsing
+      (<code>CSS.supports('selector(:has(*))')</code> is true here).</li>
+  <li><strong>Both overlays scroll cleanly at 375px</strong> &mdash; detail
+      <code>scrollHeight 913</code> / <code>clientHeight 667</code>, settings
+      <code>871</code> / <code>667</code>, both reaching their last block, neither
+      overflowing horizontally after the fix.</li>
+  <li><strong>Both overlays scroll cleanly on a short screen too</strong> &mdash; at
+      667&times;375, detail <code>780</code> / <code>375</code> and settings
+      <code>775</code> / <code>375</code>, each scrolling its full 400px of travel to a
+      reachable last block, with the close button still pinned and no horizontal
+      overflow.</li>
+  <li><strong>Zero console errors and zero warnings</strong> &mdash; the full navigation
+      path (board &rarr; ledger open &rarr; ledger close &rarr; settings &rarr; close
+      &rarr; search &ldquo;sintel&rdquo; &rarr; Escape &rarr; home) driven at 375, 768,
+      1024, 1440 and 2560, with the log cleared before each load. Nothing logged at any
+      of the five, and no uncaught page errors either. BUDGETS.md row 9 holds.
+      <em>Instrument note:</em> <code>agent-browser errors</code> stayed empty even for a
+      deliberately emitted <code>console.error</code>, so it captures uncaught page errors
+      only. The sweep uses <code>agent-browser console</code>, which was first proven to
+      report that deliberate error before any result was trusted.</li>
+  <li><strong>The collapsed search works end to end at 375px</strong> &mdash; tapping the
+      44px plate focused the field and expanded it to the full bar
+      (<code>position: absolute</code>, x=0, w=375); typing routed the app to
+      <code>#search/sintel</code>; and after blurring to another element the field
+      <em>stayed</em> expanded with its clear button reachable, which is the
+      <code>:has(#search-input:not(:placeholder-shown))</code> rule doing its job.</li>
+  <li><strong>Player chrome at 375px</strong> &mdash; opened via
+      <code>Player.play()</code> with a registry stream. Root fills the viewport, no
+      horizontal overflow, controls do not collide, and the media element reached
+      <code>readyState 4</code> with <code>duration 52.2s</code>.</li>
+</ul>
+
+<h3>NOT verified &mdash; stated plainly</h3>
+<ul>
+  <li><span class="tag t-warn">harness limit</span>
+      <strong>The coarse-pointer block was never matched by a real coarse device.</strong>
+      <code>agent-browser set device</code> sets the viewport and UA but not
+      <code>hasTouch</code>, so <code>(pointer: coarse)</code> reported <code>false</code>
+      even under iPhone emulation. The numbers above come from lifting the block's 18 rules
+      out of the CSSOM and applying them unconditionally in a temporary probe sheet &mdash;
+      that verifies the <em>declarations I shipped</em> and their layout consequences, but
+      not that the media query matches on real hardware. The query is standard; the risk is
+      low; it is still not the same claim.</li>
+  <li><span class="tag t-warn">not run</span>
+      <strong>Safe-area insets were never exercised on a notched device.</strong> Every
+      <code>env(safe-area-inset-*)</code> resolves to 0px in this harness, so the
+      <code>max()</code> fallbacks are what was actually measured. The insets are additive
+      and cannot shrink anything below the fallback, so desktop is unaffected either way.</li>
+  <li><span class="tag t-warn">not run</span>
+      <strong>The <code>@supports (height: 100dvh)</code> rule was not tested against a
+      retracting mobile URL bar</strong> &mdash; there is no URL bar in this harness.</li>
+  <li><span class="tag t-warn">partial</span>
+      <strong>Stream and episode rows were not seen populated.</strong> The
+      <code>min-width: 0</code> fix covers <code>.stream-list</code> and
+      <code>.ep-list</code> by the same mechanism proven on <code>.addon-list</code>, but no
+      installed addon returned streams during this lane, so those two lists were only ever
+      rendered empty. Worth a second look when a stream addon is installed.</li>
+  <li><span class="tag t-warn">unchanged</span>
+      <strong>Contrast was not re-measured, because no colour was touched.</strong> The
+      accent identity <code>#f5387b</code> and hp-trust's lane inks
+      (<code>--lane-v-ink #ff5c93</code>, <code>--lane-a-ink #b39dff</code>,
+      <code>--lane-d-ink #9aa0aa</code>, with their plates) are byte-identical to what was
+      merged. This lane added no colour declaration other than two neutral gradient stops
+      in the ledger's scroll shadow, both drawn from the existing panel background
+      <code>rgb(16,16,19)</code>.</li>
+</ul>
+
+<h2>Handoffs</h2>
+
+<table>
+<tr><th>To</th><th>Finding</th><th>Evidence</th></tr>
+<tr><td>hp-player</td>
+    <td>Player control buttons are 34&times;34 at 375px &mdash; below the 44px touch
+        target the rest of the app now meets. The player's stylesheet lives in
+        <code>js/player.js</code> (its <code>@media (max-width:640px)</code> block is at
+        <code>player.js:200</code>) which this lane does not own, so it was left alone.</td>
+    <td>Measured: 5 visible buttons, min 34&times;34.</td></tr>
+<tr><td>hp-player</td>
+    <td><code>.plr-tip</code> paints from <code>left: -4px</code> at 375px. It is clipped by
+        <code>.plr-root</code> so nothing escapes the viewport, but the tooltip is cut on
+        its left edge.</td>
+    <td>Measured in the open player at 375&times;667.</td></tr>
+<tr><td>hp-motion</td>
+    <td>At 3840&times;2160 the wall's content occupies roughly the top quarter of the stage
+        and the rest is empty. The container is correct
+        (<code>#stage</code> and <code>#wall</code> both 3840&times;1987, confirmed at every
+        viewport) &mdash; this is camera framing at very large viewports, inside the wall
+        engine.</td>
+    <td><code>after-4k-board.png</code>.</td></tr>
+<tr><td>hp-catalog</td>
+    <td>Deep-linking a registry item by hash
+        (<code>#detail/movie/hp:&lt;hash&gt;</code>) renders the raw id as the title and
+        toasts &ldquo;Metadata unavailable&rdquo;. Reaching the same item through the wall
+        works. Not a responsive issue, found while trying to reach the player.</td>
+    <td><code>after-375-registry-detail.png</code>.</td></tr>
+<tr><td>whoever folds in the board bar</td>
+    <td><code>js/app.js:887-905</code> injects <code>#hp-board-css</code> at runtime,
+        including <code>#catalogbar{flex-wrap:wrap}</code>. That injected sheet is appended
+        after the <code>&lt;link&gt;</code> and therefore wins ties. This lane's catalog-bar
+        rules were kept to properties that sheet does not set, so the two do not fight
+        &mdash; but the coupling is real and undocumented outside a code comment.</td>
+    <td>Read at <code>app.js:892</code>.</td></tr>
+</table>
+
+<h2>Note on method</h2>
+<div class="note warn">
+  <p>
+    Five Opus 5 subagents were spawned for this lane (a CSS overflow audit, a DOM
+    structure map, a media-query inventory, a console sweep on its own browser session,
+    and a desktop-regression review of the diff). <strong>None of them had returned a
+    report by the time the work was finished, committed and this page was written.</strong>
+    Every bug listed above was found and fixed by direct live-browser iteration in this
+    session, and the console sweep that was delegated was in the end run here, by hand,
+    rather than left as an open claim.
+  </p>
+  <p>
+    This matches the honest caveat carried in the lane brief: on tightly-scoped work with a
+    fast feedback loop, direct iteration beats the fan-out. Recording it here rather than
+    dressing it up &mdash; the fleet's density target was met by concurrent spawns, but on
+    this lane those spawns did not pay for themselves.
+  </p>
+</div>
+
+<h2>Files</h2>
+<ul>
+  <li><code>style.css</code> &mdash; +339 / &minus;3. One new documented
+      <em>RESPONSIVE &mdash; phone to 4K</em> section, plus four in-place fixes earlier in
+      the sheet (<code>@supports</code> dvh height, <code>#app</code> min-width
+      360&rarr;320, <code>.settings-scroll</code> overflow-x, the grid-item
+      <code>min-width: 0</code> rule, and the <code>.trustdock</code> flex cap).</li>
+  <li><code>index.html</code> &mdash; <strong>unchanged.</strong> No markup was needed.</li>
+  <li><code>js/*</code> &mdash; <strong>untouched.</strong> No responsive fix required a JS
+      change; the two that came close (the search collapse and the ledger sheet) were both
+      solvable in CSS.</li>
+  <li><code>.grand/shots/responsive/</code> &mdash; 26 screenshots, before and after.</li>
+</ul>
+
+</div>
+</body>
+</html>

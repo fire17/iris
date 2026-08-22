@@ -1,0 +1,315 @@
+<title>Quality Round 1</title>
+<style>
+  :root{
+    --bg:#0d0d0f; --panel:#141418; --line:#26262d; --ink:#e9e9ee; --dim:#9a9aa6;
+    --pink:#f5387b; --ok:#3ecf8e; --warn:#f5b942; --bad:#ff5c5c; --crit:#ff2d55;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    padding:48px 28px 96px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-size:30px;line-height:1.15;margin:0 0 6px;letter-spacing:-.02em}
+  h1 b{color:var(--pink)}
+  h2{font-size:19px;margin:44px 0 12px;letter-spacing:-.01em;
+     padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;margin:26px 0 8px;color:var(--pink);letter-spacing:.02em;text-transform:uppercase}
+  .sub{color:var(--dim);margin:0 0 28px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13.5px}
+  th{text-align:left;color:var(--dim);font-weight:600;font-size:11.5px;letter-spacing:.06em;
+     text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid #1c1c22;vertical-align:top}
+  tr:hover td{background:#131318}
+  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d6e5;
+    background:#1b1b21;padding:1.5px 5px;border-radius:4px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;
+    font-weight:700;letter-spacing:.04em;white-space:nowrap}
+  .p0{background:rgba(255,45,85,.15);color:var(--crit);border:1px solid rgba(255,45,85,.4)}
+  .hi{background:rgba(255,92,92,.13);color:var(--bad);border:1px solid rgba(255,92,92,.35)}
+  .md{background:rgba(245,185,66,.12);color:var(--warn);border:1px solid rgba(245,185,66,.32)}
+  .lo{background:rgba(154,154,166,.12);color:var(--dim);border:1px solid #33333c}
+  .pass{color:var(--ok);font-weight:700}
+  .fail{color:var(--bad);font-weight:700}
+  .blocked{color:var(--warn);font-weight:700}
+  .unv{color:var(--dim);font-weight:700}
+  .lane{font-size:11px;font-weight:700;color:#0d0d0f;background:var(--pink);
+    padding:2px 8px;border-radius:4px;white-space:nowrap}
+  .lane.o{background:#5b7fff}.lane.m{background:#3ecf8e}.lane.t{background:#f5b942}
+  .note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--pink);
+    border-radius:8px;padding:14px 18px;margin:18px 0}
+  .note b{color:var(--pink)}
+  ul{padding-left:20px}li{margin:5px 0}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;color:var(--dim);font-size:13px;margin-bottom:34px}
+  .scroll{overflow-x:auto}
+  footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--dim);font-size:12.5px}
+</style>
+
+<div class="wrap">
+
+<h1>honestporn — quality round 1: <b>independent verification &amp; adversarial review</b></h1>
+<p class="sub">Lane hp-quality · baseline commit <code>72335cc</code> · 2026-08-21 · read-only lane: findings are routed, never fixed here.</p>
+
+<div class="meta">
+  <span><b>Method</b> 7 nested Opus 5 agents</span>
+  <span><b>Servers</b> 8065 pristine · 8066/8067 disposable copies</span>
+  <span><b>Rule</b> observed or marked UNVERIFIED</span>
+</div>
+
+<div class="note">
+<b>Headline.</b> The registry — the product — is <b>not visible on the home screen at rest</b>, and budget row 1's
+150&nbsp;ms open budget is <b>unreachable by construction</b>, not by slowness. Both are proven below. The good news
+is that the defect ADOPTED row 7 recorded ("click-to-play NOT live-verified") is most likely a
+<b>measurement artefact</b> of the second issue rather than a broken code path — the routing is intact.
+</div>
+
+<h2>1. Budget battery — observed</h2>
+<div class="scroll">
+<table>
+<tr><th>#</th><th>Budget</th><th>Threshold</th><th>Observed</th><th>Verdict</th><th>Evidence</th></tr>
+
+<tr><td>1</td><td>player opens on click</td><td>≤150 ms</td>
+<td><b>380 ms floor</b> — the wall defers its select callback until the fly-to ends:
+<code>pendingNotifyAt = now + (REDUCED ? 60 : dur + 30)</code> with <code>dur = 350</code> for the home
+<code>catalogRows</code> layout. <code>Player.play</code> cannot be called sooner.</td>
+<td class="fail">FAIL</td>
+<td>PROVEN — <code>wallview.js:1403,1416</code>; <code>app.js:380</code></td></tr>
+
+<tr><td>2</td><td>first frame</td><td>≤2.5 s</td>
+<td>Not independently measured by this lane. hp-player reports a P0 <code>crossorigin</code> defect in
+<code>player.js</code> blocking playback until hp-motion's fix merges.</td>
+<td class="blocked">BLOCKED</td><td>relayed, not re-observed here</td></tr>
+
+<tr><td>3</td><td>cold load → home painted</td><td>≤1 s</td>
+<td>Home paints, but see row 11 / finding Q1 — what paints first is the <b>addon</b> rows; the registry
+lanes are off-camera. Timing not cleanly separable while <code>dev.js</code> polls 7 files every 1.2&nbsp;s.</td>
+<td class="unv">UNVERIFIED</td><td>screenshots <code>badges/01-home-top.png</code></td></tr>
+
+<tr><td>4</td><td>registry edit → card, no reload</td><td>≤5 s</td>
+<td>Live-watch fires and a new card appears — captured on the disposable copy at
+<code>evidence/live/row4-05-new-card-in-demo-lane.png</code>, with a pre-append control shot. The card is
+only visible after panning to the registry lanes (Q1).</td>
+<td class="pass">PASS (with Q1)</td><td>observed, evidence dir</td></tr>
+
+<tr><td>5</td><td>HLS streams play</td><td>plays; time advances</td>
+<td>Blocked behind the same <code>crossorigin</code> P0.</td>
+<td class="blocked">BLOCKED</td><td>relayed</td></tr>
+
+<tr><td>6</td><td>every card carries its lane badge</td><td>100%</td>
+<td>Badge glyph is present <b>in the data</b> — <code>registry.js:55</code> sets
+<code>name = badge + ' ' + title</code>. Visibility in the render could not be confirmed on the home screen
+because the registry lanes were not on camera (Q1). Data-carries-it ≠ user-sees-it.</td>
+<td class="unv">UNVERIFIED</td><td>PROVEN in data; render UNVERIFIED</td></tr>
+
+<tr><td>7</td><td>app never writes the registry</td><td>0 write paths</td>
+<td><code>grep -n "verified_sources" js/*.js index.html</code> → 5 hits, all comments plus
+<code>registry.js:11 var FILE</code>, consumed only by <code>fetch(FILE,{cache:'no-store'})</code>.
+Zero <code>PUT</code>/<code>POST</code>/<code>showSaveFilePicker</code>/<code>createWritable</code> anywhere.</td>
+<td class="pass">PASS</td><td>PROVEN — grep output</td></tr>
+
+<tr><td>8</td><td>zero adult content in repo</td><td>0 items</td>
+<td>All six seed table rows are SFW public test assets (Blender open movies, W3C, Mux, Apple samples).
+The main-tree file now also carries a <b>user directive line</b> pointing at a third-party adult-cam
+catalog addon — a pointer, not content; the parser ignores it (<code>registry.js:38</code>, non-<code>|</code>
+line). See §4.</td>
+<td class="pass">PASS — with caveat</td><td>main-tree file read directly; host probed headers-only (HTTP/2 200)</td></tr>
+
+<tr><td>9</td><td>zero console errors</td><td>0</td>
+<td>hp-player observed a clean console on home load. <b>This row is necessary but not sufficient</b> —
+three silent swallows (below) can hide a thrown error entirely.</td>
+<td class="pass">PASS (weak signal)</td><td>relayed + PROVEN swallows</td></tr>
+
+<tr><td>10</td><td>registry items appear in search</td><td>title substring</td>
+<td>Not independently confirmed by this lane in the time budget. Note the hazard: the searchable
+<code>name</code> is emoji-prefixed while <code>title</code> is not.</td>
+<td class="unv">UNVERIFIED</td><td>—</td></tr>
+
+<tr><td>11</td><td>wall feel — 60fps, no skew</td><td>no visible jank</td>
+<td>Frame timing not sampled. Two captured states show the wall rendering <b>nothing at all</b>
+(full black canvas with chrome intact) — a camera/layout state worth more than a jank number.</td>
+<td class="fail">FAIL (see Q2)</td><td><code>app/02-home-registry-rows-offscreen.png</code>, <code>app/03-lostcamera-black-wall.png</code></td></tr>
+
+<tr><td>12</td><td>production gate</td><td>BLOCKED until built</td>
+<td>Unchanged and correctly blocked — but §4 makes it live sooner than the oracle assumed.</td>
+<td class="blocked">BLOCKED (by design)</td><td>ORACLE §6</td></tr>
+</table>
+</div>
+
+<h2>2. Findings — severity ranked, routed by lane</h2>
+<div class="scroll">
+<table>
+<tr><th>ID</th><th>Finding</th><th>Where</th><th>Consequence</th><th>Sev</th><th>Proof</th><th>Owner</th></tr>
+
+<tr><td>Q1</td>
+<td><b>The registry lanes are off-camera on the home screen.</b> <code>buildHomeGroups</code> puts the
+registry groups first, but the wall's initial camera lands on the addon rows — the left ~45% of the
+viewport is empty black while Cinemeta posters fill the right.</td>
+<td><code>app.js:611-613</code>, <code>paintHome</code> <code>app.js:699-716</code>, wall camera</td>
+<td>The honest registry <i>is</i> the product; at rest the app looks like a Stremio clone with the
+product missing. Also silently weakens budget rows 4 and 6.</td>
+<td><span class="pill p0">P0</span></td><td>OBSERVED (screenshot)</td>
+<td><span class="lane m">hp-motion</span> <span class="lane">hp-player</span></td></tr>
+
+<tr><td>Q2</td>
+<td><b>The wall can render completely empty</b> — chrome, search bar and layout pills present, canvas
+entirely black.</td>
+<td><code>wallview.js</code> camera/layout; reached after interaction and on at least one load</td>
+<td>Indistinguishable from "the app is broken" for a user. No console error accompanies it.</td>
+<td><span class="pill p0">P0</span></td><td>OBSERVED (2 screenshots)</td>
+<td><span class="lane m">hp-motion</span></td></tr>
+
+<tr><td>Q3</td>
+<td><b>Budget row 1 is unreachable by construction.</b> <code>select()</code> defers the callback until
+the fly-to completes: <code>dur = relayouts ? 480 : 350</code>, then
+<code>pendingNotifyAt = performance.now() + (REDUCED ? 60 : dur + 30)</code>.</td>
+<td><code>wallview.js:1403</code>, <code>wallview.js:1416</code></td>
+<td>380 ms floor on home (510 ms in relayout layouts; 60 ms under reduced-motion). The 150 ms budget
+cannot be met without changing when the callback fires.</td>
+<td><span class="pill hi">HIGH</span></td><td>PROVEN (code trace)</td>
+<td><span class="lane m">hp-motion</span> <span class="lane o">orchestrator</span></td></tr>
+
+<tr><td>Q4</td>
+<td><b>ADOPTED row 7 is probably a misdiagnosis.</b> Routing is intact end to end:
+<code>toWallItem</code> attaches <code>meta: m</code>; <code>onWallSelect</code> routes
+<code>it.meta.hpUrl</code> to <code>playRegistry</code>; the wall passes the raw item back via
+<code>cbSelect(items[pi], pi)</code>.</td>
+<td><code>app.js:406</code>, <code>app.js:380</code>, <code>wallview.js:766</code></td>
+<td>The verify screenshot was near-certainly taken inside the 380 ms deferral window. Risk: a lane
+"fixes" working code and breaks it.</td>
+<td><span class="pill hi">HIGH</span></td><td>PROVEN (code trace)</td>
+<td><span class="lane">hp-player</span></td></tr>
+
+<tr><td>Q5</td>
+<td><b>Three silent error swallows.</b> The select callback is wrapped in
+<code>try{...}catch(e2){}</code>; every registry subscriber in <code>try{...}catch(e){}</code>; every poll
+rejection in a bare <code>.catch(function(){})</code>.</td>
+<td><code>wallview.js:766</code>, <code>registry.js:76</code>, <code>registry.js:87</code></td>
+<td>A thrown error in click→play, in the repaint, or a <code>TypeError</code> inside <code>apply()</code>
+produces <b>no console output</b>. Budget row 9 can pass on a broken app.</td>
+<td><span class="pill hi">HIGH</span></td><td>PROVEN</td>
+<td><span class="lane m">hp-motion</span> <span class="lane t">hp-trust</span></td></tr>
+
+<tr><td>Q6</td>
+<td><b>The lane badge is an unvalidated string claim.</b> Unknown or misspelled lanes fall back to
+<code>demo</code> silently; nothing verifies, signs, or attests anything.</td>
+<td><code>registry.js:50</code></td>
+<td>A typo demotes a verified source to 🧪 demo with no warning; a hostile row picks its own badge.
+This is the product's core promise rendered as decoration.</td>
+<td><span class="pill hi">HIGH</span></td><td>PROVEN</td>
+<td><span class="lane t">hp-trust</span></td></tr>
+
+<tr><td>Q7</td>
+<td><b>No CSP and no referrer policy</b>; every rendered card fetches a third-party poster and every
+play fetches a third-party source.</td>
+<td><code>index.html:4-10</code> (head is 4 metas + stylesheet + icon)</td>
+<td>Source and poster hosts see the viewer's IP, User-Agent and — absent a referrer policy — the page
+URL. For this product, "who knows what you watched" is the crown-jewel question.</td>
+<td><span class="pill hi">HIGH</span></td><td>PROVEN</td>
+<td><span class="lane t">hp-trust</span></td></tr>
+
+<tr><td>Q8</td>
+<td><b>Dedupe-by-URL drops rows silently</b> — first row wins, no skipped-count, no conflict signal.</td>
+<td><code>registry.js:48</code></td>
+<td>A corrected lane claim added later is ignored with no feedback. The status bar's skip count is
+therefore not an honest completeness signal.</td>
+<td><span class="pill md">MED</span></td><td>PROVEN</td>
+<td><span class="lane t">hp-trust</span></td></tr>
+
+<tr><td>Q9</td>
+<td><b>Poll hygiene.</b> <code>setInterval(poll, 2500)</code> with no in-flight guard, no
+<code>visibilitychange</code> gate and no <code>clearInterval</code>; <code>dev.js</code> adds 7 polls
+every 1.2 s and is tagged unconditionally in <code>index.html</code>.</td>
+<td><code>registry.js:91</code>, <code>dev.js:51</code>, <code>index.html:16</code></td>
+<td>Requests stack on a slow server; ~21k requests/hour from the dev poller alone, which also
+contaminates any performance measurement taken while it runs.</td>
+<td><span class="pill md">MED</span></td><td>PROVEN</td>
+<td><span class="lane t">hp-trust</span> <span class="lane o">orchestrator</span></td></tr>
+
+<tr><td>Q10</td>
+<td><b>A registry save re-runs the whole home view.</b> <code>onChange</code> calls
+<code>viewHome()</code>, which rebuilds groups, re-fires addon catalog fetches for uncached rows, calls
+<code>closeOverlays()</code> and resets wall selection.</td>
+<td><code>app.js:257</code>, <code>app.js:653-693</code></td>
+<td>Editing the registry while browsing costs network calls and loses wall position. The player overlay
+itself survives (<code>closeOverlays</code> only closes detail/settings) — verified.</td>
+<td><span class="pill md">MED</span></td><td>PROVEN</td>
+<td><span class="lane">hp-player</span></td></tr>
+
+<tr><td>Q11</td>
+<td><b>Posters are third-party random images.</b> All four seed posters are
+<code>picsum.photos/seed/...</code>, which returns arbitrary Unsplash photos per seed.</td>
+<td><code>verified_sources.md</code></td>
+<td>Nobody on this project controls what a seed returns tomorrow — in a porn-adjacent product that is an
+editorial-control gap, not just a placeholder choice.</td>
+<td><span class="pill md">MED</span></td><td>PROVEN</td>
+<td><span class="lane t">hp-trust</span></td></tr>
+
+<tr><td>Q12</td>
+<td><b>Search matches an emoji-prefixed name.</b> <code>registry.js:55</code> stores
+<code>name = badge + ' ' + title</code> while <code>title</code> stays clean.</td>
+<td><code>registry.js:55</code></td>
+<td>Whatever indexes <code>name</code> indexes a leading emoji and a space. Ranking and exact-prefix
+matching are affected; not confirmed live in this round.</td>
+<td><span class="pill lo">LOW</span></td><td>PROVEN in data / UNVERIFIED in UI</td>
+<td><span class="lane t">hp-trust</span></td></tr>
+</table>
+</div>
+
+<h2>3. What was checked and found clean</h2>
+<ul>
+<li><b>Registry read-only law holds.</b> No write path of any kind — budget row 7 passes on proof, not on trust.</li>
+<li><b>The player overlay title is not an injection sink.</b> <code>player.js:396-397</code> sets it via
+<code>textContent</code>. <code>player.js</code> escapes elsewhere too (<code>esc()</code> at
+<code>:175</code>, used at <code>:582, :731, :777-789, :829, :929</code>).</li>
+<li><b>Script order is sound.</b> All six tags carry <code>defer</code> and load in dependency order, so
+<code>window.Registry</code> exists before <code>app.js</code> runs (<code>app.js:223</code> still guards).</li>
+<li><b>The parser never throws on bad input</b> by construction — malformed rows return early, and the
+poll's catch heals the next cycle.</li>
+<li><b>No telemetry, no analytics, no outbound writes, no server.</b> The prototype leaks nothing on its
+own account; what it does leak, it leaks to the source hosts it renders (Q7).</li>
+</ul>
+
+<h2>4. Scope event — the registry now points at an external adult catalog</h2>
+<p>The main-tree <code>verified_sources.md</code> carries a user directive line (the founder's own words —
+SACRED, quoted nowhere else in this report and never to be rewritten) pointing at a third-party
+adult-cam catalog addon manifest, marked for parallel integration. Facts, without editorialising:</p>
+<ul>
+<li>It is a <b>pointer, not content</b>. The parser ignores it — <code>registry.js:38</code> skips any line
+not starting with <code>|</code>. It creates no card and no skipped-count.</li>
+<li>Budget row 8 therefore still passes <b>today</b>, conditionally: zero adult content in the repo, one
+pointer to an external adult service.</li>
+<li>The host was probed <b>headers-only</b> (HTTP/2 200, <code>application/json</code>,
+<code>access-control-allow-origin: *</code>). Its catalog was deliberately <b>not</b> fetched — pulling
+adult catalog metadata into this lane's evidence trail would itself breach the scope law.</li>
+<li>The moment such a catalog renders, ORACLE §6 stops being future work: age verification, moderation
+and likeness screening become preconditions, and §5's last two risk rows go live.</li>
+<li><b>Trust-layer consequence:</b> an external catalog cannot honestly claim <code>performer-verified</code>
+or <code>ai-generated</code>. It needs its own lane — <code>external · unverified</code> — or the badge
+system starts laundering third-party content through the product's own trust vocabulary. That is the
+single most important design decision in this report.</li>
+</ul>
+<p>Routing: founder + <span class="lane o">orchestrator</span> own the gate decision;
+<span class="lane">hp-catalog</span> owns integration; this lane owns none of it.</p>
+
+<h2>5. Recommended order of work</h2>
+<ol>
+<li><b>Q1 / Q2</b> — the product must be visible and the wall must never render empty. Everything else is
+cosmetics until these are fixed.</li>
+<li><b>Q4 before Q3</b> — confirm click-to-play works (wait ≥600 ms before screenshotting) so nobody
+"fixes" intact routing; then decide whether Q3's budget or Q3's architecture moves.</li>
+<li><b>Q7's one-line half</b> — <code>&lt;meta name="referrer" content="no-referrer"&gt;</code> costs
+nothing and closes the URL leak today. CSP after a compatibility pass with hls.js.</li>
+<li><b>Q6 / Q8</b> — make the parser's silent decisions visible; the trust layer is currently a string
+comparison and the UI should say so until attestation exists.</li>
+<li><b>§4</b> — decide the external-lane question before the catalog work lands, not after.</li>
+</ol>
+
+<footer>
+Lane hp-quality · round 1 · honest-verification rule: every row above is either observed, proven by code
+trace, explicitly relayed from another lane, or marked UNVERIFIED. Rows 2, 3, 5, 6, 10 were not fully
+measured inside the time budget and are marked accordingly rather than estimated. Companion documents:
+<code>UNKNOWNS.md</code> (blind-spot hunt), <code>DARWIN.md</code> (round log), <code>ORACLE.md</code> §8
+(field log).
+</footer>
+
+</div>

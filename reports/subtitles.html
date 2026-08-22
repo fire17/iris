@@ -1,0 +1,303 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser-Only Live Subtitles</title>
+<style>
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:940px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--pink-hi) 34%,transparent)}
+a:hover{border-bottom-color:var(--pink-hi)}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);
+  padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+header.hd{border-bottom:1px solid var(--line-soft);padding:clamp(34px,6vw,60px) 0 clamp(26px,4vw,36px)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 15px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(27px,4.4vw,42px);letter-spacing:-.03em;margin:0 0 .3em;line-height:1.1;color:var(--fg)}
+.lede{max-width:74ch;font-size:clamp(15.5px,1.9vw,17.5px);color:var(--fg-1);margin:.2em 0 0}
+.badges{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:999px;border:1px solid}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%}
+.badge.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--ok-tint)}
+.badge.ok::before{background:var(--ok)}
+.badge.no{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,transparent);background:var(--no-tint)}
+.badge.no::before{background:var(--no)}
+.badge.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent);background:var(--info-tint)}
+.badge.info::before{background:var(--info)}
+.badge.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-tint)}
+.badge.warn::before{background:var(--warn)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:22px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.meta b{color:var(--fg-1);font-weight:500}
+section{padding:clamp(32px,4.8vw,50px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(19px,2.7vw,25px);letter-spacing:-.02em;margin:0 0 .5em;color:var(--fg)}
+h3{font-size:clamp(15.5px,1.9vw,17px);letter-spacing:-.01em;margin:1.6em 0 .5em;color:var(--fg)}
+p{max-width:76ch;margin:0 0 1em;color:var(--fg-1)}
+p.top{color:var(--fg)}
+ul,ol{margin:0 0 1em;padding-left:1.2em;color:var(--fg-1);max-width:78ch}
+li{margin-bottom:.44em}
+li::marker{color:var(--pink)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin:0 0 6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--fg-2);background:var(--s2);font-weight:600;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--s2)}
+td.m{font-family:var(--mono);font-size:12.5px;color:var(--fg-1)}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}
+.no{color:var(--no);font-weight:600;white-space:nowrap}
+.nt{color:var(--info);font-weight:600;white-space:nowrap}
+.wn{color:var(--warn);font-weight:600;white-space:nowrap}
+.box{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:18px 20px;max-width:82ch;box-shadow:var(--shadow)}
+.box+.box{margin-top:14px}
+.box.warn{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-tint)}
+.box.no{border-color:color-mix(in srgb,var(--no) 40%,transparent);background:var(--no-tint)}
+.box.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:var(--ok-tint)}
+.box .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin:0 0 8px;display:block}
+.box.warn .lab{color:var(--warn)} .box.no .lab{color:var(--no)} .box.ok .lab{color:var(--ok)}
+pre{margin:16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;overflow-x:auto;box-shadow:var(--shadow)}
+pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:1.7;color:var(--fg-1)}
+pre .c{color:var(--fg-2)} pre .g{color:var(--ok)} pre .r{color:var(--no)} pre .p{color:var(--pink-hi)} pre .b{color:var(--info)}
+.cap{font-family:var(--mono);font-size:11px;color:var(--fg-2);margin:6px 2px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.stat{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat .n{font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--fg);font-family:var(--mono)}
+.stat .n.ok{color:var(--ok)} .stat .n.no{color:var(--no)} .stat .n.pink{color:var(--pink)}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+.diagram{margin:20px 0;border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:8px;box-shadow:var(--shadow);overflow-x:auto}
+.diagram svg{display:block;width:100%;height:auto;min-width:520px}
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav a.home{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);border:0;display:flex;align-items:center;gap:8px}
+.topnav a.home::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+footer.ft{border-top:1px solid var(--line-soft);padding:32px 0 60px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+footer.ft a{color:var(--fg-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+/* page-specific: the mock subtitle picker */
+.picker{border:1px solid var(--line);background:var(--s1);border-radius:14px;padding:14px;max-width:320px;box-shadow:var(--shadow);font-size:13.5px}
+.picker h5{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2);margin:2px 4px 10px}
+.picker .row{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;color:var(--fg-1)}
+.picker .row.on{background:var(--pink-tint);color:var(--fg)}
+.picker .row i{width:8px;height:8px;border-radius:50%;border:1px solid var(--fg-2);flex:none}
+.picker .row.on i{background:var(--pink);border-color:var(--pink)}
+.picker .row .ct{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--fg-2)}
+.picker .sync{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:6px}
+.picker .sync b{font-family:var(--mono);font-size:12px}
+.picker .sync .btn{font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;color:var(--fg-2)}
+.picker .sync .val{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--fg-1)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--fg-2);margin:14px 0}
+.flow .step{border:1px solid var(--line);background:var(--s1);border-radius:8px;padding:7px 11px;color:var(--fg-1)}
+.flow .arr{color:var(--pink)}
+</style>
+
+<nav class="topnav"><div class="wrap">
+  <a class="home" href="index.html">honestporn · dev showcase</a>
+  <span class="sp"></span>
+  <button class="tglbtn" data-theme-btn onclick="__toggleTheme()">theme</button>
+</div></nav>
+
+<header class="hd"><div class="wrap">
+  <p class="tagline">lane close-out · honestporn HIGHREV</p>
+  <h1>Browser-only live subtitles</h1>
+  <p class="lede">A fully-featured, known-highest-standard subtitle system that runs entirely in the
+    browser — every installed Stremio addon plus the public OpenSubtitles&nbsp;v3 source, merged and
+    deduped, grouped by language, decoded from SRT / SSA / VTT to clean WebVTT, painted into the
+    player's own overlay with a live sync offset, and remembered across sessions. No backend.</p>
+  <div class="badges">
+    <span class="badge ok">shipped · live in the player</span>
+    <span class="badge info">SRT · SSA · VTT → WebVTT</span>
+    <span class="badge warn">whisper auto-sync: interop-ready, not shipped</span>
+  </div>
+  <div class="meta">
+    <span>date <b>2026-08-21</b></span>
+    <span>model <b>claude-opus</b></span>
+    <span>source <b>js/player.js · window.SubsSource</b></span>
+    <span>default addon <b>opensubtitles-v3.strem.io</b></span>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <h2>What was built</h2>
+  <p class="top">The player now carries a complete, self-contained subtitle stack — the
+    "known highest standard, fully featured" baseline described verbatim in the source. It fetches,
+    merges, decodes, renders, and persists subtitles without any server of ours in the loop. The user
+    picks a language and gets subtitles; everything else is automatic.</p>
+  <div class="stats">
+    <div class="stat"><div class="n pink">3</div><div class="k">source classes merged</div></div>
+    <div class="stat"><div class="n">3</div><div class="k">formats decoded → VTT</div></div>
+    <div class="stat"><div class="n">5</div><div class="k">charset paths sniffed</div></div>
+    <div class="stat"><div class="n ok">0</div><div class="k">backends required</div></div>
+  </div>
+  <p>The whole surface lives in <code>js/player.js</code> and is exposed as <code>window.SubsSource.list</code>,
+    a shared fetch layer that the (separate) subtitle auto-sync lane can capability-detect and reuse
+    without a second renderer.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How it works</h2>
+  <div class="flow">
+    <span class="step">poster / stream</span><span class="arr">→</span>
+    <span class="step">gather sources</span><span class="arr">→</span>
+    <span class="step">merge + dedupe</span><span class="arr">→</span>
+    <span class="step">group by language</span><span class="arr">→</span>
+    <span class="step">decode → WebVTT</span><span class="arr">→</span>
+    <span class="step">paint overlay</span>
+  </div>
+
+  <h3>Sources — merged, deduped, grouped by language</h3>
+  <p>Three source classes are combined by <code>subSourceList(type, id, extra)</code> and returned as a
+    single deduped list keyed by URL:</p>
+  <ul>
+    <li>Subtitles already carried on the stream or item metadata.</li>
+    <li>Every installed Stremio addon that declares the <code>subtitles</code> resource for this
+      <code>type</code>/<code>id</code> (discovered via <code>Addons.supports</code>).</li>
+    <li>The public <b>OpenSubtitles v3</b> addon — <code>https://opensubtitles-v3.strem.io</code>,
+      CORS-open and, per the source, verified live. It is always appended as a default so a language
+      list exists even when no other addon is installed.</li>
+  </ul>
+  <p>Each source is queried as
+    <code>&lt;base&gt;/subtitles/&lt;type&gt;/&lt;id&gt;[/extra].json</code> with an 8-second timeout and
+    <code>cache: force-cache</code>. Series compose their id as <code>imdb:season:ep</code>, so the picker
+    tracks the exact episode. Results are grouped by language with English first, then alphabetical, and a
+    count badge appears when a language has more than one candidate.</p>
+
+  <h3>Rendering — native parse, own overlay</h3>
+  <p>The browser's native WebVTT parser fills a <code>hidden</code> <code>&lt;track&gt;</code>; the player
+    copies its cues once and paints the active ones into its own overlay element
+    (<code>S.el.subCue</code>). That indirection buys full, cross-browser-identical control over text size,
+    colour, background, vertical position, and a live manual sync offset — and lets an auto-sync lane feed
+    synced cues in without a competing second renderer. The player sets
+    <code>window.__subsRendererPresent = true</code> so any auto-sync module knows on-screen rendering is
+    already owned and never self-attaches a duplicate track.</p>
+
+  <h3>Formats — SRT / SSA(ASS) / VTT, charset-sniffed</h3>
+  <p><code>subsToVtt()</code> decodes raw bytes before converting. The charset path is explicit: a UTF-8,
+    UTF-16LE, or UTF-16BE byte-order mark is honoured first; otherwise a strict (<code>fatal</code>) UTF-8
+    decode is attempted; failing that it falls back to <code>windows-1251</code> when the bytes look
+    Cyrillic, else <code>windows-1252</code>. WEBVTT passes through (with comma→dot timestamp
+    normalisation); <code>[Script Info]</code>/<code>Dialogue:</code> is parsed as SSA/ASS by
+    <code>ass2vtt()</code>; everything else is treated as SRT by <code>srt2vttFull()</code>. Timestamps are
+    normalised by <code>subPadTs()</code> and styling tags are stripped.</p>
+
+  <div class="two" style="margin-top:20px">
+    <div>
+      <p class="eyebrow">the language picker (rebuildSubMenu)</p>
+      <div class="picker">
+        <h5>Subtitles</h5>
+        <div class="row"><i></i>Off</div>
+        <div class="row on"><i></i>English</div>
+        <div class="row"><i></i>Español <span class="ct">(3)</span></div>
+        <div class="row"><i></i>Français</div>
+        <div class="row"><i></i>Русский <span class="ct">(2)</span></div>
+        <div class="sync"><span class="btn">−250</span><span class="btn">−50</span>
+          <span class="val">0 ms</span><span class="btn">+50</span><span class="btn">+250</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow">persistence (localStorage · hp.subs.cfg)</p>
+      <div class="box"><span class="lab">shape</span>
+        <p style="margin:0"><code>{mode:'off'|'lang', lang, size, color, bg, pos}</code></p>
+        <p style="margin:.7em 0 0">The last-used <code>off</code>/language is auto-applied the next time the
+          player opens, and styling persists too. The config is merge-safe and shared with the auto-sync
+          lane through a single key, so both lanes can co-exist without stomping each other.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The law-compliance story</h2>
+  <div class="box ok"><span class="lab">no node in the byte path</span>
+    <p style="margin:0">Every subtitle byte is fetched by the browser directly from a third-party
+      content endpoint — the same class as an <code>&lt;img src&gt;</code>. The default OpenSubtitles v3
+      source is CORS-open, so no proxy of ours is needed and none exists. This lane never touches
+      <b>the law</b> — no node we run relays or re-serves subtitle content; the browser talks to the
+      addon, or to nothing.</p></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Verification status — honest</h2>
+  <p>The claims below are grounded in the shipped source (<code>js/player.js</code>). Where a piece is
+    designed-for but not present as shipped code, it is marked plainly.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Claim</th><th>Grounding</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Merges stream subs + installed subtitle addons + OpenSubtitles v3, deduped by URL, grouped by language</td><td class="m">subSourceList / subGroup / rebuildSubMenu</td><td class="ok">in source</td></tr>
+      <tr><td>Default source <code>opensubtitles-v3.strem.io</code>, CORS-open, "verified live"</td><td class="m">SUB_DEFAULT_BASE + source comment</td><td class="nt">source-asserted</td></tr>
+      <tr><td>SRT / SSA(ASS) / VTT → clean WebVTT with BOM + charset sniffing</td><td class="m">subsToVtt / srt2vttFull / ass2vtt / subDecode</td><td class="ok">in source</td></tr>
+      <tr><td>Own overlay render (not the raw <code>&lt;track&gt;</code>), cross-browser-identical styling + live offset</td><td class="m">S.el.subCue, __subsRendererPresent</td><td class="ok">in source</td></tr>
+      <tr><td>Language picker: Off + per-language rows (English first), count badges, −250/−50/+50/+250 sync</td><td class="m">rebuildSubMenu</td><td class="ok">in source</td></tr>
+      <tr><td>localStorage <code>hp.subs.cfg</code>, last-used language auto-applied, styling persisted, merge-safe</td><td class="m">subCfg / subCfgSet</td><td class="ok">in source</td></tr>
+      <tr><td><b>Whisper auto-sync / coherence engine</b> (GOAL-subtitles.md): match by first/last-sentence times + delta pattern, one-shot fine-sync, background harvest</td><td class="m">only capability-detected — <code>window.SubsAutoSync</code> is guarded, never defined in <code>js/</code></td><td class="no">not shipped</td></tr>
+    </tbody>
+  </table></div>
+  <div class="box warn"><span class="lab">the honest gap</span>
+    <p style="margin:0">The <b>standard, fully-featured live subtitle system shipped and is live</b> in the
+      player. The <b>whisper auto-sync engine</b> — the blazing-fast coherence-and-fine-sync half of the
+      original goal — did <b>not</b> ship as code: <code>js/player.js</code> only capability-detects a
+      <code>window.SubsAutoSync</code> module and hands it a clean interop surface
+      (<code>SubsSource.list</code>, the shared <code>hp.subs.cfg</code> config, the
+      <code>__subsRendererPresent</code> handshake). Every integration seam for it exists; the engine
+      behind the seam does not. Reported here rather than implied as done.</p></div>
+</div></section>
+
+<footer class="ft"><div class="wrap">
+  honestporn · browser-only mission close-out · subtitles lane ·
+  <a href="index.html">back to the dev showcase</a> · nothing was published — all local.
+</div></footer>
+
+<script>
+(function(){var K='hp-report-theme';var r=document.documentElement;try{var s=localStorage.getItem(K);if(s)r.setAttribute('data-theme',s);}catch(e){}
+function cur(){var a=r.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+window.__toggleTheme=function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem(K,n);}catch(e){}var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=n==='dark'?'◐ dark':'◑ light';};
+addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=cur()==='dark'?'◐ dark':'◑ light';});})();
+</script>

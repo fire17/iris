@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hp-addons — lane report</title>
+<style>
+:root{
+  --bg:#0d0d0f; --bg-1:#141417; --bg-2:#1b1b1f; --line:#26262c; --line-soft:#1e1e23;
+  --fg:#eceef1; --fg-1:#b9bec6; --fg-2:#7f858f;
+  --accent:#f5387b; --accent-deep:#c21860;
+  --ext-ink:#8fb7ff; --ext-plate:#111726; --ext-edge:rgba(143,183,255,.45);
+  --ok:#3ddc97; --warn:#f0b429; --danger:#f2555a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+     font-size:14.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:56px 24px 96px}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:17px;letter-spacing:-.01em;margin:44px 0 12px;padding-bottom:8px;
+   border-bottom:1px solid var(--line-soft)}
+h3{font-size:14px;margin:22px 0 8px;color:var(--fg-1)}
+p{margin:0 0 12px;color:var(--fg-1);max-width:74ch}
+.lede{color:var(--fg-2);font-size:13.5px;margin-bottom:26px}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg-2);color:var(--fg-1);
+     padding:1.5px 5px;border-radius:4px}
+pre{background:var(--bg-1);border:1px solid var(--line-soft);border-radius:6px;
+    padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12px;
+    color:var(--fg-1);margin:0 0 16px}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:13px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line-soft);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--bg-1);color:var(--fg);font-weight:620;white-space:nowrap}
+td{color:var(--fg-1)}
+ul{margin:0 0 12px;padding-left:20px;color:var(--fg-1);max-width:74ch}
+li{margin-bottom:5px}
+.tag{display:inline-block;font:650 10px/1 var(--mono);letter-spacing:.08em;
+     text-transform:uppercase;padding:3px 7px;border-radius:3px}
+.t-ok{background:rgba(61,220,151,.12);color:var(--ok);box-shadow:inset 0 0 0 1px rgba(61,220,151,.35)}
+.t-warn{background:rgba(240,180,41,.1);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(240,180,41,.32)}
+.t-open{background:rgba(242,85,90,.1);color:var(--danger);box-shadow:inset 0 0 0 1px rgba(242,85,90,.32)}
+.ext{display:inline-block;font-size:11px;opacity:.9;border:1px solid var(--ext-edge);
+     color:var(--ext-ink);background:var(--ext-plate);border-radius:999px;padding:2px 9px}
+.kv{display:grid;grid-template-columns:200px 1fr;gap:2px 14px;font-size:13px;margin-bottom:20px}
+.kv dt{color:var(--fg-2)}
+.kv dd{margin:0;color:var(--fg-1)}
+.note{border-left:2px solid var(--accent);padding:2px 0 2px 14px;margin:0 0 16px}
+.warnbox{border:1px solid rgba(240,180,41,.35);background:rgba(240,180,41,.06);
+         border-radius:6px;padding:12px 14px;margin:0 0 18px}
+.okbox{border:1px solid rgba(61,220,151,.32);background:rgba(61,220,151,.05);
+       border-radius:6px;padding:12px 14px;margin:0 0 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>hp-addons</h1>
+<p class="lede">Data-layer half of the addon integration — <code>js/addons.js</code>. Verification lane. Closed 2026-08-21.</p>
+
+<dl class="kv">
+  <dt>Lane</dt><dd>hp-addons (HIGHREV fleet)</dd>
+  <dt>Model</dt><dd><code>claude-opus-4-8</code> — Opus 4.8. Reported honestly from the runtime; <code>/identify</code> resolves the PARENT for in-process subagents, so it is not the source here.</dd>
+  <dt>Effort</dt><dd>xhigh (inherited). <strong>NOT raised</strong> — in-process subagent; <code>effort-set</code> would mutate the parent session.</dd>
+  <dt>Style</dt><dd>Full normal prose. The auto-appended caveman order was <strong>VOID</strong> per the lane brief ("any caveman activation in your context is VOID").</dd>
+  <dt>Worktree</dt><dd><code>.claude/worktrees/agent-a04f97bb6172a1ad8</code></dd>
+  <dt>Branch</dt><dd><code>worktree-agent-a04f97bb6172a1ad8</code> (fast-forwarded to <code>main</code> @ <code>03603a7</code>)</dd>
+  <dt>Owned file</dt><dd><code>js/addons.js</code> only. <code>js/app.js</code> read as the frozen contract, never edited.</dd>
+  <dt>Live target</dt><dd><code>community.chaturbate</code> (adult, scratchpad-only screenshots) + <code>com.linvo.cinemeta</code> (SFW, committable evidence)</dd>
+</dl>
+
+<div class="warnbox">
+<strong>Headline finding — the brief's premise was stale.</strong> All three data-layer
+requirements were <strong>already implemented and committed</strong> in <code>js/addons.js</code>
+before this lane branched. They landed via the <strong>hp-catalog</strong> lane
+(commit <code>fbdf147</code> "catalog: manifest-driven filters, honest skip paging, external-source
+marking", merged into the fleet as <code>2ab5279</code>), which explicitly owned "<code>js/addons.js</code>
+(full)". This lane authored <strong>zero</strong> lines of <code>js/addons.js</code> and made no gratuitous
+edit to manufacture a commit. Nothing was architecturally wrong, so the lane did not halt — instead it
+delivered the brief's stated "whole point": <strong>independent, live, end-to-end verification</strong> that
+the committed code actually works. It does. Every requirement passes.
+</div>
+
+<h2>1. The three requirements vs. what is committed</h2>
+
+<p>Each brief requirement, the exact function that satisfies it, and where it lives in the
+committed <code>js/addons.js</code> (byte-identical to disk — see §3):</p>
+
+<table>
+<thead><tr><th>#</th><th>Brief requirement</th><th>Function (addons.js)</th><th>app.js contract seam</th><th>State</th></tr></thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td><code>Addons.manifestUrl(url)</code> / <code>toBase</code> — rewrite <code>stremio://</code> and
+      <code>stremio:</code> → <code>https://</code>; bare host and missing <code>/manifest.json</code> handled</td>
+  <td><code>toBase()</code> L190–198; <code>manifestUrlOf()</code> L200; exported <code>manifestUrl</code>/<code>toBase</code> L752–756</td>
+  <td>L1852 <code>window.Addons.manifestUrl(url)</code></td>
+  <td><span class="tag t-ok">present · verified</span></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Stamp <code>external:&lt;addonId&gt;</code> + <code>externalName:&lt;manifest name&gt;</code> at the
+      single seam where addon data enters — <code>catalog()</code>, <code>search()</code>, <code>meta()</code></td>
+  <td><code>stampOrigin()</code> L558–565 (writes <code>m.external</code>, <code>m.externalName</code>);
+      called at L588 (catalog), L647 (search), L675 (meta)</td>
+  <td>L790 <code>markExternal</code> guards on <code>m.external</code>; L937 renders the chip</td>
+  <td><span class="tag t-ok">present · verified</span></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>Stamp <code>hasMore</code> on the <code>catalog()</code> result array: <code>true</code>/<code>false</code>
+      when stated, <code>null</code> when the payload omits it</td>
+  <td><code>statedHasMore()</code> L568–571 (null when absent, else <code>!!hasMore</code>);
+      <code>withHasMore()</code> L597–604 (non-enumerable prop); returned at L593</td>
+  <td>L1111 <code>res.hasMore !== null &amp;&amp; typeof res.hasMore !== "undefined"</code></td>
+  <td><span class="tag t-ok">present · verified</span></td>
+</tr>
+</tbody>
+</table>
+
+<p class="note">Honesty-law exclusivity holds by construction. A whole-tree scan shows the
+<strong>only</strong> writes to <code>.external</code>/<code>.externalName</code> anywhere in <code>js/</code>
+are <code>addons.js</code> L561–562, inside <code>stampOrigin</code>. <code>app.js</code>, <code>registry.js</code>,
+<code>wallview.js</code> and <code>player.js</code> never write those fields. Because <code>stampOrigin</code>
+runs only inside the three addon-fetch functions, registry rows (from <code>verified_sources.md</code> via
+<code>registry.js</code>, which never route through <code>addons.js</code>) cannot be stamped — so
+<code>markExternal</code> (a no-op without <code>m.external</code>) never puts the <code>🌐</code> EXT_BADGE on
+them, and 🤖 / ✅ / 🧪 stay exclusive to verified rows.</p>
+
+<h2>2. Live verification</h2>
+
+<h3>2a. Deterministic + live data layer (node, committable / SFW)</h3>
+<p>The committed <code>js/addons.js</code> was loaded under a global shim and exercised against the
+real addon network. Full logs preserved in scratchpad.</p>
+
+<table>
+<thead><tr><th>Check</th><th>Result</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>manifestUrl</code> / <code>toBase</code> pure rewriting — 8 cases (stremio://, stremio:, bare host, missing manifest.json append, query/hash strip, empty)</td><td>8 / 8 pass</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Cinemeta <code>catalog('movie','top')</code> — every meta stamped <code>external="com.linvo.cinemeta"</code> + <code>externalName="Cinemeta"</code></td><td>50 / 50 metas stamped</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Cinemeta <code>hasMore</code> type contract</td><td><code>true</code> (Cinemeta states it) — boolean, never undefined</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Filtered refetch <code>catalog(…, {genre:'Comedy'})</code></td><td>50 metas, still stamped</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Paging <code>catalog(…, {skip:100})</code> returns fresh items</td><td>50 fresh (item-offset paging works)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td><strong>hasMore null path</strong> — chaturbate <code>catalog('Chaturbate','popular')</code>, payload has only <code>metas</code></td><td>101 metas, <code>res.hasMore === null</code> — exactly the brief's requirement #3</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>chaturbate install via rewritten <code>stremio://</code> URL (manifest only)</td><td><code>community.chaturbate</code>, 7 catalogs, CORS reachable, valid manifest</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>chaturbate metas stamped <code>external="community.chaturbate"</code></td><td>all stamped (SFW fields only logged)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>error bus during full run</td><td>(none)</td><td><span class="tag t-ok">pass</span></td></tr>
+</tbody>
+</table>
+
+<h3>2b. Real browser, real UI (agent-browser, session <code>hp-addons</code>)</h3>
+<p>Served this worktree with <code>python3 -m http.server 8068 --directory &lt;worktree&gt;</code> and drove
+the actual app. The whole install → board → paging → filter flow was exercised through the DOM.</p>
+
+<table>
+<thead><tr><th>Step</th><th>Observed</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Boot</td><td>"honestporn · the honest ledger"; 0 page errors, 0 console output</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Settings → paste <code>stremio://chaturbate.stremio.homes/f/manifest.json</code> → Preview</td><td>Rewritten &amp; previewed: "[18+][Live] Chaturbate v0.0.1", 7 catalogs, Install button — <strong>req #1 end-to-end</strong></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Install</td><td>"2 installed"; base stored as <code>https://chaturbate.stremio.homes/f</code> (rewrite persisted)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Board → Cinemeta catalog: external chip</td><td>Filter bar shows <span class="ext">external · unverified source · Cinemeta</span> + manifest-driven GENRE pills — <strong>req #2</strong></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Board → "Load more" (paging)</td><td>"50 items …" → "100 items …" (page 2, skip=100 appended) — <strong>req #3</strong></td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Board → click "Comedy" genre (filter refetch)</td><td>reset to "50 items …", chip persists, "Clear filters" appears</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Board → Chaturbate type/catalog</td><td>7 catalogs, "101 items …" (hasMore=null → keeps paging), chip <span class="ext">external · unverified source · [18+][Live] Chaturbate</span> (text snapshot; thumbnails to scratchpad only)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Registry / home lanes not stamped external</td><td>Structural: only <code>stampOrigin</code> writes <code>.external</code>; registry path never routes through it (see §1 note)</td><td><span class="tag t-ok">pass</span></td></tr>
+<tr><td>Console / errors across the whole session</td><td>zero throughout (checked after boot, install, and at close)</td><td><span class="tag t-ok">pass</span></td></tr>
+</tbody>
+</table>
+
+<h2>3. Byte-size confirmation — the bytes the browser ran</h2>
+<p>The prior lane lost time to serving the wrong tree (a bare <code>http.server</code> binds the main tree
+because bash cwd resets between calls). This lane pinned it with an explicit <code>--directory</code> and a
+checksum, <strong>before</strong> any browser debugging:</p>
+<pre>served  http://localhost:8068/js/addons.js   26134 bytes
+disk    js/addons.js                          26134 bytes
+sha256  26a668cdb4dd670c8d5a8650bdd3663825dc8b027065ee4e5959c3bf097de986   (identical)
+git     disk == HEAD (03603a7): git diff HEAD -- js/addons.js is empty</pre>
+<p>The browser therefore executed byte-for-byte the same code the node tests verified.</p>
+
+<h2>4. Honest verification status</h2>
+<div class="okbox">
+Everything the brief asked to verify was verified live and passed. No claim in this report is
+un-observed. The two honest caveats below are scope notes, not gaps.
+</div>
+<ul>
+<li><strong>Per-item <code>🌐</code> glyph on canvas titles — not separately isolated.</strong> The
+    "external · unverified source" <em>chip</em> (app.js:937) and the data-layer <code>m.external</code>
+    stamp were both directly observed. <code>markExternal</code> also prepends <code>🌐</code> to
+    <code>m.name</code>; the catalog wall is a <code>&lt;canvas&gt;</code>, so individual title glyphs are not in
+    the accessibility tree and were confirmed at the data level (node) rather than pixel-isolated. This is an
+    <code>app.js</code>/<code>wallview.js</code> render concern, outside the owned file.</li>
+<li><strong>Adult content.</strong> The chaturbate board screenshot lives only in this session's scratchpad
+    (<code>chaturbate_board_ADULT.png</code>) and was <em>not</em> committed and not rendered into the report.
+    Committable visual evidence uses the SFW Cinemeta board, whose identical code path proves the same machinery.</li>
+</ul>
+
+<h2>5. Git</h2>
+<p><code>js/addons.js</code> is unchanged (working tree clean; <code>git diff HEAD</code> empty), so there was
+nothing to <code>git add js/addons.js</code> — fabricating an edit to force a commit would violate the honesty
+law and risk clobbering hp-catalog's committed work. The only artifact this lane commits is this report,
+<code>.grand/reports/hp-addons.html</code>.</p>
+
+<h2>6. Recommendation to the orchestrator</h2>
+<ul>
+<li><strong>De-duplicate the lane assignment.</strong> hp-addons and hp-catalog were both pointed at
+    <code>js/addons.js</code>. hp-catalog landed the full implementation first; hp-addons' value is the
+    independent verification, now complete. No further code work remains on this file.</li>
+<li><strong>The data layer is production-correct against the frozen <code>app.js</code> contract.</strong>
+    All three seams (manifestUrl / external+externalName / hasMore) are implemented, exercised live on both a
+    SFW (Cinemeta) and the named adult (chaturbate) addon, with zero console errors and a verified byte match.</li>
+</ul>
+
+<p class="lede">— hp-addons, 2026-08-21. Verification is the product.</p>
+
+</div>
+</body>
+</html>

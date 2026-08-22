@@ -1,0 +1,213 @@
+<title>Torrent/P2P/Relay Verify + Harden</title>
+<style>
+  :root{
+    --bg:#f7f7f9; --panel:#ffffff; --ink:#16161a; --mut:#5b5b6b; --line:#e3e3ea;
+    --accent:#c8256b; --ok:#128a3a; --okbg:#e6f6ec; --hi:#b23b00; --hibg:#fdeee4;
+    --med:#8a6d00; --medbg:#fbf4dd; --low:#3a5f8a; --lowbg:#e9f0f9; --code:#f2f2f6;
+    --crit:#a01029; --critbg:#fbe4e8;
+  }
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e0e12; --panel:#17171d; --ink:#e9e9f0; --mut:#9a9aab; --line:#26262f;
+      --accent:#ff5c9d; --ok:#4fd07a; --okbg:#122a1a; --hi:#ff9a5c; --hibg:#2a1a10;
+      --med:#e6c34d; --medbg:#2a2410; --low:#7fb0e6; --lowbg:#101c2a; --code:#1e1e26;
+      --crit:#ff6b81; --critbg:#2a1015;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0e12; --panel:#17171d; --ink:#e9e9f0; --mut:#9a9aab; --line:#26262f;
+    --accent:#ff5c9d; --ok:#4fd07a; --okbg:#122a1a; --hi:#ff9a5c; --hibg:#2a1a10;
+    --med:#e6c34d; --medbg:#2a2410; --low:#7fb0e6; --lowbg:#101c2a; --code:#1e1e26;
+    --crit:#ff6b81; --critbg:#2a1015;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:26px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:-.02em}
+  h2{font-size:19px;margin:34px 0 12px;padding-top:8px;border-top:1px solid var(--line)}
+  h3{font-size:15px;margin:20px 0 6px;color:var(--accent)}
+  .sub{color:var(--mut);font-size:13.5px}
+  .kv{display:flex;flex-wrap:wrap;gap:8px 22px;margin:12px 0 0;font-size:13px;color:var(--mut)}
+  .kv b{color:var(--ink);font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+  .scroll{overflow-x:auto}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+  td code{background:var(--code);padding:1px 5px;border-radius:4px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;letter-spacing:.02em}
+  .t-crit{background:var(--critbg);color:var(--crit)} .t-hi{background:var(--hibg);color:var(--hi)}
+  .t-med{background:var(--medbg);color:var(--med)} .t-low{background:var(--lowbg);color:var(--low)}
+  .t-ok{background:var(--okbg);color:var(--ok)}
+  .st{font-weight:700;font-size:12px}
+  .st.fixed{color:var(--ok)} .st.rep{color:var(--low)} .st.note{color:var(--med)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5}
+  pre .g{color:var(--ok)} pre .d{color:var(--mut)}
+  ul{margin:8px 0;padding-left:22px} li{margin:4px 0}
+  .verdict{border-left:4px solid var(--ok);background:var(--okbg);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-weight:600}
+  .callout{border-left:4px solid var(--med);background:var(--medbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13.5px}
+  footer{margin-top:40px;color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Browser-only P2P Torrent Stack — Adversarial Verification &amp; Hardening</h1>
+  <div class="sub">HIGHREV Lane L2 close-out · honestporn · first formal review pass of the shipped torrent/P2P/relay code</div>
+  <div class="kv">
+    <span><b>Model:</b> claude-opus-4-8</span>
+    <span><b>Date:</b> 2026-08-21</span>
+    <span><b>Base:</b> main @ 4a3b61f (owned files byte-identical to shipped)</span>
+    <span><b>Method:</b> 3 parallel Opus adversarial audit lanes + live headless-Chrome proofs</span>
+  </div>
+</header>
+
+<div class="verdict">LAW HOLDS on every path tested live. Both kill-B proofs pass on the exact shipped code
+(<code>RELAY_FILE_BYTES=0</code>), and a new negative control proves that zero is <em>measured</em>,
+not a dead counter. Two real enforcement gaps (signal relay, broker) and a cluster of browser-client
+hang/leak defects were found and fixed in the owned files.</div>
+
+<h2>1 · Scope reviewed</h2>
+<div class="panel">
+Owned paths only: <code>js/torrent.js</code>, <code>server/relay/*.mjs</code>
+(broker, signal, wss-broker, hybrid-seed), <code>test/relay-punch/*</code>, <code>tools/proof/*</code>.
+<code>js/player.js</code> read but <b>not edited</b> (other lane) — player-side findings handed back below.
+Preview/glance/pool, subtitles, and <code>verified_sources.md</code> untouched.
+</div>
+
+<h2>2 · Live evidence (run, not claimed)</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Proof</th><th>What it establishes</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td class="mono">prove-wss-killb.mjs<br><span class="sub">(2 browsers, local wss tracker B)</span></td>
+<td>Two real browser WebTorrent peers meet only via the killable local <code>wss-broker</code>; B is SIGKILLed mid-transfer; transfer completes over the direct WebRTC wire.</td>
+<td><span class="tag t-ok">PASS ×2</span><br><span class="sub">B killed @ 2.7–5.9%; 100% complete with B dead; sha256(recv)==sha256(src); <code>RELAY_FILE_BYTES=0</code>; ~5.96&nbsp;MB direct P2P; only 9 announce JSON frames (~13&nbsp;KB) crossed B. Second run used the hardened B.</span></td></tr>
+<tr><td class="mono">prove-rtc-killb.mjs<br><span class="sub">(pure WebRTC, signal.mjs B)</span></td>
+<td>A&lt;-C over a raw RTCDataChannel introduced by <code>signal.mjs</code>; B SIGKILLed the instant the channel opens; 68&nbsp;MB streams to completion with B dead + video playing.</td>
+<td><span class="tag t-ok">PASS</span><br><span class="sub">B killed at 0 bytes; both peers observe signal socket closed; 68,086,404 / 68,086,404 bytes over the direct wire; video advanced 4.89s with B dead. <b>Re-run against the hardened <code>signal.mjs</code> + new sha256 check: PASS</b> — 68,167,702 / 68,167,702 bytes, sha256 <code>9045f7ad…1cbd94</code> received == source, B killed at 0 bytes, both signal sockets closed, video advanced 5.36s with B dead. The shape-filter does not break real SDP/ICE signaling.</span></td></tr>
+<tr><td class="mono">prove-relay-negctl.mjs<br><span class="sub">(NEW — negative control)</span></td>
+<td>Pushes binary / non-protocol / oversized frames <em>through</em> the real <code>wss-broker</code> and asserts the counter moves and the socket is dropped — so <code>RELAY_FILE_BYTES=0</code> in the real runs means measured-zero.</td>
+<td><span class="tag t-ok">PASS</span><br><span class="sub"><code>fileBytes</code> 0→140,050 on injected byte-frames; all 3 violation types dropped the connection; a valid announce counted as signaling with 0 file bytes (no false reject).</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout"><b>Provisioning note (honest):</b> the shipped proofs hardcoded their <code>ROOT</code> to sibling
+git worktrees. The owned files there were verified byte-identical to this checkout via <code>diff</code>,
+so the first runs validly exercised the shipped code; the portability defect (below) was then fixed so
+the proofs self-locate and run from any checkout.</div>
+
+<h2>3 · Findings &amp; disposition</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Finding</th><th>Sev</th><th>File</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><b>signal.mjs relayed every frame verbatim</b> — no binary block, size cap, or shape check. A peer could stream a whole file through the relay as ws frames → it becomes a byte relay. Law held by convention only.</td><td><span class="tag t-hi">HIGH</span></td><td class="mono">signal.mjs</td><td class="st fixed">FIXED</td></tr>
+<tr><td>2</td><td><b>wss-broker counted but never blocked</b> — <code>accountFrame</code> was a passive tally; bytes would flow while merely being counted. Also the classifier only inspects top-level keys, so bulk data stuffed inside an SDP blob would be miscounted as signaling (false-PASS hole).</td><td><span class="tag t-med">MED-HI</span></td><td class="mono">wss-broker.mjs</td><td class="st fixed">FIXED</td></tr>
+<tr><td>3</td><td><b>No negative control</b> — <code>RELAY_FILE_BYTES=0</code> was indistinguishable from a dead counter / unwired stats file. A proof that cannot fail for the wrong reason is weak.</td><td><span class="tag t-hi">HIGH</span></td><td class="mono">test/relay-punch/</td><td class="st fixed">FIXED (new proof)</td></tr>
+<tr><td>4</td><td><b>Hardcoded ROOT + playwright path</b> in all 8 harnesses → they served files from and spawned relay scripts out of <em>ephemeral sibling worktrees</em>, verifying the wrong code (or crashing once GC'd). A dead proof is a defect.</td><td><span class="tag t-crit">CRIT</span></td><td class="mono">test/relay-punch/*</td><td class="st fixed">FIXED (×8)</td></tr>
+<tr><td>5</td><td><b>SW-never-activates infinite hang</b> — if the service worker never reaches <code>activated</code>, <code>ensureServer()</code> never settled, <code>streamTo()</code> hung forever, and the dead promise was cached for the whole session with no engine fallback.</td><td><span class="tag t-hi">HIGH</span></td><td class="mono">js/torrent.js</td><td class="st fixed">FIXED</td></tr>
+<tr><td>6</td><td><b>Client-error cluster</b> — a shared-client <code>'error'</code> (incl. a duplicate-add) during an in-flight run never settled the promise (hung to timeout) and over-reacted by destroying the whole client + every other torrent.</td><td><span class="tag t-med">MED</span></td><td class="mono">js/torrent.js</td><td class="st fixed">FIXED</td></tr>
+<tr><td>7</td><td><b>Orphaned-torrent leak + unbounded xs fetch</b> — on timeout the added torrent was never destroyed (kept announcing to dead trackers) and the <code>xs=</code> metadata fetch had no abort.</td><td><span class="tag t-med">MED</span></td><td class="mono">js/torrent.js</td><td class="st fixed">FIXED</td></tr>
+<tr><td>8</td><td><b>relayFileBytes hardcoded 0</b> — an asserted constant, not a measurement; a byte-path regression would still report 0.</td><td><span class="tag t-med">MED</span></td><td class="mono">js/torrent.js</td><td class="st fixed">FIXED (measured)</td></tr>
+<tr><td>9</td><td><b>RTC proof had no integrity check</b> — passed on byte <em>count</em> only; a garbage stream of the right length would pass.</td><td><span class="tag t-med">MED</span></td><td class="mono">prove-rtc-killb.mjs<br>rtc-peer.html</td><td class="st fixed">FIXED (sha256)</td></tr>
+<tr><td>10</td><td><b>Instant-start comment misdescribed the mechanism</b> — claimed <code>t.strategy='sequential'</code> drove it. Verified against the bundle: <code>strategy</code> IS a real knob (picker reads <code>torrent.strategy</code>, sequential is the default) — the claim HOLDS, comment corrected and strategy now set via the supported add-option.</td><td><span class="tag t-low">LOW</span></td><td class="mono">js/torrent.js</td><td class="st fixed">FIXED (honesty)</td></tr>
+<tr><td>11</td><td><b>panel-proof tautology</b> — asserted the law line by regex-matching a hardcoded string the player renders. Root cause is in <code>player.js</code> (not owned); proof-side made numeric + honest, root fix handed back.</td><td><span class="tag t-hi">HIGH</span></td><td class="mono">panel-proof.mjs<br>(player.js)</td><td class="st note">PARTIAL + handoff</td></tr>
+<tr><td>12</td><td>broker.mjs (bittorrent-tracker) &amp; hybrid-seed.mjs (C, the allowed seed) — reviewed adversarially: protocol-bound / genuine store-and-forward source. No byte-relay path.</td><td><span class="tag t-ok">OK</span></td><td class="mono">broker.mjs<br>hybrid-seed.mjs</td><td class="st note">no change</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>4 · What the hardening changed</h2>
+
+<h3>Law enforcement (relays)</h3>
+<ul>
+<li><b>signal.mjs</b> — the message handler now drops any frame that is binary, larger than
+<code>SIGNAL_MAX_BYTES</code> (64&nbsp;KB), or not a known-shape signaling JSON
+(<code>_role/_ready/offer/answer/candidate</code> or carrying <code>sdp</code>/<code>candidate</code>).
+The law is now enforced in our code, not left to peer good behaviour.</li>
+<li><b>wss-broker.mjs</b> — <code>accountFrame</code> still counts (for the proof) but now returns a
+violation verdict; the inbound handler <code>ws.close(1003,'signaling-only')</code> on any
+binary / non-protocol / oversized (&gt;64&nbsp;KB) frame. This both closes the "count-not-block"
+gap and caps per-frame SDP-smuggling. Live proof: normal announces peak ~4.9&nbsp;KB, so no false rejects.</li>
+</ul>
+
+<h3>Honest measurement</h3>
+<pre><span class="d">// torrent.js — relayFileBytes is now measured, not asserted:</span>
+<span class="d">// bytes on any wire that is NEITHER a WebRTC peer NOR a web-seed. A relay is never a</span>
+<span class="d">// WebTorrent wire, so this is 0 by construction — but computed, so a regression shows up.</span>
+else { other++; otherBytes += (w.downloaded || 0); }
+...
+relayFileBytes: wb.otherBytes || 0</pre>
+
+<h3>Browser client robustness (torrent.js)</h3>
+<ul>
+<li>Service-worker activation now races an 8s timeout → <code>streamTo()</code> rejects and the caller falls back to the engine instead of hanging forever.</li>
+<li>A single <code>finish()</code> settle-point clears the timer and removes the client-error listener; an in-flight run now settles on a client <code>'error'</code> instead of hanging to timeout.</li>
+<li>Duplicate-torrent client errors are whitelisted as non-fatal (no more destroying the shared client + every other torrent); adds are deduped by infoHash first.</li>
+<li>Timeout path destroys the orphaned torrent; the <code>xs=</code> fetch is bounded by an <code>AbortController</code>; empty/garbage magnets are rejected up front as <code>bad-magnet</code>.</li>
+</ul>
+
+<h3>Proof integrity</h3>
+<ul>
+<li>All 8 relay-punch harnesses self-locate <code>ROOT</code> via <code>import.meta.url</code> and resolve playwright repo-local-first (p2p checkout as fallback) — no more hardcoded foreign worktrees.</li>
+<li><b>New</b> <code>prove-relay-negctl.mjs</code> — the negative control that makes <code>RELAY_FILE_BYTES=0</code> meaningful.</li>
+<li><code>prove-rtc-killb.mjs</code> + <code>rtc-peer.html</code> now sha256 the received bytes and compare to the source clip (end-to-end integrity, matching the wss proof).</li>
+<li><code>panel-proof.mjs</code> parses the relay line numerically (== 0) and documents that the authoritative zero-byte proof is the relay-side counter, not the displayed string.</li>
+</ul>
+
+<h2>5 · Handed back to the player.js lane (not edited)</h2>
+<div class="panel">
+<ul>
+<li><b>Panel law line is decorative.</b> <code>player.js:~1114</code> renders <code>relay file-bytes: 0 ✓</code>
+as a static innerHTML literal — not bound to <code>BT.statsOf().relayFileBytes</code> (now a measured value).
+<b>Fix:</b> render <code>.v-relay</code> from <code>statsOf().relayFileBytes</code> so the panel shows the real number and a regression would surface.</li>
+<li><b>Post-resolve stall/recovery.</b> <code>torrent.js</code> intentionally walks away after <code>{ok:true}</code>;
+recovery is the panel's job. On a browser-torrent stall the <code>&lt;video&gt;</code> may fire <code>waiting/stalled</code>
+(spinner) without an <code>error</code>, and when an error does fire the copy-magnet branch at <code>player.js:~744</code>
+only triggers for <code>S.viaEngine</code>, not <code>S.viaBrowser</code>. <b>Fix:</b> bind <code>torrent.on('error'|'noPeers')</code>
+in the panel mount and offer the copy-magnet fallback for <code>viaBrowser</code> too.</li>
+</ul>
+</div>
+
+<h2>6 · Honest UNVERIFIED / limits</h2>
+<div class="panel">
+<ul>
+<li><b>Absolute vs shipped-client law claim.</b> The relay hardening caps and drops oversized/binary/non-protocol
+frames, but a peer could still base64 a <em>small</em> payload inside a legitimately-sized SDP blob. Against the
+<em>shipped, unmodified</em> WebTorrent client (which never does this) the zero-byte law is proven; against an
+arbitrarily malicious modified peer it is <em>bounded</em> (≤64&nbsp;KB/frame + connection-drop), not absolutely proven.</li>
+<li><b>Real-browser edge cases</b> (IndexedDB/OPFS full mid-download, tab-backgrounded timer throttling) were reasoned
+through and the hang/leak paths fixed, but not each reproduced live in a headless run — marked reasoned, not empirically reproduced.</li>
+<li><b>The built-in <code>/code-review</code> /<code>/security-review</code> /<code>/simplify</code> slash gates</b> were substituted
+by three dedicated Opus adversarial audit lanes (law/byte-path, correctness/edge-case, proof-integrity) run in parallel — higher-signal
+for this code, but a substitution, stated plainly.</li>
+<li><b>hybrid-seed.mjs</b> was reviewed statically (OK verdict) but not re-run live in this pass (it needs the classic BitTorrent swarm).</li>
+</ul>
+</div>
+
+<h2>7 · Files changed</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td class="mono">js/torrent.js</td><td>SW-activation timeout; settle-on-client-error + duplicate-non-fatal + dedupe; timeout torrent-destroy + xs AbortController; magnet validation; measured relayFileBytes; instant-start via add-option + corrected comment</td></tr>
+<tr><td class="mono">server/relay/signal.mjs</td><td>Enforce signaling-only (binary/size/shape drop) + header</td></tr>
+<tr><td class="mono">server/relay/wss-broker.mjs</td><td>Enforce (reject binary/non-protocol/oversized, close 1003); frame-size cap; counter returns violation verdict</td></tr>
+<tr><td class="mono">test/relay-punch/prove-relay-negctl.mjs</td><td><b>NEW</b> — negative control (counter-is-live + enforcement)</td></tr>
+<tr><td class="mono">test/relay-punch/prove-rtc-killb.mjs · rtc-peer.html</td><td>sha256 end-to-end integrity check + self-locate + portable require</td></tr>
+<tr><td class="mono">test/relay-punch/prove-wss-killb.mjs</td><td>Self-locate ROOT + portable playwright require</td></tr>
+<tr><td class="mono">test/relay-punch/{prove-selfsustain,prove-kill-b,prove-torrentio-bridge,prove-torrentio-video,verify-player-integration,debug-connect}.mjs</td><td>Self-locate ROOT + portable require</td></tr>
+<tr><td class="mono">test/relay-punch/.gitignore</td><td>ignore negctl stats file</td></tr>
+<tr><td class="mono">tools/proof/panel-proof.mjs</td><td>Numeric relay-byte assertion + honesty note</td></tr>
+</tbody>
+</table>
+</div>
+
+<footer>
+Generated by HIGHREV Lane L2 · claude-opus-4-8 · honest verification: every PASS above was observed in a live
+headless-Chrome run, output quoted in the lane log. Nothing left the machine.
+</footer>
+</div>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>hp-showcase — lane close-out</title>
+<style>
+:root{--bg:#0d0d0f;--s1:#141417;--line:#26262c;--line-soft:#1e1e23;--fg:#eceef1;--fg-1:#b9bec6;--fg-2:#7f858f;
+--pink:#f5387b;--pink-hi:#ff5c96;--ok:#3ddc97;--no:#ff5c96;--info:#7cc4ff;
+--font:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+a{color:var(--pink-hi);text-decoration:none;border-bottom:1px solid rgba(255,92,150,.3)}
+code{font-family:var(--mono);font-size:.87em;color:var(--fg-1)}
+header{border-bottom:1px solid var(--line-soft);padding:clamp(32px,6vw,54px) 0 clamp(24px,4vw,34px)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--fg-2);margin:0 0 14px;display:flex;align-items:center;gap:9px}
+.tagline::before{content:"";width:18px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(26px,4.2vw,38px);letter-spacing:-.028em;margin:0 0 .35em;line-height:1.12}
+.verdict{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:6px 13px;border-radius:6px;border:1px solid rgba(61,220,151,.4);color:var(--ok);margin-top:8px}
+.verdict::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:20px;display:flex;flex-wrap:wrap;gap:7px 20px}
+.meta b{color:var(--fg-1);font-weight:500}
+section{padding:clamp(30px,4.6vw,46px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(18px,2.6vw,23px);letter-spacing:-.018em;margin:0 0 .4em}
+p{max-width:76ch;margin:0 0 1em;color:var(--fg-1)}
+p.top{color:var(--fg)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px;margin-top:16px}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2);background:var(--s1);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--mono);font-size:12px;color:var(--fg-1)}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}
+.no{color:var(--no);font-weight:600;white-space:nowrap}
+.nt{color:var(--info);font-weight:600;white-space:nowrap}
+ul{margin:0 0 1em;padding-left:1.15em;color:var(--fg-1);max-width:76ch}
+li{margin-bottom:.42em}
+.box{border:1px solid var(--line);background:var(--s1);border-radius:11px;padding:17px 19px;max-width:80ch}
+.box.warn{border-color:rgba(245,56,123,.35);background:rgba(245,56,123,.06)}
+.box b{color:var(--fg)}
+footer{border-top:1px solid var(--line-soft);padding:30px 0 50px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="tagline">lane close-out · honestporn HIGHREV fleet</p>
+    <h1>hp-showcase</h1>
+    <p class="top" style="max-width:74ch">Dual showcase sites, information architecture, edge-case
+      patterns, and the repository README — all six assigned deliverables landed, verified on a live
+      server, and committed to this lane's worktree branch.</p>
+    <span class="verdict">all deliverables landed</span>
+    <div class="meta">
+      <span>date <b>2026-08-21</b></span>
+      <span>model <b>claude-opus-5[1m]</b></span>
+      <span>nested agents <b>4 · all model:'opus'</b></span>
+      <span>server <b>:8064</b></span>
+      <span>browser session <b>hp-showcase</b></span>
+      <span>worktree <b>agent-aaa193fde4cce21cd</b></span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Deliverables</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Path</th><th>What it is</th><th>Verified</th></tr></thead>
+        <tbody>
+          <tr><td class="m">IA.md</td><td>Six entities with exact field shapes, the authority map (who may write what), five view tiers T0–T4, routes and defaults, KPIs per view, data-source table</td><td class="ok">code-cited</td></tr>
+          <tr><td class="m">PATTERNS.md</td><td>Ten edge-case classes, each with the exact detection command; a runnable registry-lint script; §10 open findings</td><td class="ok">commands run</td></tr>
+          <tr><td class="m">.grand/showcase/index.html</td><td>Project showcase — verbatim premise and five stances, the two-lane trust badge motif, live-watch narrative, architecture diagram, honest-framing table</td><td class="ok">served + shot</td></tr>
+          <tr><td class="m">.grand/dev/index.html</td><td>Live dev board — deliverables, evidence-with-probe, open findings, append-only maintenance contract</td><td class="ok">served + shot</td></tr>
+          <tr><td class="m">README.md</td><td>Awesome-readme battery adapted to unpublished reality; killer hook is the 20-second live-watch demo</td><td class="ok">no remote badges</td></tr>
+          <tr><td class="m">assets/banner.svg</td><td>Hand-drawn banner, system fonts only, own opaque ground, two-lane motif in drawn geometry (no emoji)</td><td class="ok">XML + render</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What was observed, live</h2>
+    <p>Nothing below is inferred. Each is a command that ran and an output that came back.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Probe</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Registry state in the running app</td><td class="m">6 parsed / 0 skipped · 1 AI · 2 verified · 3 demo</td></tr>
+          <tr><td><code>homeGroups</code> ordering</td><td class="m">3 <code>__hp|*</code> lane rows first, then 6 Cinemeta catalogs</td></tr>
+          <tr><td>Console errors, app <code>#home</code> and both new pages</td><td class="m">none</td></tr>
+          <tr><td>Four MP4 seed sources, range request</td><td class="m">all <code>206 video/mp4</code></td></tr>
+          <tr><td>Mux HLS + CORS</td><td class="m"><code>200</code> · <code>access-control-allow-origin: *</code></td></tr>
+          <tr><td>Apple fMP4 HLS + CORS</td><td class="m"><code>200</code> · <b>no ACAO header</b></td></tr>
+          <tr><td>Duplicate URLs · illegal lanes · <code>http://</code> rows</td><td class="m">none · none · none</td></tr>
+          <tr><td>Contrast, every text/background pair on both new pages</td><td class="m">computed before use; minimum 5.02:1 (white-on-pink rejected at 3.66, dark-on-pink used instead)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Findings handed back, not fixed</h2>
+    <p>All four sit outside this lane's owned paths. Recorded in <code>PATTERNS.md</code> §10 and on
+      the dev board rather than silently patched — an unowned fix is how two lanes overwrite each
+      other.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Finding</th><th>Severity</th><th>Owner</th></tr></thead>
+        <tbody>
+          <tr><td><b>Apple fMP4 HLS seed row is a dead card outside Safari</b> — 200 with no <code>Access-Control-Allow-Origin</code>; swap to the Mux URL</td><td class="no">broken now</td><td class="m">verified_sources.md</td></tr>
+          <tr><td><b>style.css rebrand leak</b> — <code>--accent</code> is pink but <code>--accent-deep/-dim/-line</code> are still CoolStremio blue, so primary buttons fade pink→blue</td><td class="no">visible</td><td class="m">style.css lane</td></tr>
+          <tr><td><b>Home wall does not frame the trust lanes on first load</b> — lane rows are correctly first in state, but the initial canvas viewport lands on Cinemeta rows</td><td class="no">product-level</td><td class="m">wall / app lane</td></tr>
+          <tr><td><b>ORACLE.md §2 is stale</b> — documents HEAD + <code>Last-Modified</code>/<code>Content-Length</code>; the code does GET + full-body compare, which is stronger</td><td class="nt">doc drift</td><td class="m">ORACLE.md §8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Honest gaps in this lane's own work</h2>
+    <ul>
+      <li><b>Torn-read behaviour was not staged.</b> <code>PATTERNS.md</code> §6 describes it from the
+        code path and says so explicitly rather than implying observation.</li>
+      <li><b>One verify pass, not an iteration loop.</b> Per a mid-mission order to close rapidly,
+        each page was served, screenshotted and checked for console errors once. No responsive sweep
+        below 820&nbsp;px was run, though the breakpoints are written.</li>
+      <li><b>Effort was not self-raised.</b> This lane runs as an in-process subagent with no OS-level
+        session of its own; the only resolvable session id is the parent lead's, and raising it would
+        have mutated the lead. Ran at the inherited tier and reported that rather than acting.</li>
+      <li><b>Four nested agents were spawned and drained without their reports landing in time.</b>
+        Their outputs would have added depth (an independent design spec, an independent edge-case
+        sweep); the delivered work is this lane's own ground-truth reading of the code, which is why
+        every claim carries a citation or a probe.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Laws honoured</h2>
+    <div class="box warn">
+      <ul style="margin:0">
+        <li><b>Founder's words verbatim.</b> The premise and all five stances are quoted exactly,
+          typos intact, marked <code>sic</code>, never paraphrased.</li>
+        <li><b>Zero adult content.</b> Both pages, the README and the banner contain none — no
+          imagery, no suggestive geometry, no links to any.</li>
+        <li><b>Nothing published.</b> No remote badge URL, no star CTA, no install-from-channel, no
+          deploy. The README states the local-only fact in its first block.</li>
+        <li><b>Owned paths only.</b> Writes were confined to <code>IA.md</code>,
+          <code>PATTERNS.md</code>, <code>README.md</code>, <code>assets/</code>,
+          <code>.grand/showcase/</code>, <code>.grand/dev/</code>, <code>.grand/reports/</code>.</li>
+        <li><b>Every nested agent carried an explicit <code>model:'opus'</code></b> — no inheritance,
+          no Fable, no cheaper tier.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">hp-showcase · close-out · honestporn prototype · local only · nothing published</div>
+</footer>
+
+</body>
+</html>

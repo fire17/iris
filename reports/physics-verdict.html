@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Transport-Law Verdict</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* ── shared design system (report.css, inlined verbatim — self-contained) ───── */
+/* honestporn HIGHREV close-out reports — shared theme-aware design system.
+   Light palette on bare :root; dark redefined under prefers-color-scheme AND
+   [data-theme="dark"] so the toggle wins in both directions. Self-contained,
+   system fonts only, no external assets. */
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:940px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--pink-hi) 34%,transparent)}
+a:hover{border-bottom-color:var(--pink-hi)}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);
+  padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+/* header */
+header.hd{border-bottom:1px solid var(--line-soft);padding:clamp(34px,6vw,60px) 0 clamp(26px,4vw,36px)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 15px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(27px,4.4vw,42px);letter-spacing:-.03em;margin:0 0 .3em;line-height:1.1;color:var(--fg)}
+.lede{max-width:74ch;font-size:clamp(15.5px,1.9vw,17.5px);color:var(--fg-1);margin:.2em 0 0}
+.badges{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:999px;border:1px solid}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%}
+.badge.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--ok-tint)}
+.badge.ok::before{background:var(--ok)}
+.badge.no{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,transparent);background:var(--no-tint)}
+.badge.no::before{background:var(--no)}
+.badge.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent);background:var(--info-tint)}
+.badge.info::before{background:var(--info)}
+.badge.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-tint)}
+.badge.warn::before{background:var(--warn)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:22px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.meta b{color:var(--fg-1);font-weight:500}
+/* sections */
+section{padding:clamp(32px,4.8vw,50px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(19px,2.7vw,25px);letter-spacing:-.02em;margin:0 0 .5em;color:var(--fg)}
+h3{font-size:clamp(15.5px,1.9vw,17px);letter-spacing:-.01em;margin:1.6em 0 .5em;color:var(--fg)}
+p{max-width:76ch;margin:0 0 1em;color:var(--fg-1)}
+p.top{color:var(--fg)}
+ul,ol{margin:0 0 1em;padding-left:1.2em;color:var(--fg-1);max-width:78ch}
+li{margin-bottom:.44em}
+li::marker{color:var(--pink)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin:0 0 6px}
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--fg-2);background:var(--s2);font-weight:600;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--s2)}
+td.m{font-family:var(--mono);font-size:12.5px;color:var(--fg-1)}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}
+.no{color:var(--no);font-weight:600;white-space:nowrap}
+.nt{color:var(--info);font-weight:600;white-space:nowrap}
+.wn{color:var(--warn);font-weight:600;white-space:nowrap}
+/* boxes / callouts */
+.box{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:18px 20px;max-width:82ch;box-shadow:var(--shadow)}
+.box+.box{margin-top:14px}
+.box.warn{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-tint)}
+.box.no{border-color:color-mix(in srgb,var(--no) 40%,transparent);background:var(--no-tint)}
+.box.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:var(--ok-tint)}
+.box .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin:0 0 8px;display:block}
+.box.warn .lab{color:var(--warn)} .box.no .lab{color:var(--no)} .box.ok .lab{color:var(--ok)}
+/* code / proof blocks */
+pre{margin:16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;overflow-x:auto;box-shadow:var(--shadow)}
+pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:1.7;color:var(--fg-1)}
+pre .c{color:var(--fg-2)} pre .g{color:var(--ok)} pre .r{color:var(--no)} pre .p{color:var(--pink-hi)} pre .b{color:var(--info)}
+.cap{font-family:var(--mono);font-size:11px;color:var(--fg-2);margin:6px 2px 0}
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.stat{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat .n{font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--fg);font-family:var(--mono)}
+.stat .n.ok{color:var(--ok)} .stat .n.no{color:var(--no)} .stat .n.pink{color:var(--pink)}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+/* diagram */
+.diagram{margin:20px 0;border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:8px;box-shadow:var(--shadow);overflow-x:auto}
+.diagram svg{display:block;width:100%;height:auto;min-width:520px}
+/* nav / footer */
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav a.home{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);border:0;display:flex;align-items:center;gap:8px}
+.topnav a.home::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+footer.ft{border-top:1px solid var(--line-soft);padding:32px 0 60px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+footer.ft a{color:var(--fg-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+
+/* ── page-specific ─────────────────────────────────────────────────────────── */
+.verdictline{font-family:var(--mono);font-size:clamp(13px,1.7vw,15px);color:var(--fg);
+  border-left:3px solid var(--no);padding:2px 0 2px 14px;margin:18px 0;max-width:78ch}
+.lawquote{font-style:italic;color:var(--fg);max-width:70ch;margin:0}
+.dg-box{fill:var(--s2);stroke:var(--fg-2);stroke-width:1.5}
+.dg-chip{fill:var(--s1);stroke:var(--line);stroke-width:1}
+.dg-relay{fill:var(--ok-tint);stroke:var(--ok);stroke-width:1.5;stroke-dasharray:5 4}
+.dg-t{fill:var(--fg);font-size:13.5px;font-weight:700;font-family:var(--font)}
+.dg-l{fill:var(--fg-1);font-size:11.5px;font-family:var(--mono)}
+.dg-s{fill:var(--fg-2);font-size:11px;font-family:var(--mono)}
+.dg-arr{stroke:var(--fg-2);stroke-width:1.4;fill:none}
+.dg-x{stroke:var(--no);stroke-width:2.2;stroke-linecap:round}
+.dg-wall{stroke:var(--no);stroke-width:3;stroke-dasharray:9 7;opacity:.9}
+.dg-no-t{fill:var(--no);font-size:11.5px;font-weight:700;font-family:var(--mono);letter-spacing:.08em}
+.dg-ok-t{fill:var(--ok);font-size:11.5px;font-weight:700;font-family:var(--mono)}
+.dg-sig{stroke:var(--ok);stroke-width:1.4;fill:none;stroke-dasharray:4 4;opacity:.85}
+.dg-pink-t{fill:var(--pink);font-size:11px;font-family:var(--mono);letter-spacing:.06em}
+</style>
+
+</head>
+<body>
+
+<nav class="topnav"><div class="wrap">
+  <a class="home" href="index.html">honestporn · close-out reports</a>
+  <span class="sp"></span>
+  <button class="tglbtn" data-theme-btn onclick="__toggleTheme()">theme</button>
+</div></nav>
+
+<header class="hd"><div class="wrap">
+  <p class="tagline">lane close-out · honestporn HIGHREV</p>
+  <h1>The Transport-Law Verdict</h1>
+  <p class="lede">A browser cannot play an arbitrary TCP-only BitTorrent magnet without someone
+  putting a node in the byte path. This is not a difficulty rating and not a hedge — it is a proof,
+  built from the four transports a browser can actually open, and confirmed by live measurement
+  against a healthy 54-seeder swarm that contains exactly zero peers a browser can talk to.</p>
+  <div class="badges">
+    <span class="badge no">verdict: impossible</span>
+    <span class="badge ok">one compliant boundary: user brings bytes</span>
+  </div>
+  <div class="meta">
+    <span><b>date</b> 2026-08-21</span>
+    <span><b>model</b> claude-opus</span>
+    <span><b>target</b> Spider-Man: No Way Home (YTS) 2021 720p · <code>a648d96d5b4a163f72edc3574a6370bc41d062d0</code></span>
+    <span><b>THE LAW</b> a node we run may relay signaling only — never file bytes</span>
+  </div>
+</div></header>
+
+<main>
+
+<section><div class="wrap">
+  <p class="eyebrow">the constraint everything is measured against</p>
+  <h2>The law</h2>
+  <div class="box">
+    <span class="lab">fire17 — verbatim, non-negotiable</span>
+    <p class="lawquote">Any node we run may relay handshakes/signaling ONLY. It must NEVER carry
+    file bytes. Files flow peer→browser directly, or not through us. A bridge/proxy that re-serves
+    torrent bytes to the browser VIOLATES the law and is a FAILED result — even if it "works".</p>
+  </div>
+  <p style="margin-top:18px">Everything below is judged by that single sentence. A path that moves the
+  movie is not a success if our node touched the bytes; a path that fails honestly is a result worth
+  publishing. The verdict on this page is the honest one.</p>
+  <p class="verdictline">VERDICT: IMPOSSIBLE — for arbitrary TCP-only content the user does not
+  already have. A proof, not a hedge.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">the mechanism</p>
+  <h2>Four transports, and there is no fifth</h2>
+  <p class="top">A browser obtains bytes over exactly four transports. Every one of them requires the
+  <b>far side</b> to complete a specific handshake before a single byte moves. A vanilla BitTorrent
+  swarm peer — unmodified, the kind that actually holds this movie — performs none of them.</p>
+
+  <div class="tablewrap"><table>
+    <thead><tr>
+      <th>Browser can open</th>
+      <th>Mandatory handshake the far side MUST perform</th>
+      <th>Raw TCP/uTP BT peer performs it?</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>WebRTC DataChannel</b></td><td class="m">ICE (STUN binding) → DTLS → SCTP</td><td class="no">NO</td></tr>
+      <tr><td><b>WebSocket</b></td><td class="m">HTTP/1.1 <code>Upgrade: websocket</code></td><td class="no">NO</td></tr>
+      <tr><td><b>WebTransport</b></td><td class="m">HTTP/3 = QUIC + TLS 1.3</td><td class="no">NO</td></tr>
+      <tr><td><b>HTTP fetch / range</b></td><td class="m">HTTP request/response (+ CORS)</td><td class="no">NO</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>A raw BitTorrent peer answers a TCP connect with the 19-byte
+  <code>\x13BitTorrent protocol</code> handshake, or it answers uTP — a bespoke UDP framing with
+  LEDBAT. It speaks neither ICE nor DTLS nor HTTP nor QUIC. The mismatch is total, and it is not a
+  configuration problem: the peer cannot be modified, and the browser cannot emit raw packets to meet
+  the peer on the peer's own protocol.</p>
+
+  <h3>Why the three obvious escapes are closed</h3>
+  <ul>
+    <li><b>There is no fifth transport.</b> Direct Sockets (<code>TCPSocket</code>/<code>UDPSocket</code>)
+    exists in Chromium, but it ships only inside Isolated Web Apps — and IWAs install only on
+    Chrome-Enterprise-managed ChromeOS. It is never available to an ordinary <code>https://</code>
+    page, which is what this app is.</li>
+    <li><b>A signaling relay changes introductions, not protocol.</b> The law permits us to relay
+    SDP/ICE all day. It buys nothing here: once introduced, the browser can still only offer
+    ICE+DTLS, and the raw peer still cannot answer it.</li>
+    <li><b>TURN is the only ICE path to a non-STUN host — and TURN relays the media.</b> By
+    definition a TURN server carries the bytes. That is a byte-path node, which the law forbids
+    outright. Excluded.</li>
+  </ul>
+
+  <p>The single cleanest statement of the wall: <b>every transport a browser can dial requires a
+  handshake that a raw TCP/uTP BitTorrent peer cannot perform, and the browser cannot drop to the
+  peer's protocol to meet it.</b></p>
+
+  <div class="diagram">
+  <svg viewBox="0 0 900 350" role="img" aria-label="A browser can only emit WebRTC, WebSocket, WebTransport and HTTP; a raw TCP/uTP BitTorrent peer speaks only the BitTorrent wire; no shared transport exists between them, and a signaling relay changes only introductions.">
+    <!-- signaling relay (allowed, but useless here) -->
+    <rect class="dg-relay" x="298" y="6" width="304" height="46" rx="10"/>
+    <text class="dg-ok-t" x="450" y="26" text-anchor="middle">signaling relay — permitted by the law</text>
+    <text class="dg-s" x="450" y="42" text-anchor="middle">changes introductions, not protocol</text>
+    <path class="dg-sig" d="M150 70 C150 34 220 30 296 30"/>
+    <path class="dg-sig" d="M604 30 C680 30 716 46 716 70"/>
+
+    <!-- browser -->
+    <rect class="dg-box" x="26" y="70" width="248" height="206" rx="12"/>
+    <text class="dg-t" x="46" y="96">browser</text>
+    <text class="dg-s" x="46" y="112">normal https:// page — can emit only:</text>
+    <rect class="dg-chip" x="46" y="122" width="208" height="26" rx="7"/>
+    <text class="dg-l" x="58" y="139">WebRTC DataChannel</text>
+    <rect class="dg-chip" x="46" y="156" width="208" height="26" rx="7"/>
+    <text class="dg-l" x="58" y="173">WebSocket</text>
+    <rect class="dg-chip" x="46" y="190" width="208" height="26" rx="7"/>
+    <text class="dg-l" x="58" y="207">WebTransport</text>
+    <rect class="dg-chip" x="46" y="224" width="208" height="26" rx="7"/>
+    <text class="dg-l" x="58" y="241">HTTP fetch / range</text>
+    <text class="dg-s" x="46" y="266">no raw TCP · no raw UDP</text>
+
+    <!-- attempts -->
+    <line class="dg-arr" x1="276" y1="135" x2="440" y2="135"/>
+    <line class="dg-arr" x1="276" y1="169" x2="440" y2="169"/>
+    <line class="dg-arr" x1="276" y1="203" x2="440" y2="203"/>
+    <line class="dg-arr" x1="276" y1="237" x2="440" y2="237"/>
+    <g class="dg-x">
+      <line x1="443" y1="128" x2="457" y2="142"/><line x1="457" y1="128" x2="443" y2="142"/>
+      <line x1="443" y1="162" x2="457" y2="176"/><line x1="457" y1="162" x2="443" y2="176"/>
+      <line x1="443" y1="196" x2="457" y2="210"/><line x1="457" y1="196" x2="443" y2="210"/>
+      <line x1="443" y1="230" x2="457" y2="244"/><line x1="457" y1="230" x2="443" y2="244"/>
+    </g>
+
+    <!-- the wall -->
+    <line class="dg-wall" x1="478" y1="66" x2="478" y2="288"/>
+    <text class="dg-no-t" x="478" y="306" text-anchor="middle">NO SHARED TRANSPORT</text>
+
+    <!-- peer -->
+    <rect class="dg-box" x="518" y="70" width="356" height="206" rx="12"/>
+    <text class="dg-t" x="540" y="96">raw TCP / uTP swarm peer</text>
+    <text class="dg-s" x="540" y="112">unmodified BitTorrent client — speaks only:</text>
+    <rect class="dg-chip" x="540" y="122" width="312" height="26" rx="7"/>
+    <text class="dg-l" x="552" y="139">TCP · \x13BitTorrent protocol handshake</text>
+    <rect class="dg-chip" x="540" y="156" width="312" height="26" rx="7"/>
+    <text class="dg-l" x="552" y="173">uTP · UDP + LEDBAT framing</text>
+    <text class="dg-s" x="540" y="200">performs no ICE / DTLS / SCTP</text>
+    <text class="dg-s" x="540" y="218">performs no HTTP Upgrade</text>
+    <text class="dg-s" x="540" y="236">performs no QUIC / TLS 1.3</text>
+    <text class="dg-s" x="540" y="262">holds all the bytes · reachable by every non-browser</text>
+
+    <!-- footnote -->
+    <text class="dg-pink-t" x="450" y="334" text-anchor="middle">the only ICE path to a non-STUN host is TURN — and TURN relays the media bytes = byte-path node = forbidden</text>
+  </svg>
+  </div>
+  <p class="cap">The wall. Four arrows leave the browser; none of them lands. The relay above is
+  allowed by the law and still cannot help — it moves introductions, not protocols.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">the second, independent proof</p>
+  <h2>The bootstrap paradox</h2>
+  <p class="top">Suppose we give up on reaching the classic swarm and imagine a pure browser-to-browser
+  WebRTC swarm instead — browsers seeding to browsers, no node in the byte path, perfectly
+  law-compliant. It cannot start.</p>
+  <p>To seed content over WebRTC, a browser must <b>first possess the bytes</b>. A browser can only
+  get bytes over the four transports above. For content that lives only in a TCP/uTP swarm, the
+  <b>genesis browser</b> could only have obtained it from a byte-path node — a hybrid seeder, a
+  mirror, a gateway — which violates the law the moment it happens, even once.</p>
+  <div class="box no">
+    <span class="lab">the paradox, exactly</span>
+    <p style="margin:0">No byte-path node ⇒ no genesis seeder ⇒ no browser WebRTC swarm ever forms.
+    The first WebRTC seeder cannot exist without a byte-path node, because WebRTC-seeding
+    presupposes already holding bytes that only TCP/uTP could have delivered.</p>
+  </div>
+  <p style="margin-top:18px">This is why the verdict is a proof and not a measurement artifact. Even
+  if every wall on the transport side were somehow lifted tomorrow, the swarm for a given title still
+  has to be seeded by <em>someone</em>, and under the law that someone cannot be us.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">the sharp boundary</p>
+  <h2>The one compliant browser-P2P mode</h2>
+  <p class="top">There is exactly one shape of browser-to-browser P2P that satisfies the law
+  completely, and it is worth naming precisely because it marks where "impossible" stops.</p>
+  <div class="box ok">
+    <span class="lab">law-compliant — user brings the bytes</span>
+    <p style="margin:0">If the user <b>already has the file locally</b> (File System Access API or
+    drag-and-drop), the browser can seed it to other browsers over WebRTC with <b>zero node in the
+    byte path</b>. Genuinely compliant. Genuinely peer-to-peer.</p>
+  </div>
+  <p style="margin-top:18px">The catch is the whole point: it requires already possessing the
+  content. It does not play an arbitrary magnet the user lacks — which is the question this lane was
+  asked. That is the sharp boundary between <b class="ok">possible</b> (user brings bytes) and
+  <b class="no">impossible</b> (arbitrary magnet, no local copy). Everything on the possible side of
+  that line is shipped and proven elsewhere in this report set; everything on the other side is what
+  this page rules out.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">measured, not assumed</p>
+  <h2>The swarm is healthy. It has zero peers a browser can reach.</h2>
+  <p class="top">The mechanism above predicts a specific, falsifiable observation: for a real, busy,
+  fully-seeded torrent, the count of browser-reachable seeders should be zero — not low, zero. We
+  measured it. It is zero.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">54</div><div class="k">max seeders (TCP/uTP)</div></div>
+    <div class="stat"><div class="n">76</div><div class="k">TCP peers handed out</div></div>
+    <div class="stat"><div class="n no">0</div><div class="k">browser-reachable WebRTC seeders</div></div>
+    <div class="stat"><div class="n pink">4</div><div class="k">transports · no fifth</div></div>
+  </div>
+
+<pre><code><span class="c">$ node test/novel-path/proof-measure.mjs   # signaling/handshake only — carries no file bytes</span>
+<span class="c">infohash</span> a648d96d5b4a163f72edc3574a6370bc41d062d0
+
+<span class="b">TCP/uTP SWARM — what every non-browser sees</span>
+  udp://tracker.opentrackr.org:1337/announce    seeders <span class="g">54</span>   leechers <span class="g">301</span>
+  udp://open.demonii.com:1337/announce          seeders  <span class="g">3</span>   leechers <span class="g">204</span>
+  tcpPeersHandedOut <span class="g">76</span>      maxSeeders <span class="g">54</span>
+  <span class="c">DHT lookup found 212 peers; only 1/40 completed a raw-TCP BitTorrent
+  handshake (VERDICT.md) — and a browser can speak none of TCP/uTP regardless.</span>
+
+<span class="b">BROWSER-REACHABLE WEBRTC SEEDERS — what the browser sees</span>
+  wss://tracker.openwebtorrent.com    complete <span class="r">0</span>  incomplete 1  realWebrtcSignals <span class="r">0</span>  ok true
+  wss://tracker.webtorrent.dev        complete <span class="r">0</span>  incomplete 1  realWebrtcSignals <span class="r">0</span>  ok true
+  wss://tracker.files.fm:7073         ok <span class="r">false</span>
+  realWebrtcSignals_target  <span class="r">0</span>
+  realWebrtcSignals_control <span class="r">0</span>   <span class="c">&lt;- random-control infohash, same near-zero noise</span>
+
+<span class="p">=== VERDICT ===</span>
+TCP/uTP swarm alive: <span class="g">true</span> (max seeders 54, 76 peers handed out)
+Browser-reachable WebRTC seeders: <span class="r">0</span> (target signals 0 vs control 0 — equal/near-zero = none real)
+<span class="p">CONCLUSION:</span> content is fully seeded to non-browsers, and ZERO peers the browser
+can P2P with. No node-we-run carried any file byte in this test.</code></pre>
+  <p class="cap">test/novel-path/PROOF-OUTPUT.txt + proof-measure.mjs · the DHT line is from
+  test/novel-path/VERDICT.md · deps <code>ws</code>, <code>bittorrent-tracker</code></p>
+
+  <p>Two details make this evidence rather than anecdote. First, the <b>control</b>: announcing a
+  random infohash to the same WSS trackers returns the same near-zero signal count as the real
+  target, which proves the tiny "peer" numbers are protocol echo, not real browser-reachable seeders.
+  Second, the <b>contrast</b>: the same torrent that offers a browser nothing is simultaneously
+  handing out 76 peers to classic clients from a pool of 54 seeders. The content is abundant. It is
+  just not addressable from a web page.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">adversarial verification</p>
+  <h2>Fleet result: 38 dead-ends, 7 boundaries, no bypass</h2>
+  <p class="top">Five Opus-5 workflows (roughly 55 agents) were run adversarially against this
+  verdict — each tasked with breaking it, each required to produce observed output rather than
+  reasoning. Every one of them re-derived the same wall.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n no">38</div><div class="k">dead-ends</div></div>
+    <div class="stat"><div class="n">7</div><div class="k">bypass-possible</div></div>
+    <div class="stat"><div class="n ok">2</div><div class="k">documented boundaries only</div></div>
+    <div class="stat"><div class="n">5 / ~55</div><div class="k">Opus-5 workflows / agents</div></div>
+  </div>
+
+  <p>All 7 "bypass-possible" results collapse into one of the two documented boundaries —
+  user-brings-bytes File API seeding, and the third-party HTTP mirror. <b>No genuine bypass for
+  arbitrary TCP-only content was found.</b></p>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th style="min-width:150px">Candidate path</th><th>Observed result</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Direct Sockets</b><br><span class="cap">raw TCP from a browser</span></td>
+        <td>On a plain <code>https</code> page, <code>TCPSocket</code>/<code>UDPSocket</code>/<code>TCPServerSocket</code>
+        are all <code>undefined</code> on Chrome 151.0.7922.170. Force-exposed via
+        <code>--enable-features=DirectSockets,IsolatedWebApps</code> the constructors appear, but the
+        first <code>socket.opened</code> kills the renderer: <i>"Frame is not sufficiently isolated to
+        use Direct Sockets"</i> (bad_message reason 123). Zero bytes flowed. IWAs install only on
+        Chrome-Enterprise-managed ChromeOS.</td>
+        <td class="no">DEAD-END</td>
+      </tr>
+      <tr>
+        <td><b>WebTransport / RTCQuicTransport</b></td>
+        <td>The page dialed <code>new WebTransport(…, {serverCertificateHashes})</code> at a dual
+        TCP+UDP listener. The browser emitted only QUIC-v1 UDP Initial packets — <b>zero bytes on the
+        TCP socket</b>. Certificate pinning swaps CA validation; it does not remove the QUIC handshake
+        the far end must speak.</td>
+        <td class="no">DEAD-END</td>
+      </tr>
+      <tr>
+        <td><b>IPFS / Helia</b></td>
+        <td>Live bitswap-only pulled real blocks peer→browser over <code>webrtc-direct</code>:
+        <b>119,776 bytes in 6.3s, zero bytes through any node we run</b> — the transport half is
+        genuinely law-clean. But arbitrary movies are not on IPFS: no name→CID index, no infohash→CID
+        mapping, and real providers are pinning <b>servers</b> = byte-path nodes. Trap recorded:
+        default <code>createHelia</code> silently adds <code>trustless-gateway.link</code> /
+        <code>4everland.io</code> HTTP block brokers — a law-violating byte path unless explicitly
+        disabled.</td>
+        <td class="no">DEAD-END<br><span class="cap">for arbitrary movies</span></td>
+      </tr>
+      <tr>
+        <td><b>Browser as a WebRTC DHT node</b></td>
+        <td>libtorrent hybrid peers exchange WebRTC offers ONLY over WebSocket trackers —
+        <code>rtc_offer</code> grep: <code>dht_tracker.cpp</code> 0, <code>ut_pex.cpp</code> 0,
+        <code>websocket_tracker_connection.cpp</code> 4. Real magnets carry no wss rendezvous
+        (torrentio sample: <b>0 wss trackers of 25</b>).</td>
+        <td class="no">DEAD-END</td>
+      </tr>
+      <tr>
+        <td><b>HTTP third-party mirror</b></td>
+        <td>A plain <code>&lt;video src="https://mirror/file.mp4"&gt;</code> flows mirror→browser with
+        zero node we run — law-compliant, same class as any <code>&lt;img src&gt;</code>. It does not
+        generalize: four gates kill it (G1 must exist on a plain mirror, G2 range+hotlink, G3 CORS,
+        G4 container/codec — <code>MediaSource.isTypeSupported</code> is false for MKV and
+        <code>canPlayType</code> is <code>''</code> for AC3/E-AC3/DTS in Chrome). Repo-accuracy
+        finding: the app's own <i>"Sintel (torrent — no server)"</i> row is <b>not</b> P2P — it is an
+        HTTP web seed at webtorrent.io (<code>Sintel.mp4</code>,
+        <code>access-control-allow-origin:*</code>, HTTP 206).</td>
+        <td class="nt">BOUNDARY</td>
+      </tr>
+      <tr>
+        <td><b>webtor.io</b><br><span class="cap">public bridge</span></td>
+        <td>Server pods join the swarm, transcode with ffmpeg to HLS, and a CDN serves the bytes —
+        <code>bytePathThroughNode: true</code>, by design. It works, and it is exactly the thing the
+        law forbids.</td>
+        <td class="no">DEAD-END<br><span class="cap">law violation</span></td>
+      </tr>
+      <tr>
+        <td><b>instant.io / btorrent.xyz</b></td>
+        <td>Architecturally law-clean — wss signaling, STUN only, no TURN — but they cannot play an
+        arbitrary TCP-only magnet. A live announce of the exact Spider-Man infohash returned
+        <code>complete:0</code> with zero peer offers.</td>
+        <td class="no">DEAD-END</td>
+      </tr>
+      <tr>
+        <td><b>User brings the bytes</b><br><span class="cap">File API → WebRTC seeding</span></td>
+        <td>Browser-to-browser WebRTC seeding of a file the user already holds locally, with zero node
+        in the byte path. Fully compliant — and it does not answer the arbitrary-magnet question.</td>
+        <td class="nt">BOUNDARY</td>
+      </tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">what would change the verdict</p>
+  <h2>Watch-list — honestly, not today</h2>
+  <p class="top">"Impossible" here is a statement about the transports and the swarm as they exist in
+  2026-08. Three things could move that line. None of them has moved it yet, and the last gate is not
+  even technical.</p>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th style="min-width:160px">Development</th><th>Why it would matter</th><th>Status today</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>qBittorrent 5.3</b><br><span class="cap">WebTorrent enabled in CI, PR #24564</span></td>
+        <td>The first time mainstream desktop seeders would speak WebRTC — real swarm peers a browser
+        could actually complete a handshake with.</td>
+        <td class="wn">~late 2026, not shipped</td>
+      </tr>
+      <tr>
+        <td><b>libtorrent 2.1.x adoption</b></td>
+        <td>2.1.0 shipped 2026-07-09 with <code>TORRENT_USE_RTC</code>. Adoption by mainstream clients
+        would populate swarms with WebRTC-capable seeders.</td>
+        <td class="wn">shipped, not default</td>
+      </tr>
+      <tr>
+        <td><b>The social gate</b><br><span class="cap">wss endpoints in standard tracker lists</span></td>
+        <td>Even with hybrid peers everywhere, browsers and peers never meet without a shared wss
+        rendezvous in the magnet's tracker list. This is a coordination problem, not a code one.</td>
+        <td class="no">0 of 25 trackers</td>
+      </tr>
+      <tr>
+        <td><b>Direct Sockets for the open web</b></td>
+        <td>The single biggest lever: a browser could open raw TCP to a swarm peer directly — still
+        the user's own machine, still no node we run.</td>
+        <td class="no">IWA/ChromeOS-only, not planned</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p>Note the ordering. Even if every client shipped WebRTC tomorrow, the social gate is still shut:
+  the measured reach of WebRTC-capable seeders for this content is approximately zero, and no amount
+  of client capability fixes a tracker list that carries no wss endpoint. That is why the honest
+  framing is <b>not today</b> rather than <b>soon</b>.</p>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">how much to trust this page</p>
+  <h2>Verification posture</h2>
+  <p class="top">This verdict rests on two independent legs, and they fail differently — which is the
+  reason to state both.</p>
+  <div class="two">
+    <div class="box ok">
+      <span class="lab">leg 1 — first principles</span>
+      <p style="margin:0">The four-transports argument and the bootstrap paradox are structural. They
+      do not depend on any measurement, any swarm, or any moment in time. They would hold for a
+      torrent with a million seeders.</p>
+    </div>
+    <div class="box">
+      <span class="lab">leg 2 — live measurement</span>
+      <p style="margin:0">The proof harness observed the real swarm: 54 seeders, 76 TCP peers handed
+      out, 0 browser-reachable WebRTC seeders against a random control of 0. Captured in
+      <code>test/novel-path/PROOF-OUTPUT.txt</code>.</p>
+    </div>
+  </div>
+  <div class="box warn" style="margin-top:16px">
+    <span class="lab">honest caveat — the swarm numbers are time-variable</span>
+    <p style="margin:0">Swarm health moves. The evidence-file provenance for this same target records
+    it plainly: a later re-capture attempt on the exact YTS swarm <b>found 0 reachable classic
+    peers</b>. So treat 54/301, 3/204 and 76 as <b>the values observed at capture time</b>, not as
+    standing properties of the torrent. Nothing about the verdict depends on them holding — a swarm
+    with more seeders or fewer changes the numbers, not the wall. The zero that matters
+    (browser-reachable WebRTC seeders) is the one the mechanism predicts structurally.</p>
+  </div>
+  <p style="margin-top:18px">One more thing worth stating plainly: <b>no node we run carried a single
+  file byte during this test.</b> The measurement harness announces and probes; it does not download.
+  The mission published nothing and pushed nothing — nothing left the machine.</p>
+</div></section>
+
+</main>
+
+<footer class="ft"><div class="wrap">
+  honestporn HIGHREV close-out · lane 3 — physics verdict · 2026-08-21 ·
+  sources: <code>test/novel-path/VERDICT.md</code>, <code>test/TRANSPORT-LAW-VERDICT.md</code>,
+  <code>test/novel-path/PROOF-OUTPUT.txt</code> ·
+  <a href="index.html">back to the report index</a>
+</div></footer>
+
+<script>
+(function(){var K='hp-report-theme';var r=document.documentElement;try{var s=localStorage.getItem(K);if(s)r.setAttribute('data-theme',s);}catch(e){}
+function cur(){var a=r.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+window.__toggleTheme=function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem(K,n);}catch(e){}var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=n==='dark'?'◐ dark':'◑ light';};
+addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=cur()==='dark'?'◐ dark':'◑ light';});})();
+</script>
+
+</body>
+</html>

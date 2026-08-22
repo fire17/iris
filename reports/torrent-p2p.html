@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direct-P2P Browser Torrent</title>
+<style>
+/* honestporn HIGHREV close-out reports — shared theme-aware design system.
+   Light palette on bare :root; dark redefined under prefers-color-scheme AND
+   [data-theme="dark"] so the toggle wins in both directions. Self-contained,
+   system fonts only, no external assets. */
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:940px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--pink-hi) 34%,transparent)}
+a:hover{border-bottom-color:var(--pink-hi)}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);
+  padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+/* header */
+header.hd{border-bottom:1px solid var(--line-soft);padding:clamp(34px,6vw,60px) 0 clamp(26px,4vw,36px)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 15px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(27px,4.4vw,42px);letter-spacing:-.03em;margin:0 0 .3em;line-height:1.1;color:var(--fg)}
+.lede{max-width:74ch;font-size:clamp(15.5px,1.9vw,17.5px);color:var(--fg-1);margin:.2em 0 0}
+.badges{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:999px;border:1px solid}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%}
+.badge.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--ok-tint)}
+.badge.ok::before{background:var(--ok)}
+.badge.no{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,transparent);background:var(--no-tint)}
+.badge.no::before{background:var(--no)}
+.badge.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent);background:var(--info-tint)}
+.badge.info::before{background:var(--info)}
+.badge.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-tint)}
+.badge.warn::before{background:var(--warn)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:22px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.meta b{color:var(--fg-1);font-weight:500}
+/* sections */
+section{padding:clamp(32px,4.8vw,50px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(19px,2.7vw,25px);letter-spacing:-.02em;margin:0 0 .5em;color:var(--fg)}
+h3{font-size:clamp(15.5px,1.9vw,17px);letter-spacing:-.01em;margin:1.6em 0 .5em;color:var(--fg)}
+p{max-width:76ch;margin:0 0 1em;color:var(--fg-1)}
+p.top{color:var(--fg)}
+ul,ol{margin:0 0 1em;padding-left:1.2em;color:var(--fg-1);max-width:78ch}
+li{margin-bottom:.44em}
+li::marker{color:var(--pink)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin:0 0 6px}
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--fg-2);background:var(--s2);font-weight:600;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--s2)}
+td.m{font-family:var(--mono);font-size:12.5px;color:var(--fg-1)}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}
+.no{color:var(--no);font-weight:600;white-space:nowrap}
+.nt{color:var(--info);font-weight:600;white-space:nowrap}
+.wn{color:var(--warn);font-weight:600;white-space:nowrap}
+/* boxes / callouts */
+.box{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:18px 20px;max-width:82ch;box-shadow:var(--shadow)}
+.box+.box{margin-top:14px}
+.box.warn{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-tint)}
+.box.no{border-color:color-mix(in srgb,var(--no) 40%,transparent);background:var(--no-tint)}
+.box.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:var(--ok-tint)}
+.box .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin:0 0 8px;display:block}
+.box.warn .lab{color:var(--warn)} .box.no .lab{color:var(--no)} .box.ok .lab{color:var(--ok)}
+/* code / proof blocks */
+pre{margin:16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;overflow-x:auto;box-shadow:var(--shadow)}
+pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:1.7;color:var(--fg-1)}
+pre .c{color:var(--fg-2)} pre .g{color:var(--ok)} pre .r{color:var(--no)} pre .p{color:var(--pink-hi)} pre .b{color:var(--info)}
+.cap{font-family:var(--mono);font-size:11px;color:var(--fg-2);margin:6px 2px 0}
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.stat{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat .n{font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--fg);font-family:var(--mono)}
+.stat .n.ok{color:var(--ok)} .stat .n.no{color:var(--no)} .stat .n.pink{color:var(--pink)}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+/* diagram */
+.diagram{margin:20px 0;border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:8px;box-shadow:var(--shadow);overflow-x:auto}
+.diagram svg{display:block;width:100%;height:auto;min-width:520px}
+/* nav / footer */
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav a.home{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);border:0;display:flex;align-items:center;gap:8px}
+.topnav a.home::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+footer.ft{border-top:1px solid var(--line-soft);padding:32px 0 60px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+footer.ft a{color:var(--fg-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+
+/* ── page-specific ─────────────────────────────────────────────── */
+.law{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--fg);border-left:3px solid var(--pink);
+  background:var(--pink-tint);border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0;max-width:80ch}
+.dgcap{display:flex;flex-wrap:wrap;gap:8px 20px;font-family:var(--mono);font-size:11px;color:var(--fg-2);padding:4px 8px 8px}
+.dgcap i{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+.dgcap i::before{content:"";width:16px;height:3px;border-radius:2px;background:var(--fg-2)}
+.dgcap i.bytes::before{background:var(--pink);height:5px}
+.dgcap i.sig::before{background:var(--fg-2);height:0;border-top:2px dashed var(--fg-2)}
+.dgcap i.dead::before{background:var(--no)}
+.tl{list-style:none;padding:0;margin:16px 0;max-width:78ch}
+.tl li{display:flex;gap:14px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line-soft);margin:0}
+.tl li:last-child{border-bottom:0}
+.tl .t{font-family:var(--mono);font-size:12px;color:var(--pink);font-weight:600;min-width:74px;flex:none}
+.tl .d{color:var(--fg-1);font-size:14.5px}
+/* diagram — colors via classes (var() in SVG presentation attributes is unreliable in WebKit) */
+.dg text{font-family:var(--mono)}
+.dg .box-n{fill:var(--s1);stroke:var(--fg);stroke-width:1.8}
+.dg .box-b{fill:var(--s2);stroke:var(--fg-2);stroke-width:1.5;stroke-dasharray:6 5}
+.dg .t-fg{fill:var(--fg)}
+.dg .t-mut{fill:var(--fg-2)}
+.dg .t-ok{fill:var(--ok)}
+.dg .t-no{fill:var(--no)}
+.dg .t-pk{fill:var(--pink)}
+.dg .l-sig{stroke:var(--fg-2);stroke-width:1.6;stroke-dasharray:5 5;opacity:.75}
+.dg .l-kill{stroke:var(--no);stroke-width:2.5;opacity:.85}
+.dg .l-byte{stroke:var(--pink);stroke-width:6;stroke-linecap:round}
+.dg .a-byte{fill:var(--pink)}
+.dg .pill{fill:var(--pink-tint);stroke:var(--pink);stroke-width:1}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <a class="home" href="index.html">honestporn · close-out</a>
+    <span class="sp"></span>
+    <button class="tglbtn" data-theme-btn onclick="__toggleTheme()">theme</button>
+  </div>
+</nav>
+
+<header class="hd">
+  <div class="wrap">
+    <p class="tagline">lane close-out · honestporn HIGHREV</p>
+    <h1>Direct-P2P Browser Torrent</h1>
+    <p class="lede">A browser pulled a whole <b>68,086,404-byte</b> clip from another browser while the only
+      server in the picture was already dead. The signaling node carried <b>zero file bytes</b>, got SIGKILLed
+      the instant the DataChannel opened, and the transfer still finished at <b>100%</b> with the video playing.
+      This page is the honest account of what that proves — and, just as carefully, what it does not.</p>
+    <div class="badges">
+      <span class="badge ok">law-compliant · proven</span>
+      <span class="badge no">hybrid-seed bridge · law-violating</span>
+      <span class="badge warn">2 proofs unverified in this report</span>
+    </div>
+    <div class="meta">
+      <span><b>date</b> 2026-08-21</span>
+      <span><b>model</b> claude-opus</span>
+      <span><b>the law</b> our nodes relay handshakes only — never file bytes</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ───────────────────────────── THE LAW ───────────────────────────── -->
+<section id="law">
+  <p class="eyebrow">the constraint everything is judged against</p>
+  <h2>The law</h2>
+  <div class="law">
+    Any node we run may relay handshakes/signaling ONLY. It must NEVER carry file bytes.<br>
+    Files flow peer&rarr;browser directly, or not through us. A bridge/proxy that re-serves<br>
+    torrent bytes to the browser VIOLATES the law and is a FAILED result — even if it "works".
+  </div>
+  <p>Every claim below is scored against that sentence and nothing else. "It played" is not a pass. A design
+    only passes if the bytes never touched a machine we operate. That standard is what makes one half of this
+    lane a genuine result and the other half — the torrentio bridge — a failure we are obliged to report as
+    a failure, no matter how well it appeared to work.</p>
+</section>
+
+<!-- ───────────────────────────── WHAT WAS BUILT ───────────────────────────── -->
+<section id="built">
+  <p class="eyebrow">lane 1 · deliverables</p>
+  <h2>What was built</h2>
+
+  <h3>1. The compliant WebRTC peer&harr;peer path</h3>
+  <p>The topology is three nodes. <b>A</b> is a browser that wants the clip. <b>C</b> is a browser that already
+    holds it. <b>B</b> is <code>server/relay/signal.mjs</code> — roughly forty lines over the <code>ws</code>
+    package whose entire job is to forward SDP offer/answer and ICE candidates between the two peers of a room.
+    It never sees a media byte; its own header comment states the point plainly: once A and C reach
+    <code>connected</code>, "THIS PROCESS IS NO LONGER ON THE PATH."</p>
+  <p>The proof harness <code>test/relay-punch/prove-rtc-killb.mjs</code> makes that claim falsifiable rather than
+    rhetorical. It brings B up, lets A and C handshake through it, and then <b>SIGKILLs B the instant the
+    RTCDataChannel opens</b> — while <code>bytesRecv</code> is still 0 — and verifies the process is genuinely
+    gone before any payload moves. The entire clip then streams A&larr;C over the direct wire, to completion,
+    with B dead and both peers observing their signaling sockets closed.</p>
+
+  <h3>2. The self-sustaining swarm</h3>
+  <p><code>prove-selfsustain.mjs</code> pushes it further and removes the origin. C seeds; browser A takes a full
+    copy; a second fresh leech A2 joins; then the tracker B is SIGKILLed <em>and</em> C is closed at the same
+    moment, at 8.7% progress. A2 finishes to 100% from browser A alone. Once one browser holds the bytes, the
+    content survives with no tracker and no original seeder — the swarm is genuinely browser-to-browser.</p>
+
+  <h3>3. Self-seed playback with no backend at all</h3>
+  <p><code>tools/proof/self-seed-proof.mjs</code> builds a <code>.torrent</code> for the catalog's Big Buck Bunny
+    mp4 with a <code>url-list</code> pointing at a static URL on the same host that serves the app — plain files
+    and HTTP Range, i.e. what nginx, GitHub Pages or S3 already do — and a magnet carrying <code>ws=</code> and
+    <code>xs=</code> with <b>zero trackers</b>. It plays through the real Player, headless. No engine, no
+    resolver, no backend.</p>
+
+  <h3>4. The transport ceiling, and the metadata stall it caused</h3>
+  <p>The header of <code>js/torrent.js</code> states the hard ceiling verbatim: a browser can only reach WebRTC
+    "web peers" (via <code>wss://</code> trackers) and HTTP web-seeds (BEP19, magnet <code>ws=</code> or the
+    <code>.torrent</code>'s <code>url-list</code>). It <b>cannot</b> open TCP/uTP peers and cannot use the DHT.
+    Torrentio magnets — infoHash plus udp/dht only, no wss, no web-seed — therefore have zero browser-reachable
+    sources and can never play in-browser; they still need the node engine on <code>:11470</code>.</p>
+  <p>That ceiling produced a real bug with a real fix. <code>client.add(&lt;magnet&gt;)</code> waits for
+    metadata, which a browser can only obtain from WebRTC peers found through wss trackers; when those trackers
+    are unreachable, <code>ready</code> never fires — the stall. The bundle (WebTorrent 3.0.21, vendored) was
+    healthy all along: adding the raw <code>.torrent</code> bytes fired infoHash, metadata and ready in about a
+    second. The fix is to notice that our own catalog magnets always carry <code>xs=&lt;.torrent url&gt;</code>,
+    fetch that <code>.torrent</code> in-browser, and add the <b>bytes</b>. Metadata becomes instant and the
+    web-seed supplies pieces with no tracker and no peer needed. Playback needed a second piece: WebTorrent 3.x
+    removed <code>getBlobURL</code>, so <code>file.streamTo()</code> runs through the service-worker bridge —
+    <code>ensureServer()</code> registers the vendored <code>/sw.min.js</code> at root scope.</p>
+
+  <h3>5. The honest fallback for what we cannot play</h3>
+  <p>For TCP-only magnets the browser genuinely cannot reach, the app does not pretend and does not proxy. Every
+    torrent stream row carries a <b>📋 magnet</b> copy control (<code>js/app.js</code> ~1937–1966; a
+    <code>&lt;span&gt;</code> rather than a nested button, stopping propagation so copying never triggers
+    playback). <code>copyMagnet()</code> uses <code>navigator.clipboard.writeText</code> with a legacy fallback
+    and a toast. The user gets the magnet for their own client. Bytes are never routed through us — which is
+    exactly what the law demands when the answer is "we can't."</p>
+</section>
+
+<!-- ───────────────────────────── DIAGRAM ───────────────────────────── -->
+<section id="how">
+  <p class="eyebrow">the shape of the compliant path</p>
+  <h2>How it works</h2>
+  <p>Two wires, and they are not the same kind of wire. The dashed one carries introductions and is disposable.
+    The solid one carries the file and never touches anything we run.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 780 330" class="dg" role="img" aria-labelledby="dgt dgd">
+      <title id="dgt">Direct WebRTC byte path between two browsers, with the signaling relay killed</title>
+      <desc id="dgd">Browser A and browser C are joined by a thick direct WebRTC DataChannel carrying
+        68,086,404 bytes. The signaling relay B sits above them, greyed and struck through, connected only by
+        dashed signaling lines, and carries zero file bytes.</desc>
+
+      <!-- node B: the killed signaling relay -->
+      <g opacity="0.6">
+        <rect x="290" y="20" width="200" height="70" rx="12" class="box-b"/>
+        <text x="390" y="47" text-anchor="middle" font-size="14" font-weight="700" class="t-mut">B &#183; signal.mjs</text>
+        <text x="390" y="68" text-anchor="middle" font-size="11" class="t-mut">SDP / ICE relay only</text>
+      </g>
+      <line x1="300" y1="55" x2="480" y2="55" class="l-kill"/>
+      <text x="505" y="44" font-size="11.5" font-weight="700" class="t-no">SIGKILL @ t=430ms</text>
+      <text x="505" y="62" font-size="11" class="t-no">ps: NO_SUCH_PROCESS</text>
+      <text x="505" y="80" font-size="11" class="t-no">file bytes carried: 0</text>
+
+      <!-- signaling lines (dashed) -->
+      <line x1="140" y1="196" x2="330" y2="94" class="l-sig"/>
+      <line x1="640" y1="196" x2="450" y2="94" class="l-sig"/>
+      <text x="150" y="134" font-size="11" class="t-mut">SDP + ICE</text>
+      <text x="632" y="134" text-anchor="end" font-size="11" class="t-mut">SDP + ICE</text>
+      <text x="390" y="116" text-anchor="middle" font-size="11" class="t-mut">handshake path &#8212; introductions, never payload</text>
+
+      <!-- node A -->
+      <rect x="30" y="196" width="220" height="92" rx="14" class="box-n"/>
+      <text x="140" y="228" text-anchor="middle" font-size="15" font-weight="700" class="t-fg">A &#183; browser</text>
+      <text x="140" y="249" text-anchor="middle" font-size="11" class="t-mut">leech &#183; &lt;video&gt; playing</text>
+      <text x="140" y="270" text-anchor="middle" font-size="11.5" font-weight="700" class="t-ok">recv 68,086,404 B &#183; 100%</text>
+
+      <!-- node C -->
+      <rect x="530" y="196" width="220" height="92" rx="14" class="box-n"/>
+      <text x="640" y="228" text-anchor="middle" font-size="15" font-weight="700" class="t-fg">C &#183; browser</text>
+      <text x="640" y="249" text-anchor="middle" font-size="11" class="t-mut">WebRTC seed &#183; holds the clip</text>
+      <text x="640" y="270" text-anchor="middle" font-size="11.5" font-weight="700" class="t-ok">endpoint, not a proxy</text>
+
+      <!-- the byte path -->
+      <line x1="264" y1="242" x2="516" y2="242" class="l-byte"/>
+      <polygon points="250,242 268,233 268,251" class="a-byte"/>
+      <polygon points="530,242 512,233 512,251" class="a-byte"/>
+      <rect x="282" y="164" width="216" height="26" rx="8" class="pill"/>
+      <text x="390" y="182" text-anchor="middle" font-size="11.5" font-weight="700" class="t-pk">DIRECT WebRTC DataChannel</text>
+      <text x="390" y="222" text-anchor="middle" font-size="11.5" font-weight="700" class="t-pk">68,086,404 bytes &#8212; every one of them</text>
+      <text x="390" y="308" text-anchor="middle" font-size="11" class="t-mut">byte path &#8212; peer to peer, zero nodes we run</text>
+    </svg>
+    <div class="dgcap">
+      <i class="bytes">file bytes (direct, peer&harr;peer)</i>
+      <i class="sig">signaling only (SDP + ICE)</i>
+      <i class="dead">node we run — killed, 0 bytes</i>
+    </div>
+  </div>
+  <p class="cap">Topology of <code>prove-rtc-killb.mjs</code>. B exists only so the proof has something to kill.</p>
+</section>
+
+<!-- ───────────────────────────── VERIFICATION ───────────────────────────── -->
+<section id="verify">
+  <p class="eyebrow">verification status — honest</p>
+  <h2>What the evidence actually says</h2>
+
+  <div class="stats">
+    <div class="stat"><div class="n">68,086,404</div><div class="k">clip bytes (webm)</div></div>
+    <div class="stat"><div class="n no">0</div><div class="k">bytes at B-kill</div></div>
+    <div class="stat"><div class="n ok">100.0%</div><div class="k">bytesRecv final</div></div>
+    <div class="stat"><div class="n pink">4.28 s</div><div class="k">videoTime, B dead</div></div>
+  </div>
+
+  <p>Committed evidence lives at <code>.grand/reports/relay-punch-evidence/rtc-timeline.json</code>. The verdict
+    document <code>test/TRANSPORT-LAW-VERDICT.md</code> §3 quotes the live rerun of 2026-08-21:</p>
+
+<pre><code><span class="c">[0.53s]</span> <span class="r">B-KILLED</span> {"alive":<span class="r">false</span>,"ps":<span class="r">"NO_SUCH_PROCESS"</span>,"bytesRecvAtKill":<span class="r">0</span>}
+<span class="c">[6.36s]</span> <span class="g">A-final</span> {"bytesRecv":<span class="g">68086404</span>,"total":68086404,"progress":<span class="g">1</span>,
+                 "connState":"connected","videoTime":5.21,"signalClosed":true,"bDeadStill":true}
+  bytesRecv at B-kill : <span class="r">0 / 68086404 ( 0.0% — should be ~0)</span>   <span class="c">&lt;-- node carried ZERO file bytes</span>
+  bytesRecv final     : <span class="g">68086404 / 68086404 =&gt; 100.0%</span>
+  video currentTime   : 5.21 s (played with B dead)</code></pre>
+  <p class="cap">Verbatim from TRANSPORT-LAW-VERDICT.md §3. Note the two videoTime figures below.</p>
+
+  <p>The committed JSON is the authority, and it records the timeline in milliseconds:</p>
+
+  <ul class="tl">
+    <li><span class="t">t=273</span><span class="d"><b>DC-OPEN</b> — the A&harr;C direct wire is established through B. <code>bytesRecv: 0</code>.</span></li>
+    <li><span class="t">t=276</span><span class="d"><b>B-process-exit</b>.</span></li>
+    <li><span class="t">t=430</span><span class="d"><b>B-KILLED</b> — pid 18279, <code>alive:false</code>, <code>ps:"NO_SUCH_PROCESS"</code>, <code>bytesRecvAtKill: 0</code>.</span></li>
+    <li><span class="t">t=833</span><span class="d"><b>signal-sockets-after-kill</b> — both peers see their signaling socket closed; A's <code>connState</code> is still <code>"connected"</code>.</span></li>
+    <li><span class="t">t=4598</span><span class="d"><b>A-final</b> — <code>bytesRecv 68086404 / 68086404</code>, <code>progress 1</code>, <code>videoTime 4.28</code>, <code>bDeadStill: true</code>.</span></li>
+  </ul>
+
+  <div class="box warn">
+    <span class="lab">a discrepancy we are not hiding</span>
+    <p style="margin-bottom:0">The verdict document quotes <code>videoTime 5.21 s</code>; the committed
+      <code>rtc-timeline.json</code> final sample records <code>4.28</code>. These are the same run family.
+      We treat <b>4.28 s</b> — the number in the committed JSON — as the authoritative figure, and note the
+      verdict's 5.21 s as the verdict-document quote rather than silently picking whichever reads better.</p>
+  </div>
+
+  <h3>Self-sustaining swarm — committed</h3>
+  <p>From <code>selfsustain-timeline.json</code>, the same 68,086,404-byte clip over a local wss tracker: at
+    <code>t=19778</code> the tracker B was SIGKILLed and seed C was closed together, with A2 at
+    <code>progress 0.08735</code> (<code>downloaded 5947392</code>, <code>wires 2</code>). At
+    <code>t=34527</code> A2 reached <code>progress 1</code>, <code>downloaded 68086404</code>,
+    <code>done true</code>, <code>videoTime 0.12</code>, <code>uploaded 92713</code> — while browser A, now the
+    only seeder alive, had <code>uploaded 65405056</code> across <code>wires 2</code>. <code>PASS: true</code>.</p>
+
+  <h3>Green versus blue — what is verified and what is merely asserted</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Claim</th><th>Artifact</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>0 file bytes through B at kill; 68,086,404 B delivered peer-to-peer to 100%</td>
+          <td class="m">.grand/reports/relay-punch-evidence/rtc-timeline.json</td>
+          <td><span class="ok">GREEN</span> — committed, byte-level verified</td>
+        </tr>
+        <tr>
+          <td>Swarm survives tracker death <em>and</em> origin-seed closure; A2 completes from A alone</td>
+          <td class="m">.grand/reports/relay-punch-evidence/selfsustain-timeline.json</td>
+          <td><span class="ok">GREEN</span> — committed, byte-level verified</td>
+        </tr>
+        <tr>
+          <td>Browser transport ceiling, metadata-stall fix, <code>canPlay()</code> gate, copy-magnet fallback</td>
+          <td class="m">js/torrent.js · js/app.js</td>
+          <td><span class="ok">GREEN</span> — source read directly</td>
+        </tr>
+        <tr>
+          <td><code>SELF-SEED-PROOF-PASS</code> — catalog file plays from a static host, zero trackers, no backend</td>
+          <td class="m">tools/proof/self-seed-proof.mjs</td>
+          <td><span class="nt">BLUE</span> — asserted by committed harness; captured run-output not committed — <b>UNVERIFIED in this report</b></td>
+        </tr>
+        <tr>
+          <td><code>RELAY_FILE_BYTES=0</code> for the wss-tracker variant (frame-classification counters)</td>
+          <td class="m">test/relay-punch/prove-wss-killb.mjs · server/relay/wss-broker.mjs</td>
+          <td><span class="nt">BLUE</span> — asserted by committed harness; captured run-output not committed — <b>UNVERIFIED in this report</b></td>
+        </tr>
+        <tr>
+          <td>Observability panel shows a live web-seed source and the line <code>relay file-bytes: 0</code></td>
+          <td class="m">tools/proof/panel-proof.mjs</td>
+          <td><span class="nt">BLUE</span> — asserted by committed harness; captured run-output not committed — <b>UNVERIFIED in this report</b></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The blue rows are not weak claims dressed up as strong ones; they are harnesses whose assertion batteries
+    are committed and readable but whose run output was not captured into the repo. The <code>prove-wss-killb</code>
+    battery, for instance, asserts <code>R.fileBytes === 0 &amp;&amp; R.binaryFrames === 0 &amp;&amp;
+    R.suspectFrames === 0</code>, that signaling bytes stay under 5% of the file length, and that
+    <code>sha256(received) === sha256(source)</code> — and it runs <b>one Chromium per peer</b> so that seed and
+    leech cannot read each other off a shared OPFS origin and produce a false pass. Good design. Just not, in
+    this report, a captured result. The byte-level zero <em>is</em> committed and verified — for the SDP-relay
+    variant, via <code>rtc-timeline.json</code>.</p>
+</section>
+
+<!-- ───────────────────────────── FILES ───────────────────────────── -->
+<section id="files">
+  <p class="eyebrow">the code behind the claims</p>
+  <h2>Files touched</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Path</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td class="m">test/relay-punch/prove-rtc-killb.mjs</td>
+            <td>The headline proof. Brings B up, opens C (offerer) and A (answerer), SIGKILLs B the instant the DataChannel opens while bytes are ~0, and shows the whole clip stream A&larr;C to completion with B dead and the video advancing. Writes <code>rtc-timeline.json</code>.</td></tr>
+        <tr><td class="m">test/relay-punch/prove-selfsustain.mjs</td>
+            <td>The fullest form: kills the relay <em>and</em> closes the origin seed, then proves a second fresh leech finishes from a browser peer alone. Separate Chromium per peer so per-origin OPFS cannot false-pass.</td></tr>
+        <tr><td class="m">test/relay-punch/prove-wss-killb.mjs</td>
+            <td>The wss-tracker variant: two browser WebTorrent peers introduced only by a local killable tracker, which is then SIGKILLed mid-transfer. Asserts <code>RELAY_FILE_BYTES=0</code>, seeder-uploaded &ge;90%, and sha256 integrity.</td></tr>
+        <tr><td class="m">server/relay/signal.mjs</td>
+            <td>Node B in its purest form — ~40 lines over <code>ws</code>. Forwards SDP offer/answer and ICE between the two peers of a room. Carries no media bytes, by construction.</td></tr>
+        <tr><td class="m">server/relay/wss-broker.mjs</td>
+            <td>B over TLS. A browser WebTorrent client only dials <code>wss://</code>, so a local killable B must speak TLS. Still just the ws-tracker protocol — announces and SDP, never file bytes — and it writes frame-classification counters on every frame so they survive SIGKILL.</td></tr>
+        <tr><td class="m">tools/proof/self-seed-proof.mjs</td>
+            <td>Seeds the catalog's own mp4 as a self-hosted web-seed (<code>url-list</code> on the same static host, magnet with <code>ws=</code>+<code>xs=</code>, zero trackers) and plays it through the real Player headless. No engine, no resolver, no backend.</td></tr>
+        <tr><td class="m">tools/proof/panel-proof.mjs</td>
+            <td>Verifies the direct-P2P observability panel renders live stats in the real app — web-seed source, moving progress and buffer, the knobs, and the law-proof line <code>relay file-bytes: 0</code>.</td></tr>
+        <tr><td class="m">js/torrent.js</td>
+            <td>The serverless in-browser torrent client (WebTorrent 3.0.21 browser build, vendored). Documents the hard ceiling, implements the <code>xs=</code> fetch-the-<code>.torrent</code>-bytes fix for the metadata stall, and gates playability: <code>canPlay(magnet)</code> returns true only for <code>ws=</code>, <code>xs=http</code> or <code>tr=wss</code> (line 116).</td></tr>
+        <tr><td class="m">js/app.js (~1937–1966)</td>
+            <td>The honest fallback. Adds the <b>📋 magnet</b> copy control to torrent stream rows and <code>copyMagnet()</code> — clipboard write with a legacy fallback and a toast. Hands the user the magnet instead of proxying bytes.</td></tr>
+        <tr><td class="m">sw.min.js</td>
+            <td>The vendored root-scope service worker. WebTorrent 3.x dropped <code>getBlobURL</code>, so <code>file.streamTo()</code> needs this bridge via <code>client.createServer({controller})</code> for playback.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ───────────────────────────── THE BOUNDARY ───────────────────────────── -->
+<section id="boundary">
+  <p class="eyebrow">the part that failed — reported as a failure</p>
+  <h2>Where the law bites</h2>
+
+  <div class="box no">
+    <span class="lab">law violation — the torrentio bridge</span>
+    <p><code>server/relay/hybrid-seed.mjs</code> (node "C") joins the classic swarm over TCP/uTP/DHT,
+      <b>downloads bytes it did not previously hold</b>, and re-serves those exact live pieces to the browser over
+      WebRTC. On the real YTS Spider-Man magnet it held <b>0 bytes up front</b>, leeched <b>99,532,800 B</b> live
+      from 2 classic peers, and forwarded them to the browser. Its own source comment says it "re-seeds those
+      exact pieces to browser A."</p>
+    <p style="margin-bottom:0">That is a contentless node we run forwarding live pieces — a byte-path relay —
+      and the law forbids it in one sentence. The earlier <code>prove-torrentio-video.mjs</code> run "worked":
+      transport persisted past killing signaling node B. But it worked by routing file bytes through a machine
+      we operate. <b>It is a FAILED result that was mislabeled as a pass</b>, and we are correcting the label
+      here rather than quietly keeping the win.</p>
+  </div>
+
+  <p>The measured record of that run, from
+    <code>torrentio-video-real-timeline.json</code>, is worth stating precisely, because it also shows the
+    second thing that went wrong:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Measurement</th><th>Value</th><th>Reading</th></tr></thead>
+      <tbody>
+        <tr><td>torrentLengthBytes</td><td class="m">1,427,353,597</td><td>the real target, 1.43 GB</td></tr>
+        <tr><td>bytes C leeched (bounded)</td><td class="m">99,532,800</td><td><span class="no">bytes through a node we run — the violation</span></td></tr>
+        <tr><td>gainedStrictlyAfterBdeadBytes</td><td class="m">78,233,600</td><td>transport did persist past B's death</td></tr>
+        <tr><td>transportPass</td><td class="m">true</td><td>the signaling node was genuinely off-path</td></tr>
+        <tr><td>playbackAdvanced</td><td class="m">false</td><td><span class="no">videoTime 0</span> — a non-fragmented 1.43 GB mp4 cannot progressively play in-browser</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>So the kill-B evidence proves exactly one thing — that <em>signaling</em> node B is off the path. It does
+    nothing to make node C compliant. And even setting the law aside, the clip never played. Two independent
+    reasons the bridge is not a browser-first win.</p>
+
+  <div class="box warn">
+    <span class="lab">the sharp boundary</span>
+    <p style="margin-bottom:0">The compliant shape requires <b>both sides to speak WebRTC</b>. Where that holds —
+      a browser peer that genuinely holds the content, or a web-seed the browser can reach over HTTP — the law is
+      satisfied with room to spare, as the green evidence above shows. Where it does not hold, an arbitrary
+      TCP-only magnet the user does not already have cannot be delivered to a browser at all without breaking the
+      law. That is not a limitation of our effort; it is a property of the four transports a browser can open.
+      The full proof of that impossibility, with the measured swarm data behind it, is in
+      <a href="physics-verdict.html">physics-verdict.html</a>.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────────── VERDICT ───────────────────────────── -->
+<section id="verdict">
+  <p class="eyebrow">close-out</p>
+  <h2>Verdict</h2>
+  <div class="box ok">
+    <span class="lab">lane 1 — law-compliant direct-P2P browser torrent</span>
+    <p>Proven, at byte level, with committed evidence: a browser received <b>68,086,404 bytes</b> from another
+      browser over a direct WebRTC DataChannel while the only node we ran was already a dead process, having
+      carried <b>0 file bytes</b>. The swarm then proved it can outlive both its tracker and its original seeder.
+      The self-seed path shows the same content model working from nothing but a static file host.</p>
+    <p style="margin-bottom:0">What we will not claim: that this plays an arbitrary magnet. It does not, it
+      cannot, and the honest product answer for those is the copy-magnet button, not a proxy. Three of the six
+      supporting claims rest on committed harnesses whose run output was not captured, and they are marked
+      unverified above rather than folded into the win. Nothing was published or pushed; nothing left the machine.</p>
+  </div>
+</section>
+
+</div>
+
+<footer class="ft">
+  <div class="wrap">
+    honestporn HIGHREV close-out · lane 1 of the browser-only mission · 2026-08-21 ·
+    every figure on this page traces to a committed repo artifact ·
+    <a href="index.html">back to the index</a>
+  </div>
+</footer>
+
+<script>
+(function(){var K='hp-report-theme';var r=document.documentElement;try{var s=localStorage.getItem(K);if(s)r.setAttribute('data-theme',s);}catch(e){}
+function cur(){var a=r.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+window.__toggleTheme=function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem(K,n);}catch(e){}var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=n==='dark'?'◐ dark':'◑ light';};
+addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-btn]');if(b)b.textContent=cur()==='dark'?'◐ dark':'◑ light';});})();
+</script>
+</body>
+</html>

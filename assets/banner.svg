@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="honestporn — the trust layer, not the content. Two lanes: AI-generated and performer-verified.">
+  <title>honestporn — the trust layer, not the content</title>
+  <defs>
+    <linearGradient id="railA" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7cc4ff" stop-opacity="0"/>
+      <stop offset=".45" stop-color="#7cc4ff" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#7cc4ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="railV" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3ddc97" stop-opacity="0"/>
+      <stop offset=".45" stop-color="#3ddc97" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#3ddc97" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="railP" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f5387b" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#f5387b" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#f5387b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Opaque ground: the banner carries its own background so it stays legible
+       on a white page and a dark page alike. -->
+  <rect width="1280" height="320" fill="#0d0d0f"/>
+  <rect x="0" y="0" width="1280" height="320" fill="none" stroke="#26262c" stroke-width="2"/>
+
+  <!-- the two lanes, converging on the registry -->
+  <g fill="none" stroke-width="1.6">
+    <path d="M-10 96 H600 Q672 96 700 136 T792 176 H1290" stroke="url(#railA)"/>
+    <path d="M-10 232 H600 Q672 232 700 196 T792 160 H1290" stroke="url(#railV)"/>
+    <path d="M-10 164 H1290" stroke="url(#railP)" stroke-dasharray="3 9"/>
+  </g>
+  <circle cx="792" cy="167" r="4.5" fill="#f5387b"/>
+
+  <!-- wordmark -->
+  <g transform="translate(96 108)">
+    <rect x="0" y="0" width="44" height="44" rx="11" fill="#f5387b"/>
+    <path d="M17 13l16 9-16 9z" fill="#0d0d0f"/>
+    <text x="62" y="33"
+          font-family="ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+          font-size="38" letter-spacing="-1.1" fill="#eceef1" font-weight="600">honest<tspan font-weight="800">porn</tspan></text>
+  </g>
+
+  <text x="98" y="196"
+        font-family="ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+        font-size="21" fill="#b9bec6" letter-spacing="-.2">the trust layer, not the content</text>
+
+  <text x="98" y="232"
+        font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="13" fill="#7f858f" letter-spacing="1.4">PROTOTYPE  ·  LOCAL ONLY  ·  ZERO ADULT CONTENT</text>
+
+  <!-- the two-lane trust badges: drawn geometry, never emoji -->
+  <g transform="translate(880 116)">
+    <rect x="0" y="0" width="300" height="40" rx="20" fill="#141417" stroke="#7cc4ff" stroke-opacity=".4"/>
+    <path d="M0 20a20 20 0 0 1 20-20h2v40h-2A20 20 0 0 1 0 20z" fill="#7cc4ff"/>
+    <g transform="translate(36 10)" fill="none" stroke="#7cc4ff" stroke-width="1.5">
+      <path d="M10 1.4 17.6 5.8v8.8L10 19 2.4 14.6V5.8z" stroke-linejoin="round"/>
+      <circle cx="10" cy="10.2" r="2.2" fill="#7cc4ff" stroke="none"/>
+    </g>
+    <text x="70" y="25"
+          font-family="ui-sans-serif,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+          font-size="14.5" font-weight="600" fill="#eceef1">AI-Generated</text>
+    <text x="182" y="25"
+          font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+          font-size="11.5" fill="#7f858f">no human performed</text>
+  </g>
+
+  <g transform="translate(880 168)">
+    <rect x="0" y="0" width="300" height="40" rx="20" fill="#141417" stroke="#3ddc97" stroke-opacity=".4"/>
+    <path d="M0 20a20 20 0 0 1 20-20h2v40h-2A20 20 0 0 1 0 20z" fill="#3ddc97"/>
+    <g transform="translate(36 10)" fill="none" stroke="#3ddc97" stroke-width="1.5">
+      <path d="M10 1.2 16.8 4v5.2c0 3.7-2.7 6.5-6.8 7.7-4.1-1.2-6.8-4-6.8-7.7V4z" stroke-linejoin="round"/>
+      <path d="m6.9 9.4 2.3 2.3 4.2-4.4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+    </g>
+    <text x="70" y="25"
+          font-family="ui-sans-serif,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+          font-size="14.5" font-weight="600" fill="#eceef1">Performer-Verified</text>
+    <text x="204" y="25"
+          font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+          font-size="11.5" fill="#7f858f">consent · pull</text>
+  </g>
+</svg>
