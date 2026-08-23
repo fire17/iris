@@ -676,6 +676,11 @@ function fetchJSONT(url, ms) {
   }, function (e) { clearTimeout(timer); throw e; });
 }
 function resolverUp() {
+  /* On an https origin a fetch to http://127.0.0.1 can NEVER succeed (mixed content +
+     private-network blocking) — Chrome just spams "CORS error" to the console on every
+     probe. Skip probing entirely there; the resolver is a localhost-app feature. */
+  if (location.protocol === 'https:' && RESOLVER_BASE.indexOf('http://127.') === 0)
+    return Promise.resolve(false);
   var now = Date.now();
   if (now - resolverHealth.at < 8000) return Promise.resolve(resolverHealth.up);
   return fetchJSONT(RESOLVER_BASE + "/health", 800).then(function (j) {

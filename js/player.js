@@ -497,6 +497,10 @@
 
   var engineCache = { at: 0, up: false };
   function engineUp() {
+    /* https origin -> http://127.0.0.1 is always blocked (mixed content / PNA); probing
+       only spams CORS errors to the console. Localhost-app feature: skip on https. */
+    if (location.protocol === 'https:' && ENGINE.indexOf('http://127.') === 0)
+      return Promise.resolve(false);
     var now = (new Date()).getTime();
     if (now - engineCache.at < 5000) return Promise.resolve(engineCache.up);
     return fetchT(ENGINE + '/status', 1000, { cache: 'no-store' }).then(function (r) {
