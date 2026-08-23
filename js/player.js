@@ -2584,17 +2584,47 @@
       if (!CB_VCHUNK.test(url)) return;
       cbMasterFor(url).then(function (u2) {
         if (!u2 || p.destroyed || p.video !== v) return;
-        try { if (p.hls) p.hls.destroy(); } catch (e) {}
-        p.hls = null;
         loadHls().then(function (Hls) {
           if (p.destroyed || p.video !== v || !Hls.isSupported()) return;
+          /* DOUBLE-BUFFERED swap — no dropped frames: the audio-capable feed spins up
+             on a hidden second element while the video-only one keeps rendering; only
+             on the new element's first PLAYING frame do they trade places. */
+          var v2 = document.createElement('video');
+          v2.muted = true; v2.defaultMuted = true; v2.setAttribute('muted', '');
+          v2.playsInline = true; v2.setAttribute('playsinline', ''); v2.setAttribute('webkit-playsinline', '');
+          v2.preload = 'auto'; v2.setAttribute('disablepictureinpicture', '');
+          v2.style.visibility = 'hidden';
+          wrap.insertBefore(v2, v);
           var h2 = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 8, liveSyncDurationCount: 3, startFragPrefetch: true });
-          p.hls = h2;
-          h2.on(Hls.Events.MANIFEST_PARSED, function () {
-            try { var lsp = h2.liveSyncPosition; if (isFinite(lsp) && lsp > 0) v.currentTime = lsp; } catch (e) {}
-            var pr = v.play(); if (pr && pr['catch']) pr['catch'](function () {});
+          var done = false;
+          var cleanup = function () { try { h2.destroy(); } catch (e) {} try { v2.remove(); } catch (e) {} };
+          var guard = setInterval(function () {
+            if (done) { clearInterval(guard); return; }
+            if (p.destroyed || p.video !== v) { clearInterval(guard); cleanup(); }   /* entry died / was adopted mid-upgrade */
+          }, 800);
+          var doSwap = function () {
+            if (done) return;
+            if (p.destroyed || p.video !== v) { cleanup(); return; }
+            done = true; clearInterval(guard);
+            v2.muted = v.muted;                    /* the 🔊 state carries over */
+            v2.style.visibility = '';
+            try { if (p.hls) p.hls.destroy(); } catch (e) {}
+            try { v.remove(); } catch (e) {}
+            p.video = v2; p.hls = h2;
+            paintPvMute(p);
+          };
+          v2.addEventListener('playing', function () {
+            if (done) return;
+            /* swap only once a frame has actually been PRESENTED — 'playing' alone
+               still allowed a ≤100ms blink at the trade */
+            if (v2.requestVideoFrameCallback) v2.requestVideoFrameCallback(function () { doSwap(); });
+            else v2.addEventListener('timeupdate', function tu() { v2.removeEventListener('timeupdate', tu); doSwap(); });
           });
-          h2.loadSource(u2); h2.attachMedia(v);
+          h2.on(Hls.Events.MANIFEST_PARSED, function () {
+            try { var lsp = h2.liveSyncPosition; if (isFinite(lsp) && lsp > 0) v2.currentTime = lsp; } catch (e) {}
+            var pr = v2.play(); if (pr && pr['catch']) pr['catch'](function () {});
+          });
+          h2.loadSource(u2); h2.attachMedia(v2);
         });
       });
     };
