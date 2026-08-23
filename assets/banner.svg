@@ -1,81 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="honestporn — the trust layer, not the content. Two lanes: AI-generated and performer-verified.">
-  <title>honestporn — the trust layer, not the content</title>
-  <defs>
-    <linearGradient id="railA" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7cc4ff" stop-opacity="0"/>
-      <stop offset=".45" stop-color="#7cc4ff" stop-opacity=".85"/>
-      <stop offset="1" stop-color="#7cc4ff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="railV" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#3ddc97" stop-opacity="0"/>
-      <stop offset=".45" stop-color="#3ddc97" stop-opacity=".85"/>
-      <stop offset="1" stop-color="#3ddc97" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="railP" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#f5387b" stop-opacity="0"/>
-      <stop offset=".5" stop-color="#f5387b" stop-opacity=".55"/>
-      <stop offset="1" stop-color="#f5387b" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="iris — the wordmark beside an open eight-bladed camera aperture on a near-black field. Subtitle: no backend of ours — the whole app runs in your tab. Receipts: no backend of ours, torrents in the tab, Whisper in-browser, static pages.">
+<title>iris — no backend of ours — the whole app runs in your tab</title>
+<desc>An eight-bladed camera iris, held open, ringed with aperture-scale ticks, sits to the left of the serif wordmark "iris" on a near-black gradient field. Hot pink rules mark the type block, which closes with a line of receipts: NO BACKEND OF OURS, TORRENTS IN THE TAB, WHISPER IN-BROWSER, STATIC PAGES.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0f1a"/><stop offset=".55" stop-color="#101118"/><stop offset="1" stop-color="#141417"/></linearGradient>
+<radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f5387b" stop-opacity=".20"/><stop offset=".5" stop-color="#f5387b" stop-opacity=".06"/><stop offset="1" stop-color="#f5387b" stop-opacity="0"/></radialGradient>
+<linearGradient id="leafA" gradientUnits="userSpaceOnUse" x1="-120" y1="-120" x2="120" y2="120"><stop offset="0" stop-color="#363b48"/><stop offset="1" stop-color="#101219"/></linearGradient>
+<linearGradient id="leafB" gradientUnits="userSpaceOnUse" x1="-120" y1="-120" x2="120" y2="120"><stop offset="0" stop-color="#22262e"/><stop offset="1" stop-color="#08090d"/></linearGradient>
+<radialGradient id="pupil" cx=".5" cy=".45" r=".55"><stop offset="0" stop-color="#20101a"/><stop offset="1" stop-color="#05060a"/></radialGradient>
+<linearGradient id="ink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4d7e0"/></linearGradient>
+<linearGradient id="rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".17"/><stop offset=".78" stop-color="#ffffff" stop-opacity=".14"/><stop offset="1" stop-color="#ffffff" stop-opacity=".02"/></linearGradient>
+<pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#ffffff" opacity=".045"/></pattern>
+</defs>
 
-  <!-- Opaque ground: the banner carries its own background so it stays legible
-       on a white page and a dark page alike. -->
-  <rect width="1280" height="320" fill="#0d0d0f"/>
-  <rect x="0" y="0" width="1280" height="320" fill="none" stroke="#26262c" stroke-width="2"/>
+<rect width="1280" height="340" fill="url(#bg)"/>
+<rect width="1280" height="340" fill="url(#dots)"/>
+<rect x=".5" y=".5" width="1279" height="339" fill="none" stroke="#ffffff" stroke-opacity=".07"/>
 
-  <!-- the two lanes, converging on the registry -->
-  <g fill="none" stroke-width="1.6">
-    <path d="M-10 96 H600 Q672 96 700 136 T792 176 H1290" stroke="url(#railA)"/>
-    <path d="M-10 232 H600 Q672 232 700 196 T792 160 H1290" stroke="url(#railV)"/>
-    <path d="M-10 164 H1290" stroke="url(#railP)" stroke-dasharray="3 9"/>
-  </g>
-  <circle cx="792" cy="167" r="4.5" fill="#f5387b"/>
+<g transform="translate(232,170)">
+<circle r="196" fill="url(#glow)"/>
+<path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafA)" transform="rotate(0)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafB)" transform="rotate(45)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafA)" transform="rotate(90)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafB)" transform="rotate(135)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafA)" transform="rotate(180)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafB)" transform="rotate(225)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafA)" transform="rotate(270)"/><path d="M52.00 0.00L-1.84 129.99A130 130 0 0 0 129.99 1.84L0.00 -52.00Z" fill="url(#leafB)" transform="rotate(315)"/>
+<g fill="none" stroke="#5b6170" stroke-opacity=".65" stroke-width="1"><path d="M52.00 0.00L-1.84 129.99" transform="rotate(0)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(45)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(90)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(135)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(180)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(225)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(270)"/><path d="M52.00 0.00L-1.84 129.99" transform="rotate(315)"/></g>
+<g fill="none" stroke="#f5387b" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"><path d="M52.00 0.00L24.00 67.59" transform="rotate(0)"/><path d="M52.00 0.00L24.00 67.59" transform="rotate(135)"/><path d="M52.00 0.00L24.00 67.59" transform="rotate(270)"/></g>
+<polygon points="52.0,0.0 36.8,36.8 0.0,52.0 -36.8,36.8 -52.0,0.0 -36.8,-36.8 -0.0,-52.0 36.8,-36.8" fill="url(#pupil)" stroke="#f5387b" stroke-opacity=".85" stroke-width="1.7"/>
+<polygon points="31.0,0.0 21.9,21.9 0.0,31.0 -21.9,21.9 -31.0,0.0 -21.9,-21.9 -0.0,-31.0 21.9,-21.9" fill="none" stroke="#f5387b" stroke-opacity=".2" stroke-width="1"/>
+<circle r="131" fill="none" stroke="#0a0b10" stroke-width="2"/>
+<circle r="136" fill="none" stroke="#31353f" stroke-width="1"/>
+</g>
+<g stroke="#8d93a5" stroke-width="1" stroke-linecap="round"><path d="M374.0 170.0L384.0 170.0" stroke-opacity="0.5"/><path d="M372.8 188.5L378.2 189.3" stroke-opacity="0.26"/><path d="M369.2 206.8L374.5 208.2" stroke-opacity="0.26"/><path d="M363.2 224.3L368.3 226.4" stroke-opacity="0.26"/><path d="M355.0 241.0L359.7 243.8" stroke-opacity="0.26"/><path d="M344.7 256.4L349.0 259.8" stroke-opacity="0.26"/><path d="M332.4 270.4L339.5 277.5" stroke-opacity="0.5"/><path d="M318.4 282.7L321.8 287.0" stroke-opacity="0.26"/><path d="M303.0 293.0L305.8 297.7" stroke-opacity="0.26"/><path d="M286.3 301.2L288.4 306.3" stroke-opacity="0.26"/><path d="M268.8 307.2L270.2 312.5" stroke-opacity="0.26"/><path d="M250.5 310.8L251.3 316.2" stroke-opacity="0.26"/><path d="M232.0 312.0L232.0 322.0" stroke-opacity="0.5"/><path d="M213.5 310.8L212.7 316.2" stroke-opacity="0.26"/><path d="M195.2 307.2L193.8 312.5" stroke-opacity="0.26"/><path d="M177.7 301.2L175.6 306.3" stroke-opacity="0.26"/><path d="M161.0 293.0L158.3 297.7" stroke-opacity="0.26"/><path d="M145.6 282.7L142.2 287.0" stroke-opacity="0.26"/><path d="M131.6 270.4L124.5 277.5" stroke-opacity="0.5"/><path d="M119.3 256.4L115.0 259.8" stroke-opacity="0.26"/><path d="M109.0 241.0L104.3 243.8" stroke-opacity="0.26"/><path d="M100.8 224.3L95.7 226.4" stroke-opacity="0.26"/><path d="M94.8 206.8L89.5 208.2" stroke-opacity="0.26"/><path d="M91.2 188.5L85.8 189.3" stroke-opacity="0.26"/><path d="M90.0 170.0L80.0 170.0" stroke-opacity="0.5"/><path d="M91.2 151.5L85.8 150.7" stroke-opacity="0.26"/><path d="M94.8 133.2L89.5 131.8" stroke-opacity="0.26"/><path d="M100.8 115.7L95.7 113.6" stroke-opacity="0.26"/><path d="M109.0 99.0L104.3 96.2" stroke-opacity="0.26"/><path d="M119.3 83.6L115.0 80.2" stroke-opacity="0.26"/><path d="M131.6 69.6L124.5 62.5" stroke-opacity="0.5"/><path d="M145.6 57.3L142.2 53.0" stroke-opacity="0.26"/><path d="M161.0 47.0L158.2 42.3" stroke-opacity="0.26"/><path d="M177.7 38.8L175.6 33.7" stroke-opacity="0.26"/><path d="M195.2 32.8L193.8 27.5" stroke-opacity="0.26"/><path d="M213.5 29.2L212.7 23.8" stroke-opacity="0.26"/><path d="M232.0 28.0L232.0 18.0" stroke-opacity="0.5"/><path d="M250.5 29.2L251.3 23.8" stroke-opacity="0.26"/><path d="M268.8 32.8L270.2 27.5" stroke-opacity="0.26"/><path d="M286.3 38.8L288.4 33.7" stroke-opacity="0.26"/><path d="M303.0 47.0L305.8 42.3" stroke-opacity="0.26"/><path d="M318.4 57.3L321.8 53.0" stroke-opacity="0.26"/><path d="M332.4 69.6L339.5 62.5" stroke-opacity="0.5"/><path d="M344.7 83.6L349.0 80.2" stroke-opacity="0.26"/><path d="M355.0 99.0L359.7 96.2" stroke-opacity="0.26"/><path d="M363.2 115.7L368.3 113.6" stroke-opacity="0.26"/><path d="M369.2 133.2L374.5 131.8" stroke-opacity="0.26"/><path d="M372.8 151.5L378.2 150.7" stroke-opacity="0.26"/></g>
+<path d="M217.8 34.7A136 136 0 0 1 358.1 119.1" fill="none" stroke="#f5387b" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- wordmark -->
-  <g transform="translate(96 108)">
-    <rect x="0" y="0" width="44" height="44" rx="11" fill="#f5387b"/>
-    <path d="M17 13l16 9-16 9z" fill="#0d0d0f"/>
-    <text x="62" y="33"
-          font-family="ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
-          font-size="38" letter-spacing="-1.1" fill="#eceef1" font-weight="600">honest<tspan font-weight="800">porn</tspan></text>
-  </g>
+<rect x="470" y="65.5" width="30" height="3" fill="#f5387b"/>
+<text x="512" y="72" font-family="Verdana, Geneva, 'DejaVu Sans', sans-serif" font-size="10.5" letter-spacing="2.9" fill="#8b90a1">BROWSER-ONLY MEDIA WALL</text>
+<line x1="768" y1="68" x2="1072" y2="68" stroke="#282c36" stroke-width="1"/>
+<text x="1216" y="72" text-anchor="end" font-family="Verdana, Geneva, 'DejaVu Sans', sans-serif" font-size="10.5" letter-spacing="2.4" fill="#5c6170">IRIS.AKEYO.IO</text>
+<line x1="1216" y1="80" x2="1216" y2="247" stroke="#ffffff" stroke-opacity=".07" stroke-width="1"/>
 
-  <text x="98" y="196"
-        font-family="ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
-        font-size="21" fill="#b9bec6" letter-spacing="-.2">the trust layer, not the content</text>
+<text x="468" y="176" font-family="Georgia, 'Times New Roman', Times, serif" font-size="128" letter-spacing="2" fill="url(#ink)">iris</text>
+<text x="470" y="220" font-family="Georgia, 'Times New Roman', Times, serif" font-style="italic" font-size="24" fill="#aab0bd">no backend of ours — the whole app runs in your tab</text>
 
-  <text x="98" y="232"
-        font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
-        font-size="13" fill="#7f858f" letter-spacing="1.4">PROTOTYPE  ·  LOCAL ONLY  ·  ZERO ADULT CONTENT</text>
-
-  <!-- the two-lane trust badges: drawn geometry, never emoji -->
-  <g transform="translate(880 116)">
-    <rect x="0" y="0" width="300" height="40" rx="20" fill="#141417" stroke="#7cc4ff" stroke-opacity=".4"/>
-    <path d="M0 20a20 20 0 0 1 20-20h2v40h-2A20 20 0 0 1 0 20z" fill="#7cc4ff"/>
-    <g transform="translate(36 10)" fill="none" stroke="#7cc4ff" stroke-width="1.5">
-      <path d="M10 1.4 17.6 5.8v8.8L10 19 2.4 14.6V5.8z" stroke-linejoin="round"/>
-      <circle cx="10" cy="10.2" r="2.2" fill="#7cc4ff" stroke="none"/>
-    </g>
-    <text x="70" y="25"
-          font-family="ui-sans-serif,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
-          font-size="14.5" font-weight="600" fill="#eceef1">AI-Generated</text>
-    <text x="182" y="25"
-          font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
-          font-size="11.5" fill="#7f858f">no human performed</text>
-  </g>
-
-  <g transform="translate(880 168)">
-    <rect x="0" y="0" width="300" height="40" rx="20" fill="#141417" stroke="#3ddc97" stroke-opacity=".4"/>
-    <path d="M0 20a20 20 0 0 1 20-20h2v40h-2A20 20 0 0 1 0 20z" fill="#3ddc97"/>
-    <g transform="translate(36 10)" fill="none" stroke="#3ddc97" stroke-width="1.5">
-      <path d="M10 1.2 16.8 4v5.2c0 3.7-2.7 6.5-6.8 7.7-4.1-1.2-6.8-4-6.8-7.7V4z" stroke-linejoin="round"/>
-      <path d="m6.9 9.4 2.3 2.3 4.2-4.4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
-    </g>
-    <text x="70" y="25"
-          font-family="ui-sans-serif,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
-          font-size="14.5" font-weight="600" fill="#eceef1">Performer-Verified</text>
-    <text x="204" y="25"
-          font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
-          font-size="11.5" fill="#7f858f">consent · pull</text>
-  </g>
+<line x1="470" y1="255" x2="1216" y2="255" stroke="url(#rail)" stroke-width="1"/>
+<rect x="470" y="254" width="96" height="2" fill="#f5387b"/>
+<text x="470" y="280" font-family="Verdana, Geneva, 'DejaVu Sans', sans-serif" font-size="10.5" letter-spacing="2.6" fill="#878c9d"><tspan fill="#eef0f6">NO BACKEND OF OURS</tspan><tspan dx="12" fill="#f5387b">&#183;</tspan><tspan dx="12">TORRENTS IN THE TAB</tspan><tspan dx="12" fill="#f5387b">&#183;</tspan><tspan dx="12">WHISPER IN-BROWSER</tspan><tspan dx="12" fill="#f5387b">&#183;</tspan><tspan dx="12">STATIC PAGES</tspan></text>
 </svg>
