@@ -196,6 +196,35 @@ img { display: block; max-width: 100%; }
 }
 .navbtn:hover { background: var(--bg-2); color: var(--fg); }
 .navbtn.on { background: var(--accent-dim); color: var(--accent); }
+
+/* hosted-engine status pill (topbar) — proves the GitHub-Actions runners are live,
+   connected, and ready to stream. Sits just before the nav. */
+.enginestat {
+  display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+  height: 34px; padding: 0 11px; margin-right: 2px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg-1); color: var(--fg-1);
+  font: 600 12.5px/1 inherit; letter-spacing: .2px; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.enginestat:hover { background: var(--bg-2); border-color: var(--bg-3); }
+.enginestat .es-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--fg-3); flex: 0 0 auto;
+}
+.enginestat .es-label { white-space: nowrap; }
+/* OFF — opt-in not enabled */
+.enginestat.es-off { color: var(--fg-2); }
+.enginestat.es-off .es-dot { background: var(--fg-3); }
+/* WARMING — spinning up / discovering (amber pulse) */
+.enginestat.es-warm { color: var(--warn); border-color: rgba(240,180,41,.4); }
+.enginestat.es-warm .es-dot { background: var(--warn); animation: es-pulse 1.1s var(--e5, ease-in-out) infinite; }
+/* READY — a live runner is connected and ready to stream (green pulse) */
+.enginestat.es-ready { color: var(--ok); border-color: rgba(61,220,151,.42); background: rgba(61,220,151,.10); }
+.enginestat.es-ready .es-dot { background: var(--ok); box-shadow: 0 0 0 0 rgba(61,220,151,.55); animation: es-live 2s ease-out infinite; }
+@keyframes es-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes es-live { 0% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 70% { box-shadow: 0 0 0 7px rgba(61,220,151,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); } }
+@media (max-width: 620px) { .enginestat .es-label { display: none; } .enginestat { padding: 0 9px; height: 32px; } }
+@media (prefers-reduced-motion: reduce) { .enginestat .es-dot { animation: none !important; } }
 @media (max-width: 620px) { .navbtn span { display: none; } .navbtn { padding: 0 9px; } }
 
 /* ============================= catalog bar ============================== */
