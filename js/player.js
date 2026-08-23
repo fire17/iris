@@ -45,9 +45,9 @@
   var HLS_URL = (function () {
     try {
       var s = document.currentScript;
-      if (s && s.src) return new URL('../vendor/hls.js?v=83b3e31f', s.src).href;
+      if (s && s.src) return new URL('../vendor/hls.js', s.src).href;
     } catch (e) {}
-    return 'vendor/hls.js?v=83b3e31f';
+    return 'vendor/hls.js';
   })();
 
   // ------------------------------------------------------------------- styles
@@ -786,7 +786,7 @@
     on(v, 'stalled', function () { spin(true); });
     on(v, 'timeupdate', function () {
       paintTime();
-      if (!v.paused && v.currentTime !== S.lastT) { S.lastT = v.currentTime; spin(false); }
+      if (!v.paused && v.currentTime !== S.lastT) { S.lastT = v.currentTime; spin(false); S.healN = 0; }
     });
     on(v, 'progress', paintBuf);
     on(v, 'durationchange', function () { paintTime(); paintBuf(); });
@@ -799,11 +799,10 @@
       if (!e) return;
       var m = { 1: 'Playback aborted.', 2: 'Network error while loading the stream.',
         3: 'This stream could not be decoded.', 4: 'This stream format is not supported by the browser.' };
-      if (S.viaEngine && S.magnet) {
-        magnetPanel(S.magnet, 'The local streaming engine could not serve this file (it may still be ' +
-          'looking for peers, or the file index is wrong). Copy the magnet link to watch it in a torrent client.', true);
-        return;
-      }
+      /* engine stream hiccuped (runner cycled, tunnel blip, job restart) — try to heal and
+         resume from where we were before surfacing the magnet fallback (healStream does
+         that on exhaustion) */
+      if (S.viaEngine) { healStream('video-err:' + e.code); return; }
       fail(m[e.code] || 'This stream could not be played.');
     });
 
@@ -851,7 +850,7 @@
     };
     /* hover/drag preview time, clamped so the bubble never bleeds past either end */
     var previewTip = function (ev) {
-      var d = v.duration, p = seekAt(ev);
+      var d = effDur(), p = seekAt(ev);
       var r = el.seek.getBoundingClientRect();
       el.tip.textContent = isFinite(d) && d > 0 ? fmt(p * d) : '--:--';
       var w = el.tip.offsetWidth, x = p * r.width;
@@ -896,6 +895,27 @@
     // --- periodic save
     S.saveT = setInterval(function () { save(); }, SAVE_MS);
     S.timers.push(function () { clearInterval(S.saveT); });
+
+    /* SELF-HEAL WATCHDOG (engine streams): if playback stops advancing while playing, tell
+       a legit content buffer (ffmpeg realtime pacing / slow peers) apart from a dead engine
+       by pinging /status — only re-resolve when the engine is genuinely unreachable, so we
+       never churn on normal buffering. Self-gates on S.viaEngine (set async after open). */
+    S.healT = setInterval(function () {
+      if (!S || S.destroyed || !S.viaEngine || S.healing) return;
+      var vv = S.el.video;
+      if (vv.paused || vv.ended) { S.stallSince = 0; return; }
+      if (vv.currentTime !== S.wdT) { S.wdT = vv.currentTime; S.stallSince = 0; return; }
+      if (!S.stallSince) { S.stallSince = Date.now(); return; }
+      if (Date.now() - S.stallSince < 15000) return;                 /* grace for real buffering */
+      var base = engineBase();
+      if (!base) { healStream('stall-no-base'); return; }
+      fetch(base + '/status', { cache: 'no-store' }).then(function (r) {
+        if (!S || S.destroyed) return;
+        if (!r || !r.ok) { healStream('stall-engine-down'); return; }
+        S.stallSince = Date.now();                                   /* reachable → just buffering */
+      })['catch'](function () { if (S && !S.destroyed) healStream('stall-unreachable'); });
+    }, 5000);
+    S.timers.push(function () { clearInterval(S.healT); });
     on(window, 'pagehide', function () { save(); });
     on(window, 'beforeunload', function () { save(); });
 
@@ -914,7 +934,7 @@
   function noop() {}
 
   function applySeek(p, commit) {
-    var v = S.el.video, d = v.duration;
+    var v = S.el.video, d = effDur();
     if (!isFinite(d) || d <= 0) return;
     var t = p * d;
     S.el.fill.style.width = (p * 100) + '%';
@@ -965,9 +985,20 @@
     S.el.fs.classList[isFs ? 'add' : 'remove']('plr-on');
   }
 
+  /* An engine transcode is a growing HLS playlist, so <video>.duration reports only what
+     has been transcoded so far — the seek bar would read "position / buffered" instead of
+     "position / whole film". S.durTotal is the real length the engine probed; use it when
+     present so the time label and seek bar reflect the entire movie. Everything else
+     (direct MP4, live cams) leaves it unset and keeps <video>.duration. */
+  function effDur() {
+    if (!S) return NaN;
+    if (Number.isFinite(S.durTotal) && S.durTotal > 0) return S.durTotal;
+    return S.el.video.duration;
+  }
+
   function paintTime() {
     if (!S || S.dragging) return;
-    var v = S.el.video, d = v.duration, t = v.currentTime;
+    var v = S.el.video, d = effDur(), t = v.currentTime;
     var p = (isFinite(d) && d > 0) ? Math.max(0, Math.min(1, t / d)) : 0;
     S.el.fill.style.width = (p * 100) + '%';
     S.el.knob.style.left = (p * 100) + '%';
@@ -978,7 +1009,7 @@
   }
   function paintBuf() {
     if (!S) return;
-    var v = S.el.video, d = v.duration, out = '';
+    var v = S.el.video, d = effDur(), out = '';
     if (isFinite(d) && d > 0) {
       try {
         for (var i = 0; i < v.buffered.length; i++) {
@@ -1498,6 +1529,7 @@
           var u = base + '/stream/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx);
           S.viaEngine = true;
           S.magnet = mg;
+          S.engineIh = ih; S.engineIdx = idx;   /* kept so healStream() can re-resolve */
           var where = viaRunner ? 'hosted runner (experimental — not browser-p2p)' : 'the local engine (opt-in — not browser-p2p)';
           /* Ask the engine HOW to play first: browser-native containers stream direct with
              Range; MKVs with Dolby/DTS audio come back as an ffmpeg HLS transcode (audio →
@@ -1509,6 +1541,7 @@
               if (j && j.ok && j.url) {
                 u = j.url;
                 S.engineProbe = j.probe || null;
+                S.durTotal = (j.probe && j.probe.dur) || 0;   /* whole-film length for the seek bar */
                 toast(j.kind === 'hls' ? 'Streaming via ' + where + ': audio → AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ')'
                                        : 'Streaming via ' + where, 3200);
                 start(j.kind === 'hls' ? 'hls' : 'url', u);
@@ -1583,6 +1616,63 @@
     });
   }
 
+  /* SELF-HEAL: when an engine stream drops mid-watch — the hosted runner cycled to a new
+     URL, a tunnel blip, or the transcode job restarted — silently re-resolve and resume
+     from the last good time instead of erroring out. Re-discovers the runner (its URL may
+     have changed), re-asks /play, reloads the source, and seeks back. Debounced, capped,
+     and scoped to engine streams; direct-MP4 (Range) resumes exactly, an HLS transcode
+     resumes at the transcoded head. */
+  function healStream(reason) {
+    if (!S || S.destroyed || !S.viaEngine || S.healing || S.engineIh == null) return;
+    S.healN = (S.healN || 0) + 1;
+    if (S.healN > 4) {
+      S.healing = false;
+      if (S.magnet) magnetPanel(S.magnet, 'The stream kept dropping and could not be recovered. Copy the magnet to watch it in a torrent client.', true);
+      else fail('The stream dropped and could not be recovered.');
+      return;
+    }
+    S.healing = true;
+    var v = S.el.video, at = (isFinite(S.lastT) && S.lastT > 0) ? S.lastT : (v.currentTime || 0);
+    toast('Reconnecting…', 4000);
+    if (window.ErrLog) ErrLog.push('heal', 'reconnect #' + S.healN + ' (' + (reason || '') + ') at t=' + at.toFixed(1), '');
+    var runnerOptIn = optIn(RUNNER_OPTIN);
+    var refresh = (runnerOptIn && window.HPRunner)
+      ? window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 8000 })['catch'](function () { return ''; })
+      : Promise.resolve('');
+    refresh.then(function () {
+      if (!S || S.destroyed) return Promise.reject();
+      var base = engineBase();
+      if (!base) return Promise.reject(new Error('no engine'));
+      return fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; });
+    }).then(function (j) {
+      if (!S || S.destroyed) return;
+      if (!(j && j.ok && j.url)) throw new Error('re-resolve failed');
+      S.durTotal = (j.probe && j.probe.dur) || S.durTotal || 0;
+      var url = j.url, kind = j.kind === 'hls' ? 'hls' : 'url';
+      var seekBack = function () {
+        try { if (at > 0.5) v.currentTime = at; } catch (e) {}
+        S.healing = false;
+        var pp = v.play(); if (pp && pp['catch']) pp['catch'](function () {});
+      };
+      if (kind === 'hls' && S.hls && window.Hls) {
+        var once = function () { try { S.hls.off(window.Hls.Events.MANIFEST_PARSED, once); } catch (e) {} seekBack(); };
+        S.hls.on(window.Hls.Events.MANIFEST_PARSED, once);
+        S.hls.loadSource(url); S.hls.startLoad();
+      } else if (kind === 'hls') {
+        start('hls', url);
+        v.addEventListener('loadedmetadata', seekBack, { once: true });
+      } else {
+        v.addEventListener('loadedmetadata', seekBack, { once: true });
+        v.src = url; v.load();
+      }
+    })['catch'](function () {
+      if (!S || S.destroyed) return;
+      S.healing = false;
+      setTimeout(function () { if (S && !S.destroyed && !S.healing) healStream('retry'); }, 2500);
+    });
+  }
+
   function start(kind, url) {
     if (!S) return;
     var v = S.el.video;
@@ -1632,15 +1722,22 @@
         S.hls = hls;
         hls.on(Hls.Events.ERROR, function (evt, data) {
           if (!data || !data.fatal) return;
+          var det = data.details || '';
+          /* the whole playlist/base is unreachable (the hosted runner cycled to a new URL,
+             or the tunnel dropped) — startLoad cannot fix a dead origin, so re-resolve the
+             engine and resume from the last good time instead */
+          var playlistGone = /manifestLoad|manifestParsing|levelLoad|levelEmpty/i.test(det);
+          if (S && S.viaEngine && playlistGone) { healStream('hls:' + det); return; }
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
             try { hls.startLoad(); toast('Network hiccup — reconnecting…', 2000); return; } catch (e) {}
           } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             try { hls.recoverMediaError(); toast('Recovering the video stream…', 2000); return; } catch (e) {}
           }
-          if (window.ErrLog) ErrLog.push('hls', 'fatal ' + (data.type || '') + ' / ' + (data.details || ''), (S && S.playUrl || '').slice(0, 200));
+          if (window.ErrLog) ErrLog.push('hls', 'fatal ' + (data.type || '') + ' / ' + det, (S && S.playUrl || '').slice(0, 200));
+          if (S && S.viaEngine) { healStream('hls-fatal'); return; }   /* one more shot before giving up */
           try { hls.destroy(); } catch (e) {}
           S.hls = null;
-          fail('The HLS stream failed (' + esc(data.details || data.type || 'fatal error') + ').');
+          fail('The HLS stream failed (' + esc(det || data.type || 'fatal error') + ').');
         });
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
           if (S && S.live) {
