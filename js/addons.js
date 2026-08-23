@@ -718,6 +718,29 @@
 
   installed = loadInstalled();
 
+  /* Out-of-the-box addons — shipped installed on first run, seeded ONCE into existing
+   * installs (fire17, 2026-08-23: torrentio + chaturbate ready out of the box). The
+   * one-shot flag means a user's later removal is respected forever.
+   * (stremio://chaturbate.stremio.homes/f/manifest.json is the deep-link form of the
+   *  https URL below.) */
+  var SEED_KEY = 'coolstremio.addons.seed.v1';
+  var SEED = [
+    'https://torrentio.strem.fun/manifest.json',
+    'https://chaturbate.stremio.homes/f/manifest.json'
+  ];
+  (function seedDefaults() {
+    var s = safeStorage();
+    if (!s) return;
+    try { if (s.getItem(SEED_KEY)) return; s.setItem(SEED_KEY, '1'); } catch (e) { return; }
+    Promise.all(SEED.map(add)).then(function (ms) {
+      /* first-ever seed: if the user is sitting on home already, rebuild it so the
+         new rows appear without a manual refresh */
+      if (ms.filter(Boolean).length && (!location.hash || /^#(home)?$/.test(location.hash))) {
+        try { window.dispatchEvent(new Event('hashchange')); } catch (e) {}
+      }
+    });
+  })();
+
   var ready = (function () {
     if (installed.length) return Promise.resolve(list());
     return add(CINEMETA_URL).then(function () { return list(); });

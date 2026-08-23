@@ -325,6 +325,7 @@ function route() {
   var parts = raw.split("/").map(dec);
   var head = parts[0] || "home";
 
+  if (head === "home" || head === "board" || !raw) setTimeout(camRestore, 0);   /* after the view builds */
   if (head === "settings") return viewSettings();
   if (head === "detail" && parts[1] && parts[2]) return viewDetail(parts[1], parts[2]);
   if (head === "search") return viewSearch(parts[1] || "");
@@ -362,6 +363,31 @@ function goBack() {
 }
 
 /* ================================================================== wall */
+/* --- canvas position persistence: the wall reopens exactly where you left it ----- */
+function camKey() {
+  var raw = txt(location.hash).replace(/^#/, "");
+  var pts = raw.split("/");
+  return "hp.cam." + (pts[0] === "board" ? "board." + (pts[1] || "") : "home");
+}
+function camRestore() {
+  if (!S.wall) return;
+  try {
+    var c = JSON.parse(localStorage.getItem(camKey()) || "null");
+    if (c) call(S.wall, "setCamera", c);
+  } catch (e) {}
+}
+var camSaveT = 0, camLast = "";
+function camSaverStart() {
+  if (camSaveT) return;
+  camSaveT = setInterval(function () {
+    if (!S.wall || S.wallMode !== "canvas") return;
+    var st; try { st = S.wall.getState(); } catch (e) { return; }
+    if (!st || !st.cam) return;
+    var v = JSON.stringify(st.cam);
+    if (v !== camLast) { camLast = v; try { localStorage.setItem(camKey(), v); } catch (e) {} }
+  }, 1200);
+}
+
 function initWall() {
   if (S.wall || !D.wall) return;
   if (window.WallView) {
@@ -370,6 +396,8 @@ function initWall() {
       S.wallMode = "canvas";
       call(S.wall, "onSelect", onWallSelect);
       call(S.wall, "onHover", onWallHover);
+      camRestore();
+      camSaverStart();
       show(D.wall, true);
       show(D.grid, false);
       return;

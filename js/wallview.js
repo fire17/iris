@@ -614,6 +614,7 @@ function WallView(canvas, opts) {
   var wallOrder = opts.order === "ttb" ? "ttb" : "ltr";
   var selected = null;
   var cam = { x: 0, y: 0, zoom: 1 };
+  var pendingCam = null;   /* a restored camera: wins over the NEXT home-arrival framing */
   var camVel = { x: 0, y: 0 };
   var camTween = null;
   var savedCam = null;
@@ -980,7 +981,8 @@ function WallView(canvas, opts) {
       if (instant) { cam.x = res.camera.x; cam.y = res.camera.y; cam.zoom = res.camera.zoom; camTween = null; }
       else flyTo(res.camera.x, res.camera.y, res.camera.zoom, 480, easeInOutCubic);
     } else if (home && res.homeCamera) {
-      var hc = res.homeCamera;
+      var hc = pendingCam || res.homeCamera;
+      if (pendingCam) pendingCam = null;
       /* the very first paint SNAPS: flying in from a position the user never
          chose is motion that means nothing. Later arrivals ease. */
       if (instant || REDUCED || firstEver) {
@@ -2137,6 +2139,15 @@ function WallView(canvas, opts) {
   this.selectIndex = function (i, notify) { select(i | 0, notify !== false); return this; };
   this.deselect = function () { deselect(); return this; };
   this.getSelected = function () { return selected == null ? null : { item: items[selected], index: selected }; };
+  /* Restore a saved camera. Applies NOW and pins itself against the next home-arrival
+     framing (content often lands after boot and would otherwise re-home the view). */
+  this.setCamera = function (c) {
+    if (!c || !isFinite(+c.x) || !isFinite(+c.y) || !(+c.zoom > 0)) return this;
+    cam.x = +c.x; cam.y = +c.y; cam.zoom = +c.zoom;
+    camTween = null; camVel.x = 0; camVel.y = 0;
+    pendingCam = { x: cam.x, y: cam.y, zoom: cam.zoom };
+    kick(); return this;
+  };
   this.showSpinner = function (on) { spinnerOn = !!on; kick(); return this; };
   this.setEmptyText = function (s) { emptyText = s || ""; kick(); return this; };
   this.setBrand = function (s) { brand = s == null ? "" : s; kick(); return this; };

@@ -706,6 +706,7 @@
     if (S.adopted) {
       var vv = el.video;
       S.playUrl = (opts.adopt && opts.adopt.url) || vv.currentSrc || '';
+      S.adoptOrigin = (opts.adopt && opts.adopt.back) || null;   /* Esc unwinds to here */
       S.audioRestored = true;                 /* it is already playing — no autoplay guard */
       /* an UNMUTED preview is explicit intent: stay audible and remember it */
       if (opts.adopt && opts.adopt.audible) { vv.muted = false; lsSet(MUTE_KEY, '0'); S.wantMuted = false; }
@@ -1003,13 +1004,13 @@
     if (!S) return;
     var t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-      if (e.key === 'Escape') { Player.close(); e.preventDefault(); }
+      if (e.key === 'Escape') { escBack(); e.preventDefault(); }
       return;
     }
     var v = S.el.video, k = e.key;
     if (k === 'Escape') {
       if (document.fullscreenElement || document.webkitFullscreenElement) return; // browser exits fs first
-      Player.close(); e.preventDefault(); return;
+      escBack(); e.preventDefault(); return;
     }
     if (S.card) return; // modal card owns the rest
     if (k === ' ' || k === 'Spacebar' || k === 'k') { toggle(true); e.preventDefault(); }
@@ -2225,6 +2226,29 @@
   }
 
   // -------------------------------------------------------------------- close
+  /* Esc from an adopted session unwinds ONE level — player → glance → tile — with the
+     stream (and its 🔊 state) alive the whole way. The player teardown runs against a
+     dummy element so it cannot touch the media being handed back. */
+  function escBack() {
+    var ao = S && S.adoptOrigin;
+    if (!ao || !ao.origin) { Player.close(); return; }
+    var vv = S.el.video;
+    var t = { video: vv, hls: S.hls, url: S.playUrl, audible: !vv.muted && vv.volume > 0 };
+    if (ao.level === 'glance' && ao.origin) t.back = null;   /* set below via origin chain */
+    try { vv.remove(); } catch (e) {}
+    S.el.video = document.createElement('video');
+    S.hls = null;
+    destroy(true);
+    var o = ao.origin;
+    if (ao.level === 'glance') {
+      openGlance({ stream: o.stream, poster: o.poster, live: o.live, title: o.title,
+                   onWatch: o.onWatch, reduced: o.reduced, rect: o.rect, adopt: t, origin: o });
+    } else {
+      poolPromote({ key: o.key, stream: o.stream, rect: o.rect, poster: o.poster, title: o.title,
+                    live: o.live, onWatch: o.onWatch, reduced: o.reduced, adopt: t });
+    }
+  }
+
   function destroy(immediate) {
     if (!S || S.destroyed) return;
     var s = S;
@@ -2321,6 +2345,13 @@
     if (!p || p.destroyed || !p.video) return null;
     var t = { video: p.video, hls: p.hls, url: (p.stream && p.stream.url) || '',
               audible: !p.video.muted && p.video.volume > 0 };   /* the user's 🔊 choice travels with the media */
+    /* where Esc should RETURN the media to: a glance goes back as a glance, a pool
+       preview goes back to its tile — the whole view stack unwinds without ever
+       stopping the stream. */
+    t.back = (p.mode === 'glance')
+      ? (p.origin ? { level: 'glance', origin: p.origin } : null)
+      : { level: 'preview', origin: { key: p.key, stream: p.stream, rect: p.rect, poster: p.poster,
+                                      title: p.title, live: p.live, onWatch: p.onWatch, reduced: p.reduced } };
     p.video = null; p.hls = null; p.destroyed = true;
     for (var i = 0; i < p.timers.length; i++) { try { clearTimeout(p.timers[i]); } catch (e) {} }
     if (p.keyH) { try { document.removeEventListener('keydown', p.keyH, true); } catch (e) {} }
@@ -2357,8 +2388,19 @@
   }
   /* tear the WHOLE pool down (view/catalog/search change) */
   function poolClear() { while (POOL.length) destroyEntry(POOL.pop()); }
-  /* stop just the glance singleton */
-  function glanceStopFn() { if (GL) { var g = GL; GL = null; destroyEntry(g); } }
+  /* stop just the glance singleton — an adopted glance hands its media BACK to the
+     tile it came from (the collapse half of the expand trick); nothing is refetched. */
+  function glanceStopFn() {
+    if (!GL) return;
+    var g = GL; GL = null;
+    if (g.origin && g.video) {
+      var t = extractTransfer(g);
+      if (t) { poolPromote({ key: g.origin.key, stream: g.origin.stream, rect: g.origin.rect,
+                             poster: g.origin.poster, title: g.origin.title, live: g.origin.live,
+                             onWatch: g.origin.onWatch, reduced: g.origin.reduced, adopt: t }); return; }
+    }
+    destroyEntry(g);
+  }
   /* stop everything: pool + glance (a full open supersedes both) */
   function pvStopAll() { poolClear(); glanceStopFn(); }
   /* the canvas sound toggle: paint one entry's 🔊 state; mute every entry */
@@ -2461,7 +2503,7 @@
               video: null, hls: null, timers: [], destroyed: false, stream: stream,
               poster: opts.poster || '', live: live, reduced: reduced, rect: opts.rect || null,
               onWatch: (typeof opts.onWatch === 'function' ? opts.onWatch : null), keyH: null,
-              muteBtn: muteBtn };
+              muteBtn: muteBtn, origin: opts.origin || null, title: opts.title || '' };
 
     document.body.appendChild(wrap);
     positionPv(wrap, mode, opts.rect);
@@ -2471,8 +2513,12 @@
 
     if (glanceBtn) glanceBtn.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
+      var t = extractTransfer(p);   /* the glance ADOPTS this preview's live media */
       openGlance({ stream: stream, poster: opts.poster, live: live,
-                   onWatch: opts.onWatch, reduced: reduced, rect: opts.rect });
+                   onWatch: opts.onWatch, reduced: reduced, rect: opts.rect,
+                   adopt: t || undefined,
+                   origin: { key: p.key, stream: stream, rect: opts.rect, poster: opts.poster,
+                             title: opts.title, live: live, onWatch: opts.onWatch, reduced: reduced } });
     });
     muteBtn.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
@@ -2492,6 +2538,18 @@
       p.keyH = function (e) { if (e.key === 'Escape') { e.preventDefault(); glanceStopFn(); } };
       document.addEventListener('keydown', p.keyH, true);
       scrim.addEventListener('click', function () { glanceStopFn(); });
+    }
+
+    /* ADOPTION: media handed over from another preview/glance keeps playing in this
+       entry — same element, same buffer, zero refetch (the expand/collapse trick). */
+    if (opts.adopt && opts.adopt.video) {
+      var av = opts.adopt.video;
+      p.video = av; p.hls = opts.adopt.hls || null;
+      wrap.insertBefore(av, wrap.firstChild);
+      wrap.classList.add('plr-pv-playing');
+      paintPvMute(p);
+      var pr0 = av.play(); if (pr0 && pr0['catch']) pr0['catch'](function () {});
+      return p;
     }
 
     /* prefers-reduced-motion: honour it literally — no autoplaying video at all,
