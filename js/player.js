@@ -33,9 +33,9 @@
   var HLS_URL = (function () {
     try {
       var s = document.currentScript;
-      if (s && s.src) return new URL('../vendor/hls.js', s.src).href;
+      if (s && s.src) return new URL('../vendor/hls.js?v=83b3e31f', s.src).href;
     } catch (e) {}
-    return 'vendor/hls.js';
+    return 'vendor/hls.js?v=83b3e31f';
   })();
 
   // ------------------------------------------------------------------- styles
