@@ -288,8 +288,8 @@
     /* DESKTOP only: a pool card's buttons fade in on hover (the wall drives .plr-pv-hot,
        since the wrap is pointer-events:none and CSS :hover never fires on it). */
     '@media (hover:hover) and (pointer:fine){',
-    '.plr-pv-wrap:not(.plr-pv-glance) .plr-pv-btns{opacity:0;transition:opacity .13s var(--e4)}',
-    '.plr-pv-wrap.plr-pv-hot:not(.plr-pv-glance) .plr-pv-btns{opacity:1}',
+    '.plr-pv-wrap:not(.plr-pv-glance) .plr-pv-btns,.plr-pv-wrap:not(.plr-pv-glance) .plr-pv-tag{opacity:0;transition:opacity .13s var(--e4)}',
+    '.plr-pv-wrap.plr-pv-hot:not(.plr-pv-glance) .plr-pv-btns,.plr-pv-wrap.plr-pv-hot:not(.plr-pv-glance) .plr-pv-tag{opacity:1}',
     '}',
     '.plr-pv-b svg{width:16px;height:16px;fill:currentColor;display:block;pointer-events:none}',
     '.plr-pv-wrap.plr-pv-audible .plr-pv-mute{background:var(--acc);color:#20040e;border-color:transparent}',
