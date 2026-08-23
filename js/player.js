@@ -677,6 +677,20 @@
       title: titleMain, sub: sub, subUI: subUI, resumed: false, subsReady: false, subTracks: []
     };
 
+    /* ADOPTION: the preview's <video> (and its hls instance) become THE player media —
+       same element, same buffer, zero refetch. Swap before wire() so every handler
+       binds to the adopted element. (The adopted hls carries no fatal-recovery
+       listeners; the element's own error handler is the backstop.) */
+    if (opts.adopt && opts.adopt.video) {
+      var av = opts.adopt.video, ov = el.video;
+      av.className = ov.className; av.controls = false; av.loop = false;
+      try { av.removeAttribute('disablepictureinpicture'); } catch (e) {}
+      try { ov.parentNode.replaceChild(av, ov); } catch (e) {}
+      el.video = av;
+      S.hls = opts.adopt.hls || null;
+      S.adopted = true;
+    }
+
     /* sweep any orphan overlay still fading out from a previous session */
     var old = document.querySelectorAll('.plr-root');
     for (var oi = 0; oi < old.length; oi++) { try { old[oi].remove(); } catch (e) {} }
@@ -689,7 +703,20 @@
     try { el.root.focus(); } catch (e) {}
 
     wire();
-    route();
+    if (S.adopted) {
+      var vv = el.video;
+      S.playUrl = (opts.adopt && opts.adopt.url) || vv.currentSrc || '';
+      S.audioRestored = true;                 /* it is already playing — no autoplay guard */
+      /* an UNMUTED preview is explicit intent: stay audible and remember it */
+      if (opts.adopt && opts.adopt.audible) { vv.muted = false; lsSet(MUTE_KEY, '0'); S.wantMuted = false; }
+      else vv.muted = !!S.wantMuted;
+      if (!vv.muted && vv.volume === 0) vv.volume = 0.5;
+      paintVol(); spin(false); attachSubs();
+      var pp0 = vv.play(); if (pp0 && pp0['catch']) pp0['catch'](function () {});
+      toast('Transferred from preview — same live feed', 2000);
+    } else {
+      route();
+    }
     return S;
   }
 
@@ -1533,7 +1560,7 @@
         /* live streams (registry `live`, resolver/addon live cams) want the low-
            latency path and the live edge; VOD keeps the deep back-buffer. */
         var hls = new Hls(S.live
-          ? { enableWorker: true, lowLatencyMode: true, backBufferLength: 12, liveSyncDurationCount: 3, startPosition: -1 }
+          ? { enableWorker: true, lowLatencyMode: true, backBufferLength: 12, liveSyncDurationCount: 3, startPosition: -1, startFragPrefetch: true }
           /* an engine transcode is a GROWING event playlist (no ENDLIST yet) — hls.js would
              treat it as live and start at the edge; it is a film, so start at 0 */
           : { enableWorker: true, lowLatencyMode: false, backBufferLength: 90, startPosition: S.viaEngine ? 0 : -1 });
@@ -2287,6 +2314,23 @@
      IMMEDIATELY (so the live count drops this tick — no transient extra video
      during a fade); the now-empty wrap fades out and is removed a beat later
      purely for looks. Every entry has this explicit destroy path — no orphans. */
+  /* Pull the PLAYING media out of a preview entry so the full player can ADOPT it —
+     the feed keeps streaming, nothing is refetched. The entry husk is retired
+     immediately; destroyEntry can no longer touch the extracted media. */
+  function extractTransfer(p) {
+    if (!p || p.destroyed || !p.video) return null;
+    var t = { video: p.video, hls: p.hls, url: (p.stream && p.stream.url) || '',
+              audible: !p.video.muted && p.video.volume > 0 };   /* the user's 🔊 choice travels with the media */
+    p.video = null; p.hls = null; p.destroyed = true;
+    for (var i = 0; i < p.timers.length; i++) { try { clearTimeout(p.timers[i]); } catch (e) {} }
+    if (p.keyH) { try { document.removeEventListener('keydown', p.keyH, true); } catch (e) {} }
+    var k = POOL.indexOf(p); if (k >= 0) POOL.splice(k, 1);
+    if (GL === p) GL = null;
+    try { p.wrap.remove(); } catch (e) {}
+    try { if (p.scrim) p.scrim.remove(); } catch (e) {}
+    return t;
+  }
+
   function destroyEntry(p) {
     if (!p || p.destroyed) return;
     p.destroyed = true;
@@ -2440,8 +2484,9 @@
     watchBtn.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
       var ow = p.onWatch;
+      var t = extractTransfer(p);  /* grab the live media BEFORE the pool teardown */
       pvStopAll();                 /* full play supersedes the whole pool + glance */
-      if (ow) { try { ow(); } catch (e2) {} }
+      if (ow) { try { ow(t); } catch (e2) {} }
     });
     if (mode === 'glance') {
       p.keyH = function (e) { if (e.key === 'Escape') { e.preventDefault(); glanceStopFn(); } };
@@ -2602,6 +2647,9 @@
     },
     previewSetRect: previewSetRectFn,
     previewHas: function (key) { try { return poolFind(key) >= 0; } catch (e) { return false; } },
+    adoptPreview: function (key) {
+      try { var i = poolFind(key); return i >= 0 ? extractTransfer(POOL[i]) : null; } catch (e) { return null; }
+    },
     previewKeys: function () { try { return POOL.map(function (e) { return e.key; }); } catch (e) { return []; } },
     glance: function (opts) { try { return openGlance(opts || {}); } catch (e) { return null; } },
     glanceStop: glanceStopFn,

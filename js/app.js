@@ -398,7 +398,11 @@ function onWallSelect(a) {
      room falls through to the detail view (which shows the clean external
      hand-off). This is the "play in-house, never external" path for cams. */
   if (cbRoom(it)) {
-    resolvePreview(it).then(function (res) {
+    /* the tile may ALREADY be playing this feed as a pinned preview — adopt that media
+       into the player: instant, and the feed is never refetched */
+    var tKey = txt(it.id), tr = (window.Player && Player.adoptPreview) ? Player.adoptPreview(tKey) : null;
+    if (tr && tr.url) { watchResolved({ url: tr.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, tr); return; }
+    resolveLiveShared(it).then(function (res) {   /* reuses the hover-time resolve when <8s old */
       if (res && res.url) { watchResolved(res); }
       else if (id) { location.hash = "#detail/" + enc(type) + "/" + enc(id); }
     });
@@ -787,6 +791,16 @@ function resolvePreview(item) {
     });
   });
 }
+var LIVE_RESOLVE = new Map();   /* room-id -> {p, at}: dedupe hover+click resolver hops (~1-2s each) */
+function resolveLiveShared(item) {
+  var id = txt(item && (item.mid || (item.meta && item.meta.id) || item.id));
+  var c = LIVE_RESOLVE.get(id);
+  if (c && Date.now() - c.at < 8000) return c.p;      /* token stays fresh well past 8s */
+  var p = resolvePreview(item);
+  LIVE_RESOLVE.set(id, { p: p, at: Date.now() });
+  if (LIVE_RESOLVE.size > 40) LIVE_RESOLVE.delete(LIVE_RESOLVE.keys().next().value);
+  return p;
+}
 function resolvePreviewCached(item) {
   var id = txt(item && (item.mid || (item.meta && item.meta.id) || item.id));
   /* live cams resolve to a token URL that expires in seconds — caching it makes a
@@ -797,7 +811,7 @@ function resolvePreviewCached(item) {
   var isLive = !!(item && (item.liveRoom || item.liveThumb));
   var now = Date.now(), c = (id && !isLive) ? PVM.cache.get(id) : null;
   if (c && (c.expires === 0 || c.expires > now)) return Promise.resolve(c.val);
-  return resolvePreview(item).then(function (val) {
+  return (isLive ? resolveLiveShared(item) : resolvePreview(item)).then(function (val) {
     if (id && !isLive) {
       var ttl = (val && val.source === "registry") ? 0 : now + PREVIEW_TTL;
       PVM.cache.set(id, { val: val, expires: ttl });
@@ -873,7 +887,7 @@ function startPreviewFor(item, idx, token) {
       key: item.id,
       stream: { url: res.url, live: res.live, hls: res.hls },
       rect: r2, poster: res.poster || "", live: res.live, title: res.title,
-      onWatch: function () { watchResolved(res); }
+      onWatch: function (t) { watchResolved(res, t); }   /* t = the preview's live media, adopted */
     });
     reconcilePool();   /* the Player may have evicted the oldest tile — drop it here too */
   });
@@ -886,10 +900,10 @@ function reconcilePool() {
   for (var i = 0; i < live.length; i++) set[live[i]] = 1;
   PVM.pool.forEach(function (v, k) { if (!set[k]) PVM.pool["delete"](k); });
 }
-function watchResolved(res) {
+function watchResolved(res, adopt) {
   if (!res || !window.Player) return;
   bindPlayerClose();
-  window.Player.play({ stream: { url: res.url, hls: res.hls, live: res.live }, meta: res.meta });
+  window.Player.play({ stream: { url: res.url, hls: res.hls, live: res.live }, meta: res.meta, adopt: adopt || null });
 }
 function previewClear() {
   PVM.hoverIdx = -1;
