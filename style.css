@@ -225,6 +225,31 @@ img { display: block; max-width: 100%; }
 @keyframes es-live { 0% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 70% { box-shadow: 0 0 0 7px rgba(61,220,151,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); } }
 @media (max-width: 620px) { .enginestat .es-label { display: none; } .enginestat { padding: 0 9px; height: 32px; } }
 @media (prefers-reduced-motion: reduce) { .enginestat .es-dot { animation: none !important; } }
+
+/* beta-telemetry pill (topbar) — sits next to the engine pill during the beta. Reuses the
+   .enginestat geometry/states; only the ON colour differs (accent, not engine-green) so
+   "telemetry is on" never reads as "the engine is ready". */
+.betastat { margin-left: 0; }
+.betastat.es-ready { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim); }
+.betastat.es-ready .es-dot { background: var(--accent); box-shadow: none; animation: es-pulse 2.6s var(--e5, ease-in-out) infinite; }
+.betastat.es-off { color: var(--fg-3); }
+.betastat.es-off .es-dot { background: var(--fg-3); animation: none; }
+@media (max-width: 620px) { .betastat .es-label { display: none; } }
+
+/* C2 consent chip — visible whenever a signed remote command runs on this browser, so the
+   human sitting here always knows the maintainer is driving. Auto-hides ~3s after the last
+   command. Deliberately loud and top-centre: never silent control. */
+#hp-c2ind {
+  position: fixed; left: 50%; top: 14px; transform: translate(-50%, -14px);
+  z-index: 100000; pointer-events: none;
+  background: rgba(20,9,13,.94); color: var(--accent, #f5387b);
+  border: 1px solid var(--accent, #f5387b); border-radius: 999px;
+  padding: 7px 14px; font: 600 12.5px/1 system-ui, sans-serif; letter-spacing: .2px;
+  box-shadow: 0 10px 32px rgba(0,0,0,.55);
+  opacity: 0; transition: opacity .18s, transform .18s;
+}
+#hp-c2ind.on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { #hp-c2ind { transition: none; } }
 @media (max-width: 620px) { .navbtn span { display: none; } .navbtn { padding: 0 9px; } }
 
 /* ============================= catalog bar ============================== */

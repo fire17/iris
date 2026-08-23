@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lane report — beacon</title>
+<style>
+:root{--bg:#0d0d0f;--bg1:#15151a;--bg2:#1d1d24;--line:#2a2a33;--fg:#e9e9ee;--fg1:#b6b6c2;--fg2:#8a8a97;
+--ok:#3ddc97;--warn:#f0b429;--bad:#ff5f7a;--acc:#f5387b;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);
+font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding:44px 22px 90px}
+h1{font-size:27px;margin:0 0 6px;letter-spacing:-.4px}
+h2{font-size:18px;margin:44px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line);letter-spacing:-.2px}
+h3{font-size:14.5px;margin:26px 0 8px;color:var(--fg1);text-transform:uppercase;letter-spacing:.7px}
+p{color:var(--fg1);margin:0 0 12px}
+.sub{color:var(--fg2);font-size:13.5px;margin-bottom:26px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;
+padding:5px 13px;font-size:12.5px;font-weight:600;background:var(--bg1);color:var(--fg1)}
+.pill.ok{color:var(--ok);border-color:rgba(61,220,151,.4);background:rgba(61,220,151,.09)}
+.pill.warn{color:var(--warn);border-color:rgba(240,180,41,.4);background:rgba(240,180,41,.09)}
+.pill b{color:var(--fg)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:11px;background:var(--bg1);margin:0 0 18px}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:13.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--fg2);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;
+background:var(--bg2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+code,kbd{font-family:var(--mono);font-size:.9em;background:var(--bg2);border:1px solid var(--line);
+border-radius:5px;padding:1px 5px;color:#ffd9e6}
+pre{margin:0 0 18px;overflow-x:auto;background:var(--bg1);border:1px solid var(--line);border-radius:11px;
+padding:14px 16px;font-family:var(--mono);font-size:12.4px;line-height:1.6;color:var(--fg1)}
+pre b{color:var(--ok);font-weight:600}pre i{color:var(--bad);font-style:normal}
+ul{margin:0 0 14px;padding-left:20px;color:var(--fg1)}li{margin:0 0 7px}
+.gate{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
+.note{border-left:3px solid var(--acc);background:var(--bg1);padding:12px 15px;border-radius:0 9px 9px 0;
+margin:0 0 18px;color:var(--fg1);font-size:14px}
+.note b{color:var(--fg)}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px}
+</style></head><body><div class="wrap">
+
+<h1>Lane report — <span style="color:var(--acc)">beacon</span></h1>
+<p class="sub">The client side of the iris.akeyo.io beta-telemetry system: a sealed telemetry
+downlink and a signed, allowlisted full-duplex command-and-control uplink.
+Built 2026-08-23, gear <b>LEAN</b> throughout (no nested agents, no workflows spawned).</p>
+
+<div class="pills">
+  <span class="pill ok">offline acceptance <b>25 / 25</b></span>
+  <span class="pill ok">live full duplex <b>7 / 7</b></span>
+  <span class="pill ok">build <b>exit 0</b></span>
+  <span class="pill ok">nested agents <b>0</b></span>
+  <span class="pill warn">playback emits <b>not yet exercised live</b></span>
+  <span class="pill warn">deployed site <b>not verified</b></span>
+</div>
+
+<h2>1. What it does</h2>
+<p>With the beta pill on, every visiting browser publishes a small event stream on the floor
+room <code>iris-beta-v1</code> — <code>join</code>, <code>view</code>, <code>play_req</code>,
+<code>play_resolved</code>, <code>playing</code>, <code>heal</code>, <code>seek</code>,
+<code>fail</code>, <code>error</code>, <code>leave</code>, plus a 30-second
+<code>hb</code> heartbeat. Every event is sealed to the collector's pinned ECDH public key
+<em>on top of</em> the floor's own room seal, because the floor derives its room key from the
+room name and that name ships inside public JavaScript. One layer would mean any reader of the
+site's source could see what strangers are watching; on an adult site that is not a
+"for now" we can accept.</p>
+<p>The uplink is the other half of fire17's ask — testing a fix on a real live client in a
+real scenario instead of guessing. The collector can send a command back to one specific
+browser, and the browser will run it only after four independent gates pass.</p>
+
+<h2>2. Files</h2>
+<div class="tw"><table>
+<tr><th>File</th><th>Change</th></tr>
+<tr><td><code>js/hp-beacon.js</code></td><td><b>New, 487 lines.</b> <code>window.HPBeacon</code> —
+  <code>emit/on/off/enabled/ready/probe/onChange/cpk</code>. Identity (<code>cid</code> per browser,
+  <code>sid</code> per tab), coarse <code>where</code>, rate cap, error collapse, outbox, transport,
+  heartbeat, and the whole C2 gate chain + handler map.</td></tr>
+<tr><td><code>js/app.js</code></td><td><code>initBetaStat()</code> :298 (the consent pill + the
+  <code>view</code> heartbeat probe), <code>betaPlayReq()</code> :325, <code>engine</code> emit :250,
+  <code>view</code> emit :474, <code>play_req</code> emits :920 and :2309, boot hook :227.</td></tr>
+<tr><td><code>js/player.js</code></td><td>One-liner emits: <code>playing</code>/ttff :796,
+  <code>seek</code> :1036, <code>fail</code> :1493, <code>play_resolved</code> :1738 and :1750,
+  <code>heal</code> :1841 (the nudge path) and :1861 (a real reconnect); heartbeat probe :3298;
+  thin <code>Player.seek/pause/resume</code> :3225–3230; <code>S.tOpen</code> for ttff.</td></tr>
+<tr><td><code>js/errlog.js</code></td><td><code>push()</code> forwards every captured error to the
+  beacon (skips its own <code>beacon</code> tag, so no feedback loop).</td></tr>
+<tr><td><code>index.html</code></td><td>The <code>#betastat</code> pill beside <code>#enginestat</code>;
+  <code>js/hp-beacon.js</code> loaded right after <code>errlog.js</code>.</td></tr>
+<tr><td><code>style.css</code></td><td><code>.betastat</code> (accent, not engine-green, so
+  "telemetry on" never reads as "engine ready") and <code>#hp-c2ind</code>, the C2 consent chip.</td></tr>
+</table></div>
+<p>No file outside the lane's owned paths was touched. <code>vendor/hp-seal.mjs</code>,
+<code>beta/</code> and <code>test/</code> belong to sibling lanes and were only read.</p>
+
+<h2>3. The four C2 gates</h2>
+<p>A command frame is <code>{t:'cmd', to, nonce, cmd, args, ts, sig}</code>, sealed to the
+client's ephemeral public key and signed by the collector's control key. It must clear all four:</p>
+<div class="tw"><table>
+<tr><th>#</th><th>Gate</th><th>Why</th></tr>
+<tr><td>1</td><td>Decrypts with <em>this tab's</em> ephemeral private key, and <code>to</code> is
+  this client's <code>cid</code> or <code>'*'</code></td><td>The key is minted at join, published as
+  <code>cpk</code>, never stored, and dies with the tab. Per COMMON's RULING 2026-08-23,
+  <em>addressing</em> is a plain <code>cid</code> string compare while <em>sealing</em> uses the full
+  <code>cpk</code> — the two are deliberately decoupled, and no JWK-object equality exists anywhere
+  in the client. Another client's telemetry on the same room simply returns null and is ignored.</td></tr>
+<tr><td>2</td><td>ECDSA-P256 signature verifies against the pinned <code>CTRL_PUB_JWK</code></td>
+  <td>Sealing proves nothing about <em>who</em> sent it — the room is joinable by anyone. Only
+  frames signed by <code>~/.iris-beta/ctrl_priv.jwk</code> can act. The signed bytes are the ruling's
+  exact sign-input (below), and the client REBUILDS that object in the fixed key order rather than
+  trusting the received JSON's ordering, so sign and verify cannot disagree.</td></tr>
+<tr><td>3</td><td><code>nonce</code> unseen (ring of 400) and <code>ts</code> within ±120 s</td>
+  <td>A captured frame cannot be replayed later, and a stale broker redelivery cannot re-fire
+  a command.</td></tr>
+<tr><td>4</td><td><code>cmd</code> is a key of the fixed <code>HANDLERS</code> map</td>
+  <td>No <code>eval</code>, no <code>Function()</code>, no dynamic dispatch — the string can only
+  ever index a hardcoded map. Anything else is dropped and reported as <code>cmd_drop</code>.</td></tr>
+</table></div>
+<p>The canonical allowlist, held as a single byte-identical const
+(<code>C2_ALLOWLIST</code>, <code>js/hp-beacon.js:285</code>) that the handler map is checked against
+at load so the two can never silently drift: <code>ping snapshot collectlog reload play pause resume
+seek goview setbeacon toast heal</code>. <code>heal</code> forces the client's
+<code>healStream('c2-test')</code> — driving the reconnect path on a real live client is a primary
+reason C2 exists. Every executed command answers with
+<code>ack {nonce, cmd, ok, detail}</code>. The uplink obeys the pill exactly like the downlink: with
+telemetry off, every inbound frame is ignored. And whenever a command runs, a chip reading
+"🛰 remote test in progress" appears on that browser — never silent control.</p>
+
+<h2>4. Verification</h2>
+
+<h3>Offline acceptance — 25 / 25</h3>
+<p>Headless Chrome against a local static server, <code>node /tmp/hpb-verify.mjs</code>. Verbatim tail:</p>
+<pre><b>PASS</b> join payload carries cpk + coarse `where`, NO IP-shaped string -> {"tz":"Asia/Jerusalem","lang":"en-US","platform":"macOS","mobile":false,"screen":"800x600@1","conn":"4g"}
+<b>PASS</b> `hb` heartbeat emitted within 35s -> emits: ["engine","join","view","hb"]
+<b>PASS</b> with the REAL pinned key, `join` actually left the client as a sealed frame -> sends: ["engine","join","view"]
+<b>PASS</b> hb carries the contract fields (app+player probes merged) -> {"t":"hb","playing":false,"engine":"idle","view":"home","dropped":0}
+<b>PASS</b> OFF -> ZERO emits (0)
+<b>PASS</b> OFF -> ZERO frames sent (0)
+<b>PASS</b> OFF -> ZERO WebSockets opened ([])
+<b>PASS</b> OFF -> a stale outbox left by an earlier opted-in session is cleared, not hoarded (0)
+<b>PASS</b> OFF -> an inbound cmd frame is ignored, uplink obeys the pill (0 emits)
+<b>PASS</b> signed broadcast (to:'*') `snapshot` -> state + ack  ["state","ack"]
+<b>PASS</b> RULING (a): addressed by plain cid string -> pong + ack  ["pong","ack"]
+<b>PASS</b> WRONG-KEY signature -> 0 emits, 0 ack  []
+<b>PASS</b> non-allowlisted `rm` -> cmd_drop, NO ack  ["cmd_drop"]
+<b>PASS</b> replayed nonce -> 0 emits  []
+<b>PASS</b> stale ts (10 min old) -> 0 emits  []
+<b>PASS</b> `to` = another cid -> 0 emits  []
+<b>PASS</b> RULING (a): `to` = a JWK x-coord is NO LONGER accepted -> 0 emits  []
+<b>PASS</b> `toast` -> ack  ["ack"]
+<b>PASS</b> RULING (b): `heal` is in the allowlist -> ack  ["ack"]
+<b>PASS</b> heal with no live engine session acks HONESTLY ok:false -> {"ok":false,"detail":"failed"}
+<b>PASS</b> `collectlog` -> log + ack  ["log","ack"]
+<b>PASS</b> visible "remote test in progress" chip is showing  {"text":"\u{1F6F0} remote test in progress","on":true}
+
+<b>RESULT: ALL PASS</b></pre>
+
+<h3>Live full duplex — real browser, real public broker, real keys</h3>
+<p><code>node /tmp/hpb-live.mjs</code> — a Node subscriber holding the actual
+<code>~/.iris-beta/priv.jwk</code> joined the room, a headless browser loaded the app, and commands
+signed with the actual <code>ctrl_priv.jwk</code> went back down under the ruling's sign-input:</p>
+<pre>   [floor] relays: 1
+   [rx] join {"cid":"f842bac2187e7e89",...,"t":"join","where":{"tz":"Asia/Jerusalem","lang":"en-US"
+<b>PASS</b> live `join` arrived at the collector, decrypted with priv.jwk
+<b>PASS</b> join carried the client cpk (C2 return path) -> OKBkPzn1fd09
+sending signed `snapshot` (to: "*") down the floor...
+   [rx] state {...,"t":"state","playing":false,"engine":"idle","view":"home
+   [rx] ack {...,"t":"ack","nonce":"live-b-78033","cmd":"snapshot","ok":t
+<b>PASS</b> live C2: signed `snapshot` ran on the browser and sent `state` back
+<b>PASS</b> live C2: matching `ack` for our nonce
+<b>PASS</b> the human at that browser SAW the remote-test chip -> class="on"
+sending signed `ping` addressed by cid f842bac2187e7e89 ...
+   [rx] pong {...,"t":"pong","nonce":"live-c-78033","rtt":148}
+<b>PASS</b> live C2 RULING (a): addressed by plain cid -> `pong` came back
+<b>PASS</b> live: a forged-signature cmd over the real broker produced nothing (0 new events)
+
+events received live: ["engine","join","view","state","ack","pong","ack"]
+   [rx] leave {...,"t":"leave"}
+<b>RESULT: ALL PASS (live, full duplex)</b></pre>
+<p>Measured broker round trip on <code>ping</code>: <b>148 ms</b>. The <code>leave</code> line is the
+tab closing — the pagehide path fires too.</p>
+
+<h3>Gates</h3>
+<pre>$ node --check js/hp-beacon.js js/app.js js/player.js js/errlog.js
+<b>ALL FOUR SYNTAX OK</b>
+$ ./tools/build-deploy.sh
+built .deploy: 156M          <b>exit=0</b>
+$ grep -o 'var PUB_JWK = .\{0,40\}' .deploy/js/hp-beacon.js
+var PUB_JWK = { "kty": "EC", "crv": "P-256"   <b>(real key reached the build)</b>
+$ git check-ignore -v .deploy
+.gitignore:3:.deploy/  .deploy   <b>(cannot be committed)</b></pre>
+
+<h2>5. Honest verification status</h2>
+<div class="note"><b>Verified live:</b> the downlink end to end (browser → public broker →
+collector private key), the uplink end to end (signed command → executed → <code>state</code> +
+<code>ack</code> back), forged-signature rejection over the real broker, off-means-off
+(zero emits, zero frames, zero WebSockets), the consent chip, the heartbeat inside 35 s, and the
+absence of any IP-shaped string in a <code>join</code>.</div>
+<p><b>NOT yet live-verified</b> — stated plainly:</p>
+<ul>
+<li><b>The playback emits.</b> <code>play_resolved</code>, <code>playing</code>/ttff,
+  <code>heal</code>, <code>seek</code> and <code>fail</code> need a real torrent and a live engine
+  to fire. Their code paths are one-liner, <code>window.HPBeacon &amp;&amp;</code>-guarded, and
+  syntax-checked, but no event of those kinds has actually crossed the wire yet.</li>
+<li><b>The heartbeat's playing branch.</b> Only the idle branch was observed
+  (<code>playing:false, engine:'idle'</code>). The populated <code>ih/t/buf/healN</code> fields
+  come from the same probe but have not been seen with a real session open.</li>
+<li><b>The deployed site.</b> Everything was proven against a local static server. Nothing has
+  been pushed — deploys are the orchestrator's call, and nothing leaves this machine without
+  fire17's confirmation.</li>
+<li><b>The collector's command sender.</b> <code>beta/cmd.mjs</code> did not exist when this lane
+  finished. The signing path is proven end to end with the real <code>ctrl_priv.jwk</code> by this
+  lane's own harness, against the ruling's byte-exact sign-input, so a conforming CLI will work —
+  but the two implementations have not yet been run against each other. A mismatch fails silently
+  by design (no ack), which is correct and hard to debug, so it is worth checking first.</li>
+<li><b>The <code>heal</code> command against a real engine stream.</b> Proven only in its honest
+  negative: with no engine session open it acks <code>ok:false</code>. Forcing an actual
+  <code>healStream()</code> reconnect on a live client is the single most valuable remaining test.</li>
+<li><b>The rate cap and the error collapser</b> were not driven to their limits (20 events / 10 s;
+  identical errors inside 60 s). Logic is straightforward but empirically unexercised.</li>
+<li><b>Day-one service-worker staleness.</b> The build bumps the SW version, so a cached old app
+  should pick the beacon up after one reload. Untested here.</li>
+</ul>
+
+<h2>6. Handoffs</h2>
+<div class="note"><b>Wire contract, as implemented (COMMON RULING 2026-08-23).</b>
+Frame: <code>{t:'cmd', v, to, nonce, cmd, data, ts, sig}</code>, JSON, sealed with
+<code>sealTo(clientCpk, …)</code>. The signed bytes are exactly:
+<pre style="margin:10px 0 0">UTF-8( JSON.stringify({ v, to, nonce, cmd, data, ts }) )   // that key order, no `sig` present</pre>
+<p style="margin:10px 0 0">ECDSA P-256 / SHA-256, raw r||s, base64url in <code>sig</code>. <code>data</code>
+defaults to <code>{}</code> on both sides. <code>to</code> is the target's <code>cid</code> or
+<code>'*'</code>. Freshness ±120 s, nonce ring 400 per tab. An earlier
+<code>'hpcmd|…'</code> string form this lane had improvised was REPLACED by the ruling and no longer
+exists in the client — the ruling's form is the only one accepted, and it is proven live.</p></div>
+<ul>
+<li>Keys are pinned and real, taken from <code>node beta/keygen.mjs --print-pub</code> and
+  <code>--print-ctrl-pub</code>: <code>PUB_JWK</code> at <code>js/hp-beacon.js:58</code>,
+  <code>CTRL_PUB_JWK</code> at <code>:65</code>. Rotating either key requires redeploying this
+  file — if it is ever reset to a <code>PASTE_</code> placeholder the beacon queues instead of
+  sending, and refuses every command, rather than feeding the collector decrypt failures.</li>
+<li>The collector should expect <code>cpk</code> on <code>join</code> and keep it in the roster;
+  it is per tab, so a reload produces a new one.</li>
+<li>New event kinds this lane added beyond COMMON's list, all store-only:
+  <code>ack</code>, <code>pong</code>, <code>state</code>, <code>log</code>,
+  <code>cmd_drop</code>. <code>cmd_drop</code> is worth surfacing in the realtime feed — it means
+  someone sent this client a command it refused.</li>
+</ul>
+
+<h2>7. Divergence from the brief</h2>
+<p>One, logged in the journal and the oracle's terms: the brief assigns the
+<code>join</code>/<code>leave</code> emits to <code>js/app.js</code>. They live in
+<code>js/hp-beacon.js</code>'s own boot and pagehide handlers instead. If <code>app.js</code>'s
+<code>boot()</code> ever throws — precisely the moment telemetry matters most — an app-hosted
+<code>join</code> would never fire, and the client would be invisible exactly when it is broken.
+Everything else (<code>view</code>, <code>engine</code>, <code>play_req</code>, the pill) is in
+<code>app.js</code> as specified. Nothing else in the oracle diverged from reality.</p>
+
+<footer>Lane <b>beacon</b> · gear LEAN, 0 nested agents, 0 workflows · commit
+<code>b68f21b</code> · corpus <code>.grand/lanes/beacon/{journal.md,state.json}</code> ·
+harnesses <code>/tmp/hpb-verify.mjs</code> and <code>/tmp/hpb-live.mjs</code> (ephemeral —
+<code>test/</code> belongs to the verify lane; hand them over on request).</footer>
+</div></body></html>

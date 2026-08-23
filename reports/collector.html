@@ -1,0 +1,82 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>collector lane — beta telemetry</title>
+<style>
+  :root { --bg:#fbfbfa; --fg:#1c1b19; --mut:#6b6862; --line:#e2ded6; --ok:#1a7f4b; --warn:#9a6b00; --bad:#a3282d; --code:#f3f1ec; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161513; --fg:#eceae6; --mut:#9c9890; --line:#302d29; --ok:#5fce93; --warn:#e0b34d; --bad:#f0868a; --code:#201e1b; } }
+  * { box-sizing:border-box } body { margin:0; padding:2.5rem 1.25rem 5rem; background:var(--bg); color:var(--fg);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:60rem; margin:0 auto }
+  h1 { font-size:1.7rem; margin:0 0 .2rem; letter-spacing:-.02em }
+  h2 { font-size:1.1rem; margin:2.6rem 0 .7rem; padding-bottom:.35rem; border-bottom:1px solid var(--line) }
+  .sub { color:var(--mut); margin:0 0 2rem }
+  code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:.85rem 1rem; overflow-x:auto }
+  table { border-collapse:collapse; width:100%; margin:.5rem 0 1rem; display:block; overflow-x:auto }
+  th,td { text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--line); vertical-align:top }
+  th { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); font-weight:600 }
+  .ok{color:var(--ok);font-weight:600} .warn{color:var(--warn);font-weight:600} .bad{color:var(--bad);font-weight:600}
+  ul { padding-left:1.2rem } li { margin:.3rem 0 }
+  .file { font-family:ui-monospace,monospace; white-space:nowrap }
+</style>
+<main>
+<h1>collector lane — local telemetry collector, sealed envelope, query CLI, full-duplex C2</h1>
+<p class="sub">iris.akeyo.io beta-testing telemetry · 2026-08-23 · gear: LEAN throughout (no nested agents, no workflows spawned)</p>
+
+<h2>What this lane built</h2>
+<table>
+<tr><th>File</th><th>What it is</th></tr>
+<tr><td class="file">vendor/hp-seal.mjs</td><td>The shared sealed envelope, imported by the beacon lane. ECDH P-256 → HKDF-SHA256 → AES-256-GCM, isomorphic (browser + Node 22+), zero dependencies, no imports at all. Wire: <code>[0x01][65B ephemeral raw pub][12B iv][ct+tag]</code>. A fresh ephemeral keypair per message, and the ephemeral public key doubles as the HKDF salt, so every event derives its own AES key. <code>openWith</code> never throws.</td></tr>
+<tr><td class="file">beta/keygen.mjs</td><td>Mints both keypairs: the ECDH <em>sealing</em> pair (<code>priv.jwk</code>, 0600) and the ECDSA <em>control</em> pair (<code>ctrl_priv.jwk</code>, 0600). Prints either public JWK for pinning in the client. Refuses to clobber without <code>--force</code>, because a silent rotation would blind every deployed client.</td></tr>
+<tr><td class="file">beta/collector.mjs</td><td>The daemon. Joins the floor room, opens sealed events, validates hard, appends to <code>events/&lt;UTC-day&gt;.jsonl</code>, maintains the derived roster, and writes MAJOR events only to <code>realtime.log</code> with 60-second coalescing.</td></tr>
+<tr><td class="file">beta/query.mjs</td><td>Reads the store back: <code>status</code> · <code>clients</code> · <code>tail</code> (<code>--since --client --kind --grep --major --limit</code>) · <code>top</code>. Read-only; scrubs every value it prints.</td></tr>
+<tr><td class="file">beta/cmd.mjs</td><td>The command half. One signed, sealed frame to a live browser, then it prints whatever comes back matched by nonce.</td></tr>
+<tr><td class="file">beta/hp-floor.mjs</td><td>Byte-identical copy of <code>vendor/hp-floor.mjs</code>, the way <code>dispatcher/</code> vendors it. Carries the orchestrator's relay-counter fix (0494347); this lane never edited it.</td></tr>
+</table>
+
+<h2>Verification — every row was run against the real public broker, not mocked</h2>
+<table>
+<tr><th>Claim</th><th>Status</th><th>Evidence (verbatim)</th></tr>
+<tr><td>Envelope round-trips; a different private key returns null</td><td class="ok">VERIFIED</td><td>13/13 PASS — <code>openWith(correct priv) returns the exact bytes</code> · <code>openWith(DIFFERENT priv) returns null (no throw)</code> · <code>tampered tag returns null</code> · <code>two seals of the same plaintext differ</code> · <code>8 KB payload round-trips</code></td></tr>
+<tr><td>Sealed: a wrong-key sender stores nothing</td><td class="ok">VERIFIED</td><td><code>counters ... decrypt_fail=2</code> and <code>wrongkeyclient: nothing stored (grep found 0)</code></td></tr>
+<tr><td>join + error reach both channels</td><td class="ok">VERIFIED</td><td>2 lines in <code>realtime.log</code>, 2 in the JSONL, <code>query clients</code> shows 1 client with <code>c2: yes</code></td></tr>
+<tr><td>Heartbeats never enter the realtime feed</td><td class="ok">VERIFIED</td><td><code>hb</code> accepted and stored; <code>grep -cE ' (hb|view|seek|engine|log) ' realtime.log</code> → <code>0</code></td></tr>
+<tr><td>Log injection cannot forge a feed line</td><td class="ok">VERIFIED</td><td>A <code>msg</code> carrying a newline plus a fake log line collapsed to ONE line; lines without an ISO prefix: <code>0</code></td></tr>
+<tr><td>Oversize events dropped</td><td class="ok">VERIFIED</td><td>9 KB <code>msg</code> → <code>oversize=1</code>, <code>huge event was NOT stored</code></td></tr>
+<tr><td>Coalescing: repeats collapse to one line + a closing ×N</td><td class="ok">VERIFIED</td><td>4 identical errors → 1 line at <code>22:41:36.806Z</code>, silence, then one closing line at <code>2026-08-23T22:42:36.809Z testclie error [hls] manifestLoadError: 404 on chunklist x4</code> exactly 60s later; all 4 still in the JSONL. A burst still open when the process is killed loses only its closing ×N line — every event survives in the JSONL.</td></tr>
+<tr><td>Crash-resume: roster identical, ids dedup</td><td class="ok">VERIFIED</td><td><code>roster BEFORE kill -9 == roster AFTER restart: True</code>; re-sent ids → <code>frames=2 accepted=0 dup=2</code>, zero new JSONL lines</td></tr>
+<tr><td>Full-duplex C2 round-trip</td><td class="ok">VERIFIED</td><td><code>ping</code> → <code>pong {"rtt_ms":356}</code> + <code>ack</code>; <code>snapshot</code> → <code>state {view,playing,ih,buf,engine,healN}</code> + <code>ack</code></td></tr>
+<tr><td>A command signed with a different control key is refused</td><td class="ok">VERIFIED</td><td><code>cmd=reload ... sigbytes=64 SIGNATURE=INVALID -&gt; IGNORED</code> — no execution, no response</td></tr>
+<tr><td>Privacy: no IP-shaped data in the store</td><td class="ok">VERIFIED</td><td><code>grep -Eoc '([0-9]{1,3}\.){3}[0-9]{1,3}' events/*.jsonl</code> → <code>0</code></td></tr>
+<tr><td>Broker reachability</td><td class="warn">PARTIAL, honestly reported</td><td><code>relay wss://broker.emqx.io:8084/mqtt -&gt; UP (CONNACK ok in 2.80s)</code> · <code>relay wss://test.mosquitto.org:8081/mqtt -&gt; DOWN</code> · <code>relays: 1</code>. One relay, not two — mosquitto is unreachable from this machine (<code>curl</code> exit 52, WS close 1006).</td></tr>
+<tr><td>hp-seal in a real browser</td><td class="bad">NOT yet live-verified</td><td>Verified in Node 22+ only. It references no Node-only API (WebCrypto globals and TextEncoder), but no headless-browser run was done by this lane. The beacon and verify lanes own that proof.</td></tr>
+<tr><td>Behaviour under many concurrent real clients</td><td class="bad">NOT yet live-verified</td><td>All tests used one or two stand-in clients. Flood behaviour under real traffic is unproven.</td></tr>
+</table>
+
+<h2>Defects found and fixed while verifying (each caught by running the real thing)</h2>
+<ul>
+<li><strong>Relay counter underflow in the shared floor</strong> — <code>down()</code> decremented the shared <code>live</code> counter even for a socket that never opened, so each failed retry against the dead relay cancelled the healthy relay's increment and <code>relays</code> decayed to 0 while data flowed fine. Outside this lane's owned paths, so it was <em>reported, not patched</em>; the orchestrator fixed it in 0494347. <code>--probe</code> now dials each relay itself and waits for a real CONNACK, so the number it prints cannot be a shared-counter artifact.</li>
+<li><strong><code>rx</code> was persisted as epoch milliseconds</strong> while both <code>query.mjs</code> and the crash replay parsed it with <code>Date.parse</code>. <code>query status</code> reported zero events while the JSONL held them. Now an ISO-8601 string.</li>
+<li><strong>Roster drifted across a crash</strong> — <code>cmd_sent</code> is written locally by <code>cmd.mjs</code> and never crosses the wire, so the live collector could not count it while a restart replayed it. <code>cmd_sent</code> is now excluded from the roster (still fully stored and queryable), making the roster deterministic.</li>
+<li><strong>Roster/status flush was 10s</strong>, so <code>query clients</code> could be stale right after an event. Now 2s.</li>
+<li><strong>The closing ×N line reused the first event's timestamp</strong>, so a line appearing now bore a minute-old time. It is now stamped when the window closes.</li>
+</ul>
+
+<h2>Security posture</h2>
+<ul>
+<li><strong>Outbound only.</strong> No inbound port, no HTTP server, no listener. <code>floor.send</code> is never called from the collector; commands leave through <code>cmd.mjs</code>, a separate short-lived process the operator runs deliberately.</li>
+<li><strong>Injection-immune.</strong> No shell, no <code>eval</code>, no <code>fetch</code>, no child process. Filesystem writes are confined to <code>$IRIS_BETA_HOME</code> at paths built from our own clock and fixed names — never from a frame. Inbound strings are control-character scrubbed before reaching any log line.</li>
+<li><strong>Bounded.</strong> Frames over ~9 KB dropped, plaintext over 8 KB dropped, every string truncated to 500 chars, arrays capped at 100, object keys at 50, depth at 6, ids at 64 chars, dedup LRU at 10k.</li>
+<li><strong>Crash-proof.</strong> Global <code>uncaughtException</code> / <code>unhandledRejection</code> guards, every frame handled inside try/catch, derived state rebuilt from the day's JSONL on start.</li>
+<li><strong>C2 cannot be widened by data.</strong> The verb list is a fixed twelve-entry allowlist; there is no eval and no arbitrary-JS command at any rev level. Commands are signed with a key that never leaves this machine, and each is sealed to one client's own public key.</li>
+<li><strong>Privacy.</strong> Nothing derives or stores an IP or precise location; <code>where</code> is the coarse client-declared set and nothing more.</li>
+</ul>
+
+<h2>Handoffs</h2>
+<ul>
+<li><strong>Beacon lane:</strong> the two pins are in the lane journal and were relayed live. Re-read any time with <code>node beta/keygen.mjs --print-pub</code> and <code>--print-ctrl-pub</code>. The client's <code>cpk</code> must be an ECDH P-256 public JWK and should arrive in <code>join</code>; command responses come back as ordinary sealed telemetry carrying the <code>nonce</code>.</li>
+<li><strong>Verify lane:</strong> the durable end-to-end harness (<code>test/beta/e2e.mjs</code>) is yours. The stand-in client this lane used lives at <code>/tmp/ib-client.mjs</code> and covers join/error/inject/huge/hb plus signed-command handling — worth lifting rather than rewriting.</li>
+<li><strong>Ops lane:</strong> <code>beta/run.sh</code> should restart-loop <code>node beta/collector.mjs</code>; the daemon writes <code>status.json</code> every 2s, so a stale <code>updated</code> is the liveness signal (<code>query.mjs status</code> flags it).</li>
+<li><strong>Oracle:</strong> the §4 playbook line "<code>--probe</code> must print <code>relays: 2</code>" should read <strong>≥1</strong> on this machine.</li>
+</ul>
+</main>

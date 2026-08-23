@@ -224,6 +224,7 @@ function boot() {
      watch, instead of a ~30–40s cold wait at play time. Handshake-only, no media. */
   setTimeout(warmRunner, 1200);
   initEngineStat();
+  initBetaStat();
 }
 
 function warmRunner() {
@@ -246,6 +247,7 @@ function initEngineStat() {
   var lab = el.querySelector(".es-label");
   var busy = false;
   function set(state, text, title) {
+    if (state !== S.engineState) { S.engineState = state; if (window.HPBeacon) HPBeacon.emit("engine", { state: state }); }
     el.classList.remove("es-off", "es-warm", "es-ready");
     el.classList.add("es-" + state);
     if (lab) lab.textContent = text;
@@ -287,6 +289,48 @@ function initEngineStat() {
   setInterval(refresh, 30000);
   window.addEventListener("focus", refresh);
   window.addEventListener("online", refresh);
+}
+
+/* Beta-telemetry pill (topbar): during the beta this site reports anonymous usage and
+   errors to the maintainer's local collector so the beta can actually be fixed. The pill is
+   the CONSENT surface — it says out loud that telemetry is on, and one click turns it off
+   for good (localStorage hp.beta). Nothing is sent while it reads "off". */
+function initBetaStat() {
+  var el = document.getElementById("betastat");
+  if (!el || !window.HPBeacon) return;
+  var lab = el.querySelector(".es-label");
+  el.hidden = false;
+  /* the heartbeat's `view` field comes from here — the player registers the rest */
+  HPBeacon.probe(function () { return { view: S.view || "" }; });
+  function paint() {
+    var on = HPBeacon.enabled();
+    el.classList.remove("es-off", "es-warm", "es-ready");
+    el.classList.add(on ? "es-ready" : "es-off");
+    if (lab) lab.textContent = on ? "Beta" : "Beta off";
+    el.title = on
+      ? "Beta telemetry: on \u2014 anonymous usage + errors help fix the beta. Click to turn off."
+      : "Beta telemetry: off \u2014 nothing is sent. Click to help fix the beta.";
+    el.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+  el.addEventListener("click", function () {
+    if (HPBeacon.enabled()) { HPBeacon.off(); toast("Beta telemetry off \u2014 nothing is sent from this browser.", "info", "Beta"); }
+    else { HPBeacon.on(); toast("Thanks \u2014 anonymous beta telemetry is on.", "info", "Beta"); }
+    paint();
+  });
+  HPBeacon.onChange(paint);
+  paint();
+}
+
+/* play_req payload: what was asked for, never who asked. */
+function betaPlayReq(stream, meta) {
+  stream = stream || {};
+  var ih = txt(stream.infoHash) || (/^magnet:\?.*btih:([0-9a-zA-Z]{32,40})/.exec(txt(stream.url)) || [])[1] || "";
+  var kind = ih ? "torrent" : (stream.hls === true ? "hls" : "url");
+  var o = { kind: kind };
+  if (ih) o.ih = String(ih).toLowerCase().slice(0, 40);
+  var nm = txt((meta && meta.name) || stream.title || stream.name);
+  if (nm) o.name = nm.slice(0, 120);
+  return o;
 }
 
 /* Modules may arrive late (dynamic injection / slow network). */
@@ -427,6 +471,7 @@ function route() {
 }
 
 function setView(name) {
+  if (S.view !== name && window.HPBeacon) HPBeacon.emit("view", { name: name });
   S.view = name;
   if (D.app) D.app.dataset.view = name;
   document.querySelectorAll(".navbtn, .tabbtn").forEach(function (b) {
@@ -872,6 +917,7 @@ function pickHomeCatalogs() {
 function playRegistry(m) {
   if (!window.Player) return;
   bindPlayerClose();
+  if (window.HPBeacon) HPBeacon.emit("play_req", { kind: m.hls === true ? "hls" : "url", name: txt(m.title || m.name).slice(0, 120) });
   window.Player.play({
     stream: { url: m.hpUrl, title: m.title || m.name, hls: m.hls === true, live: m.live === true },
     meta: { id: m.id, type: "movie", name: m.title || m.name, poster: m.poster || "" }
@@ -1087,8 +1133,23 @@ function previewHover(item, idx) {
   var myToken = ++PVM.token;
   PVM.startT = setTimeout(function () {
     if (myToken !== PVM.token || PVM.hoverIdx !== idx) return;
+    primeHover(item);                 /* warm the exact title on the runner during a steady hover */
     startPreviewFor(item, idx, myToken);
   }, PREVIEW_DEBOUNCE);
+}
+/* Instant-play warm-up: if the engine is opted in, a runner is already known, and this item
+   carries a torrent stream we can resolve synchronously, fire a non-blocking /prime so the
+   runner fetches the head + starts the transcode WHILE the user is still browsing. Deduped
+   per infoHash by HPRunner.prime; a no-op for live cams, direct/HLS streams, or when no
+   runner is cached (priming never wakes one — the pill does). */
+function primeHover(item) {
+  if (!item || !window.HPRunner || !HPRunner.prime || !engineOptedIn()) return;
+  try {
+    var s = pickPlayable(item.streams || (item.meta && item.meta.streams));
+    if (!s) return;
+    var ih = txt(s.infoHash) || (/btih:([0-9a-zA-Z]{32,40})/i.exec(txt(s.url)) || [])[1] || "";
+    if (ih) HPRunner.prime(String(ih).toLowerCase().slice(0, 40), null);
+  } catch (e) {}
 }
 function startPreviewFor(item, idx, token) {
   var rect = tileRect(idx);
@@ -2260,6 +2321,7 @@ function playStream(stream, video) {
   }
   try {
     bindPlayerClose();
+    if (window.HPBeacon) HPBeacon.emit("play_req", betaPlayReq(stream, meta));
     window.Player.play({ stream: stream, meta: meta, video: video || null });
   } catch (e) {
     if (window.ErrLog) ErrLog.push('player', 'Player.play threw: ' + (e && e.message), (stream && stream.url || stream && stream.infoHash || '').slice ? String(stream.url || stream.infoHash).slice(0, 200) : '');

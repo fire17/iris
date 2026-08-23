@@ -25,6 +25,13 @@
       if (buf.length > MAX) buf.shift();
       seen++;
       paint();
+      /* BETA TELEMETRY: every captured error also goes to the beacon, so the maintainer
+         sees a beta tester's failure without them having to describe it. The beacon
+         no-ops when the beta pill is off, rate-caps itself, and collapses repeats. */
+      var e0 = buf[buf.length - 1];
+      if (window.HPBeacon && e0 && e0.tag !== 'beacon') {
+        try { window.HPBeacon.emit('error', { tag: e0.tag, msg: e0.msg, ctx: e0.detail }); } catch (be) {}
+      }
     } catch (e) { /* the error logger must never throw */ }
   }
 

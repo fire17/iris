@@ -1,0 +1,419 @@
+<title>Ops Lane Close-Out</title>
+<style>
+/* honestporn HIGHREV close-out reports — shared theme-aware design system.
+   Light palette on bare :root; dark redefined under prefers-color-scheme AND
+   [data-theme="dark"] so the toggle wins in both directions. Self-contained,
+   system fonts only, no external assets. */
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:940px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--pink-hi) 34%,transparent)}
+a:hover{border-bottom-color:var(--pink-hi)}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);
+  padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+/* header */
+header.hd{border-bottom:1px solid var(--line-soft);padding:clamp(34px,6vw,60px) 0 clamp(26px,4vw,36px)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 15px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(27px,4.4vw,42px);letter-spacing:-.03em;margin:0 0 .3em;line-height:1.1;color:var(--fg)}
+.lede{max-width:74ch;font-size:clamp(15.5px,1.9vw,17.5px);color:var(--fg-1);margin:.2em 0 0}
+.badges{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:999px;border:1px solid}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%}
+.badge.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--ok-tint)}
+.badge.ok::before{background:var(--ok)}
+.badge.no{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,transparent);background:var(--no-tint)}
+.badge.no::before{background:var(--no)}
+.badge.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent);background:var(--info-tint)}
+.badge.info::before{background:var(--info)}
+.badge.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-tint)}
+.badge.warn::before{background:var(--warn)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:22px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.meta b{color:var(--fg-1);font-weight:500}
+/* sections */
+section{padding:clamp(32px,4.8vw,50px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(19px,2.7vw,25px);letter-spacing:-.02em;margin:0 0 .5em;color:var(--fg)}
+h3{font-size:clamp(15.5px,1.9vw,17px);letter-spacing:-.01em;margin:1.6em 0 .5em;color:var(--fg)}
+p{max-width:76ch;margin:0 0 1em;color:var(--fg-1)}
+p.top{color:var(--fg)}
+ul,ol{margin:0 0 1em;padding-left:1.2em;color:var(--fg-1);max-width:78ch}
+li{margin-bottom:.44em}
+li::marker{color:var(--pink)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2);margin:0 0 6px}
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:18px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--fg-2);background:var(--s2);font-weight:600;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--s2)}
+td.m{font-family:var(--mono);font-size:12.5px;color:var(--fg-1)}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}
+.no{color:var(--no);font-weight:600;white-space:nowrap}
+.nt{color:var(--info);font-weight:600;white-space:nowrap}
+.wn{color:var(--warn);font-weight:600;white-space:nowrap}
+/* boxes / callouts */
+.box{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:18px 20px;max-width:82ch;box-shadow:var(--shadow)}
+.box+.box{margin-top:14px}
+.box.warn{border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-tint)}
+.box.no{border-color:color-mix(in srgb,var(--no) 40%,transparent);background:var(--no-tint)}
+.box.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:var(--ok-tint)}
+.box .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin:0 0 8px;display:block}
+.box.warn .lab{color:var(--warn)} .box.no .lab{color:var(--no)} .box.ok .lab{color:var(--ok)}
+/* code / proof blocks */
+pre{margin:16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;overflow-x:auto;box-shadow:var(--shadow)}
+pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:1.7;color:var(--fg-1)}
+pre .c{color:var(--fg-2)} pre .g{color:var(--ok)} pre .r{color:var(--no)} pre .p{color:var(--pink-hi)} pre .b{color:var(--info)}
+.cap{font-family:var(--mono);font-size:11px;color:var(--fg-2);margin:6px 2px 0}
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.stat{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat .n{font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--fg);font-family:var(--mono)}
+.stat .n.ok{color:var(--ok)} .stat .n.no{color:var(--no)} .stat .n.pink{color:var(--pink)}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-top:8px}
+/* diagram */
+.diagram{margin:20px 0;border:1px solid var(--line);border-radius:12px;background:var(--s1);padding:8px;box-shadow:var(--shadow);overflow-x:auto}
+.diagram svg{display:block;width:100%;height:auto;min-width:520px}
+/* nav / footer */
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav a.home{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);border:0;display:flex;align-items:center;gap:8px}
+.topnav a.home::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+footer.ft{border-top:1px solid var(--line-soft);padding:32px 0 60px;color:var(--fg-2);font-family:var(--mono);font-size:12px}
+footer.ft a{color:var(--fg-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+</style>
+
+<nav class="topnav"><div class="wrap">
+  <a class="home" href="index.html">honestporn reports</a>
+  <span class="sp"></span>
+  <button class="tglbtn" id="tgl">theme</button>
+</div></nav>
+
+<header class="hd"><div class="wrap">
+  <p class="tagline">beta-telemetry fleet · lane <b>ops</b> · close-out</p>
+  <h1>Run it forever, watch it live</h1>
+  <p class="lede">The collector is now a crash-restarting local service, its realtime feed is one
+  armed Monitor away, and the roster of connected beta clients renders as plain text in one
+  command. Nothing is installed system-wide, nothing listens on a port, nothing was pushed.</p>
+  <div class="badges">
+    <span class="badge ok">6 / 6 deliverables landed</span>
+    <span class="badge ok">acceptance PASS</span>
+    <span class="badge no">docker build NOT verified</span>
+    <span class="badge info">gear: lean · nested agents 0</span>
+  </div>
+  <div class="meta">
+    <span><b>model</b> claude-opus-5</span>
+    <span><b>date</b> 2026-08-23</span>
+    <span><b>commits</b> 8f10d2a · c4349c9 · 68be40d</span>
+    <span><b>speedloop</b> Monitor b5yph7av6</span>
+    <span><b>journal</b> .grand/lanes/ops/journal.md</span>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+<section>
+  <p class="eyebrow">at a glance</p>
+  <h2>What this lane produced</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">841</div><div class="k">lines, 7 files</div></div>
+    <div class="stat"><div class="n ok">3s</div><div class="k">kill -9 → new collector</div></div>
+    <div class="stat"><div class="n ok">0</div><div class="k">processes left after stop</div></div>
+    <div class="stat"><div class="n ok">0</div><div class="k">duplicate log lines</div></div>
+    <div class="stat"><div class="n pink">1</div><div class="k">Monitor line for Claude</div></div>
+    <div class="stat"><div class="n">0</div><div class="k">npm dependencies</div></div>
+  </div>
+  <p>Three surfaces, each doing one thing: a supervisor that refuses to let the collector stay
+  dead, a follow-the-feed one-liner shaped for the harness's appetite, and a reader that turns the
+  collector's derived roster into something a human can scan in two seconds. Plus the staged
+  packaging — Docker and launchd — and a README carrying the security model.</p>
+</section>
+
+<section>
+  <p class="eyebrow">deliverables</p>
+  <h2>Files</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>file</th><th>lines</th><th>what it is</th></tr></thead>
+    <tbody>
+      <tr><td class="m">beta/run.sh</td><td class="m">185</td><td>The supervisor. <code>start · stop · restart · status · log</code>; exponential backoff 1→60s that resets once a child has lived 60s; <code>run.pid</code> + <code>collector.pid</code>; a SIGTERM trap that takes the collector down with it; <code>stop</code> also reaps an <b>orphaned</b> collector if the supervisor itself was <code>kill -9</code>'d; <code>IRIS_BETA_CMD</code> override so the loop is testable on its own.</td></tr>
+      <tr><td class="m">beta/watch.sh</td><td class="m">44</td><td>The Monitor one-liner. <code>tail -n0 -F realtime.log</code>, creates the log if it does not exist yet so the monitor can be armed before the collector starts, follows by name so rotation survives, and takes an optional extended-regex filter piped through <code>grep -E --line-buffered</code>.</td></tr>
+      <tr><td class="m">beta/board.mjs</td><td class="m">203</td><td>The roster board. Zero dependencies, node built-ins only. Columns <code>CID DOING C2 LAST AGE WHERE CONN EV NOTABLE</code>, a header line from <code>status.json</code>, and the tail of the realtime feed. <code>--watch</code> redraws every 5s; <code>-n</code>, <code>--no-feed</code>, <code>--home</code>.</td></tr>
+      <tr><td class="m">beta/Dockerfile</td><td class="m">54</td><td>The <code>dispatcher/Dockerfile</code> shape: <code>node:22-alpine</code>, unprivileged <code>iris</code> user, <b>no <code>EXPOSE</code></b>, zero npm deps, store on a <code>/data</code> volume. Mirrors the repo layout (<code>/app/beta</code> + <code>/app/vendor</code>) because <code>beta/keygen.mjs:27</code> imports <code>../vendor/hp-seal.mjs</code>.</td></tr>
+      <tr><td class="m">beta/Dockerfile.dockerignore</td><td class="m">10</td><td>Build-context whitelist. The repo root is ~10&nbsp;GB, so the context ships only <code>beta/</code> plus the floor and seal modules.</td></tr>
+      <tr><td class="m">beta/iris-beta.plist</td><td class="m">65</td><td>launchd <code>KeepAlive</code> agent — <b>staged only, deliberately never loaded</b>. The install and the complete uninstall are written in its header comment. <code>plutil -lint</code> clean.</td></tr>
+      <tr><td class="m">beta/README.md</td><td class="m">280</td><td>How it runs, the four ways Claude reads the beta, the six-point security model adapted from <code>dispatcher/README.md</code>, the visitor opt-out, Docker, launchd staging, and an honest verification section.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <p class="eyebrow">the whole interface</p>
+  <h2>The three commands</h2>
+
+  <h3>(a) Start the collector service</h3>
+<pre><code>node beta/keygen.mjs            <span class="c"># once: mint the keys, print the public JWKs to pin in js/hp-beacon.js</span>
+beta/run.sh start               <span class="c"># supervise the collector — restarts it forever, returns immediately</span>
+beta/run.sh status              <span class="c"># supervisor PID + collector PID + log paths</span>
+beta/run.sh stop                <span class="c"># stop both; leaves no process and no PID files</span>
+beta/run.sh log                 <span class="c"># tail -F collector.log and run.log together</span></code></pre>
+  <p class="cap">Everything honours <code>IRIS_BETA_HOME</code> (default <code>~/.iris-beta</code>), so a throwaway store costs nothing: <code>IRIS_BETA_HOME=/tmp/ib-test beta/run.sh start</code>.</p>
+
+  <h3>(b) Watch the realtime feed</h3>
+<pre><code><span class="c">// the line to arm as a Monitor — major events only, heartbeats never enter this file</span>
+Monitor({persistent: true, command: <span class="p">'beta/watch.sh'</span>, description: <span class="p">'iris beta realtime'</span>})
+
+<span class="c">// if even the major feed is too loud, re-arm with a filter — never widen the feed itself</span>
+Monitor({persistent: true, command: <span class="p">"beta/watch.sh 'error|fail|heal'"</span>, description: <span class="p">'iris beta errors'</span>})</code></pre>
+  <p class="cap">From a shell it is just <code>beta/watch.sh</code>, or <code>beta/watch.sh -n 40</code> to replay the last 40 lines before following.</p>
+
+  <h3>(c) View the roster board</h3>
+<pre><code>node beta/board.mjs             <span class="c"># once</span>
+node beta/board.mjs --watch      <span class="c"># redraw every 5s</span>
+node beta/board.mjs -n 40        <span class="c"># longer feed tail</span>
+node beta/board.mjs --no-feed    <span class="c"># roster only</span></code></pre>
+<pre><code>iris beta roster — /tmp/ib-real   2026-08-23 15:58:53 UTC
+collector pid 4242 · up 2h · relays 2 · room iris-beta-v1 · accepted 4821 · major 133 · dup 4 · bad_json 1   (status 0s ago)
+3 clients · 2 live (seen &lt;90s) · 2 remote-testable · 373 events · roster written 0s ago
+
+CID      DOING             C2  LAST  AGE   WHERE                         CONN     EV    NOTABLE
+----------------------------------------------------------------------------------------------------------------------
+a1b2c3d4 ▶ player hls      cmd 3s    42m   MacIntel Asia/Jerusalem he-IL…wifi     97    play_req 3 · play_resolved 3 · playing 3 · heal 2
+ff00aa11 · home            -   40s   5m    iPhone·mob Europe/Berlin de 3…4g       14    view 4 · join 1 · <span class="r">⚠ dropped 7</span>
+deadbeef left player webto…cmd 3h    1d    Win32 America/New_York en-US …ethernet 262   play_req 11 · error 6 · join 2 · leave 2</code></pre>
+  <p class="cap">Rendered from a fixture written in the exact shape <code>beta/collector.mjs:167-205</code> produces. <code>C2 = cmd</code> means that client advertised a <code>cpk</code> and can be driven live with <code>node beta/cmd.mjs &lt;cid&gt; snapshot</code>.</p>
+</section>
+
+<section>
+  <p class="eyebrow">evidence or it didn't happen</p>
+  <h2>Acceptance — verbatim output</h2>
+
+  <h3>Syntax gates</h3>
+<pre><code>$ bash -n beta/run.sh beta/watch.sh   <span class="g">bash -n OK</span>
+$ node --check beta/board.mjs         <span class="g">node --check OK</span>
+$ plutil -lint beta/iris-beta.plist   <span class="g">beta/iris-beta.plist: OK</span></code></pre>
+
+  <h3>The restart loop, proven with kill -9</h3>
+<pre><code>### acceptance 2: run.sh start/status with IRIS_BETA_HOME=/tmp/ib-ops
+home:       /tmp/ib-ops
+supervisor: 25920
+collector:  25934
+cmd:        sleep 3600
+log:        /tmp/ib-ops/collector.log
+
+### acceptance 3: kill -9 -&gt; new pid within 10s
+before=25934 after=26822
+supervisor: 25920
+collector:  26822
+
+### acceptance 4: stop leaves nothing
+stopped
+no process 26822</code></pre>
+  <p class="cap">A new collector PID <b>3 seconds</b> after <code>kill -9</code>; after <code>stop</code>, no process and both PID files gone.</p>
+
+  <h3>Backoff on a hard-broken child, so it cannot hot-loop</h3>
+<pre><code>$ IRIS_BETA_CMD=false beta/run.sh start ; sleep 9 ; beta/run.sh stop
+starts in 9s: 4
+2026-08-23T15:49:28Z [run] restarting in 1s
+2026-08-23T15:49:29Z [run] restarting in 2s
+2026-08-23T15:49:31Z [run] restarting in 4s
+2026-08-23T15:49:35Z [run] restarting in 8s</code></pre>
+
+  <h3>The orphan case — supervisor killed, collector still alive</h3>
+<pre><code>--- kill -9 the SUPERVISOR (36884), orphaning collector (36907) ---
+supervisor: not running
+collector:  36907
+<span class="r">WARNING: collector pid 36907 is orphaned (supervisor gone) — beta/run.sh stop</span>
+rc=1
+--- stop cleans the orphan ---
+stopped
+orphan reaped, nothing left</code></pre>
+
+  <h3>watch.sh streams, and filters, live</h3>
+<pre><code>--- unfiltered watch saw ---
+2026-08-23T15:50:00Z a1b2c3d4 join tz=Asia/Jerusalem mobile=0
+2026-08-23T15:50:02Z a1b2c3d4 play_req magnet Big.Buck.Bunny
+2026-08-23T15:50:07Z a1b2c3d4 error hls manifestLoadError x3
+2026-08-23T15:50:09Z a1b2c3d4 fail engine gone
+--- filtered watch ('error|fail') saw ---
+2026-08-23T15:50:07Z a1b2c3d4 error hls manifestLoadError x3
+2026-08-23T15:50:09Z a1b2c3d4 fail engine gone</code></pre>
+  <p class="cap">Both stages line-buffered — the filtered monitor delivered exactly the two lines it should, with no batching delay.</p>
+
+  <h3>End to end with the real collector</h3>
+<pre><code>$ IRIS_BETA_HOME=/tmp/ib-live node beta/keygen.mjs &amp;&amp; beta/run.sh start
+supervisor: 96031
+collector:  96044
+cmd:        node /Users/magic/Creations/cooliris/honestporn/beta/collector.mjs
+
+$ node beta/board.mjs --no-feed
+collector pid 96044 · up 20s · relays 1 · room iris-beta-v1 · <span class="b">decrypt_fail 24</span>   (status 0s ago)
+no clients.json yet — nothing has connected, or the collector has not started.
+
+$ kill -9 96044
+before=96044 <span class="g">after=1387</span>
+$ beta/run.sh stop
+stopped
+clean: no collector process left</code></pre>
+  <div class="box ok"><span class="lab">bonus proof — an oracle §6 invariant, incidentally</span>
+  That throwaway store had a <b>fresh</b> keypair, so the sealed frames already on the room could
+  not be opened: <code>decrypt_fail 24</code> and <b><code>clients.json</code> was never created</b>.
+  Wrong key ⇒ nothing stored, exactly as the oracle requires. (The invariant belongs to the verify
+  lane; recording it here because the run produced it.)</div>
+</section>
+
+<section>
+  <p class="eyebrow">seams found after beta/collector.mjs landed</p>
+  <h2>Two fixes the acceptance list would not have caught</h2>
+
+  <h3>1 · The roster shape was not what the contract said</h3>
+  <p><code>COMMON.md</code> specifies <code>cid → {first, last, where, state, counts}</code> with
+  ms-epoch stamps. <code>beta/collector.mjs:167-205</code> actually writes <b>ISO strings</b> for
+  <code>first</code>/<code>last</code> and <code>state</code> as an <b>object</b>
+  <code>{view, playing, ih, buf, engine, healN, dropped, at}</code>, plus <code>cpk</code>,
+  <code>sid</code> and <code>last_major</code>. Rendered naively that is <code>NaN</code> ages and
+  <code>[object Object]</code>. <code>board.mjs</code> now accepts both stamp forms, renders the
+  state object as the <code>DOING</code> column (<code>▶ player hls</code>, <code>· home</code>,
+  <code>left player webtorrent</code>), flags client-side drops, counts remote-testable clients,
+  and reads <code>status.json</code> for its header line.</p>
+
+  <h3>2 · Every collector line was being logged twice</h3>
+  <p><code>beta/collector.mjs:79-85</code> appends each line to <code>collector.log</code>
+  <i>itself</i> as well as printing it, so the supervisor's <code>&gt;&gt; collector.log</code>
+  redirect duplicated the whole service log. The child's raw stdout/stderr now goes to
+  <code>run.log</code> — which is where a node startup crash or stack trace lands, the output that
+  dies before the collector's own logger exists — while <code>collector.log</code> keeps the
+  collector's lines plus the supervisor's <code>[run]</code> lines. <code>beta/run.sh log</code>
+  tails both.</p>
+<pre><code>$ awk 'p==$0{d++} {p=$0} END{print "duplicate adjacent lines:", d+0}' collector.log
+<span class="g">duplicate adjacent lines: 0</span>
+
+2026-08-23T16:00:15Z [run] supervisor up pid=14313 home=/tmp/ib-live2 cmd: node …/beta/collector.mjs
+2026-08-23T16:00:15Z [run] collector started pid=14330
+2026-08-23T16:00:15.081Z [collector] starting -- room=iris-beta-v1 home=/tmp/ib-live2 key=…/priv.jwk
+2026-08-23T16:00:15.081Z [collector] outbound-only: no inbound port is opened, ever.
+2026-08-23T16:00:15.335Z [collector] floor relays=0</code></pre>
+</section>
+
+<section>
+  <p class="eyebrow">honest status</p>
+  <h2>Verification status</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>claim</th><th>status</th><th>how</th></tr></thead>
+    <tbody>
+      <tr><td>Restart loop survives <code>kill -9</code></td><td class="ok">PASS</td><td class="m">new PID 3s later (25934 → 26822); real collector 96044 → 1387</td></tr>
+      <tr><td>Backoff cannot hot-loop</td><td class="ok">PASS</td><td class="m">1s / 2s / 4s / 8s logged, 4 starts in 9s</td></tr>
+      <tr><td><code>stop</code> leaves nothing</td><td class="ok">PASS</td><td class="m">no process, both PID files removed</td></tr>
+      <tr><td>Orphan detected and reaped</td><td class="ok">PASS</td><td class="m">status warns + rc=1; stop cleans</td></tr>
+      <tr><td>Feed follows and filters live</td><td class="ok">PASS</td><td class="m">4 lines streamed; filter delivered exactly 2</td></tr>
+      <tr><td>Board renders the real roster shape</td><td class="ok">PASS</td><td class="m">fixture in collector's exact shape + live <code>status.json</code></td></tr>
+      <tr><td>Board survives a truncated / missing file</td><td class="ok">PASS</td><td class="m">"unparseable (mid-write? try again)", no crash</td></tr>
+      <tr><td>launchd plist is valid and NOT installed</td><td class="ok">PASS</td><td class="m"><code>plutil -lint … OK</code>; never <code>launchctl load</code>ed</td></tr>
+      <tr><td>No duplicate logging</td><td class="ok">PASS</td><td class="m">adjacent-duplicate count 0</td></tr>
+      <tr><td>Docker image builds</td><td class="no">NOT VERIFIED</td><td class="m">daemon down: <code>Cannot connect to the Docker daemon at unix:///Users/magic/.colima/default/docker.sock</code>; also <code>docker: unknown command: docker buildx</code></td></tr>
+      <tr><td>Board against real connected clients</td><td class="no">NOT VERIFIED</td><td class="m">no browser has joined yet — waits on the beacon lane</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="box warn"><span class="lab">docker — what is known and what is not</span>
+  The build was attempted and fails before the Dockerfile is even read. There is also no
+  <code>buildx</code> on this machine, so the legacy builder would <b>ignore</b>
+  <code>beta/Dockerfile.dockerignore</code> and tar the ~10&nbsp;GB repo root to the daemon. The
+  documented primary recipe is therefore a piped tar context, measured at <b>91&nbsp;KB</b>:
+<pre><code>tar -cf - beta vendor/hp-floor.mjs vendor/hp-seal.mjs \
+  | docker build -f beta/Dockerfile -t iris-beta-collector -</code></pre>
+  The <code>COPY</code> paths were checked against the tree and the file is a line-for-line
+  adaptation of the working <code>dispatcher/Dockerfile</code>, but the image itself is unproven
+  until a daemon exists.</div>
+</section>
+
+<section>
+  <p class="eyebrow">the law these scripts keep</p>
+  <h2>Security model, in one paragraph each</h2>
+  <ul>
+    <li><b>No inbound surface.</b> No listener, no port bind, no <code>EXPOSE</code>, no <code>-p</code>. Browser and collector both dial <i>out</i> to a neutral broker, so neither learns the other's address and nothing on the internet can reach this host — the same one-way law as <code>dispatcher/</code>.</li>
+    <li><b>Sealed, not merely "on a private room."</b> The floor's room key derives from the room name and that name ships in public JavaScript, so every event is additionally sealed to the collector's key (ECDH P-256 + HKDF + AES-256-GCM). A wrong key stores nothing — proven above.</li>
+    <li><b>No PII.</b> The <code>where</code> block is <code>{tz, lang, platform, mobile, screen, conn}</code>. No IP, no precise geolocation, no account, no cookie, no fingerprint — and the store never leaves the machine.</li>
+    <li><b>A visitor can see it and switch it off in one click</b> — the beta pill, or <code>localStorage.setItem('hp.beta','0')</code>. Off means the beacon sends nothing at all, and the C2 uplink is dead too because it rides the same switch.</li>
+    <li><b>Remote control is signed, allowlisted and visible</b> — never silent. The browser shows a remote-test indicator whenever a command runs.</li>
+    <li><b>These three scripts cannot be an attack surface.</b> They read the store and their own PID files, interpolate no inbound value into anything, run no command derived from telemetry, and never touch <code>priv.jwk</code> or <code>ctrl_priv.jwk</code>.</li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">handoffs</p>
+  <h2>What the next session or lane needs to know</h2>
+  <ul>
+    <li><b>Nothing is installed and nothing was pushed.</b> The launchd plist is staged; the supported way to run the service is <code>beta/run.sh start</code>, which needs no root and leaves nothing behind after <code>stop</code>.</li>
+    <li><b>Docker is the one unproven artifact.</b> Bring up colima (or install buildx) and run the piped-tar recipe; that is the only step left to close it.</li>
+    <li><b>The store contract gained files</b> beyond <code>COMMON.md</code>'s list: <code>status.json</code> (collector counters, which the board's header reads), <code>ctrl_pub.jwk</code>/<code>ctrl_priv.jwk</code> (C2 signing), and the supervisor's <code>run.log</code>/<code>run.pid</code>/<code>collector.pid</code>.</li>
+    <li><b>No floor copy lives in this lane.</b> <code>board.mjs</code> imports only <code>node:fs</code>, <code>node:path</code>, <code>node:os</code>; <code>run.sh</code> and <code>watch.sh</code> are shell. The Dockerfile copies the canonical <code>vendor/hp-floor.mjs</code>, so the relay-underflow fix (<code>0494347</code>) is picked up with no re-sync — verified in sync with <code>beta/hp-floor.mjs</code> and <code>dispatcher/hp-floor.mjs</code>.</li>
+    <li><b>One field note for the collector and verify lanes:</b> a live run showed <code>relays=1</code> (0 → 1 over ~8s) rather than the oracle probe's expected <code>relays: 2</code>. That observation predates <code>0494347</code>, which fixed exactly this counter, so it is likely already answered — worth one confirming probe.</li>
+  </ul>
+</section>
+
+</div>
+
+<footer class="ft"><div class="wrap">
+  lane <b>ops</b> · beta-telemetry fleet · claude-opus-5 · gear lean, 0 nested agents ·
+  corpus <code>.grand/lanes/ops/</code> · commits <code>8f10d2a</code> <code>c4349c9</code> <code>68be40d</code>
+</div></footer>
+
+<script>
+  document.getElementById('tgl').addEventListener('click', function () {
+    var r = document.documentElement;
+    var dark = r.getAttribute('data-theme') === 'dark' ||
+      (!r.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  });
+</script>

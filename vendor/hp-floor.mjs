@@ -98,7 +98,7 @@ export const joinFloor = async ({ room, selfId, onFrame, onStatus }) => {
 
   const connect = (url, attempt = 0) => {
     if (closed) return;
-    let ws, ping;
+    let ws, ping, opened = false;
     try { ws = new WebSocket(url, 'mqtt'); } catch { return; }
     ws.binaryType = 'arraybuffer';
     sockets.push(ws);
@@ -109,6 +109,7 @@ export const joinFloor = async ({ room, selfId, onFrame, onStatus }) => {
       ws.send(packet(1, 0, [...mstr('MQTT'), 4, 2, 0, 60, ...mstr(clientId)]));
       let id = 1;
       for (const topic of topics) ws.send(packet(8, 2, [0, id++, ...mstr(topic), 0]));
+      opened = true;
       live += 1;
       onStatus?.({ relays: live });
       ping = setInterval(() => { try { ws.send(packet(12, 0, [])); } catch { /* gone */ } }, 30_000);
@@ -128,8 +129,11 @@ export const joinFloor = async ({ room, selfId, onFrame, onStatus }) => {
 
     const down = () => {
       clearInterval(ping);
-      live = Math.max(0, live - 1);
-      onStatus?.({ relays: live });
+      // only decrement for a socket that actually opened — a relay that never connects
+      // (e.g. an unreachable broker retrying forever) must not drive `live` to 0 while
+      // another relay is healthy. Underflowed the counter and made a working floor report
+      // relays:0 (runner-discovery + beacon status lie). Found by the beta verify lane.
+      if (opened) { opened = false; live = Math.max(0, live - 1); onStatus?.({ relays: live }); }
       const wait = Math.min(120_000, 3000 * 2 ** Math.min(attempt, 5));
       if (!closed) setTimeout(() => connect(url, attempt + 1), wait * (0.7 + Math.random() * 0.6));
     };

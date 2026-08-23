@@ -17,6 +17,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 7a7 7 0 0 1 7-7h14l11 11v14a7 7 0 0 1-7 7H7a7 7 0 0 1-7-7z' fill='%230d0d0f'/%3E%3Cpath d='M21 0l11 11h-8a3 3 0 0 1-3-3z' fill='%23c21860'/%3E%3Cpath d='M9 16.6l4 4L23.5 10' fill='none' stroke='%23f5387b' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script defer src="js/addons.js"></script>
 <script defer src="js/errlog.js"></script>
+<script defer src="js/hp-beacon.js"></script>
 <script defer src="js/registry.js"></script>
 <script defer src="js/wallview.js"></script>
 <script defer src="js/app.js"></script>
@@ -71,6 +72,12 @@
             title="Hosted streaming engine status" aria-live="polite" aria-label="Streaming engine status">
       <span class="es-dot" aria-hidden="true"></span>
       <span class="es-label">Engine</span>
+    </button>
+
+    <button id="betastat" class="enginestat betastat es-off" type="button" hidden
+            title="Beta telemetry" aria-live="polite" aria-label="Beta telemetry status">
+      <span class="es-dot" aria-hidden="true"></span>
+      <span class="es-label">Beta</span>
     </button>
 
     <nav class="topnav">

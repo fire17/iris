@@ -97,5 +97,23 @@
     }, function () { return false; });
   }
 
-  window.HPRunner = { discover: discover, cachedBase: cachedBase, wake: wake, BASE_KEY: BASE_KEY };
+  /* prime(ih, idx): warm the EXACT title on an already-known runner while the user is still
+     browsing, so /play is near-instant on click. Fire-and-forget GET /prime (202); only runs
+     when a runner base is already cached (never wakes one from a hover — that's what the pill
+     + warmRunner do). Deduped per (ih,idx) for this page so repeated hovers cost one request. */
+  var _primed = {};
+  function prime(ih, idx) {
+    if (!ih) return;
+    var base = cachedBase();
+    if (!base) return;
+    var key = ih + ':' + (idx == null ? '' : idx);
+    if (_primed[key]) return;
+    _primed[key] = 1;
+    try {
+      fetch(base + '/prime/' + encodeURIComponent(ih) + (idx == null ? '' : '/' + encodeURIComponent(idx)),
+        { cache: 'no-store', mode: 'cors' })['catch'](function () { delete _primed[key]; });
+    } catch (e) { delete _primed[key]; }
+  }
+
+  window.HPRunner = { discover: discover, cachedBase: cachedBase, wake: wake, prime: prime, BASE_KEY: BASE_KEY };
 })(window);

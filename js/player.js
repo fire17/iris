@@ -709,7 +709,8 @@
       opts: opts,                       /* opts.crossOrigin opts a source into CORS mode */
       cwId: meta.id || stream.infoHash || stream.url || titleMain,
       cwVid: video ? (video.id || video.videoId || epLabel || '') : '',
-      title: titleMain, sub: sub, subUI: subUI, resumed: false, subsReady: false, subTracks: []
+      title: titleMain, sub: sub, subUI: subUI, resumed: false, subsReady: false, subTracks: [],
+      tOpen: Date.now()                 /* origin for the beacon's ttff_ms */
     };
 
     /* ADOPTION: the preview's <video> (and its hls instance) become THE player media —
@@ -792,6 +793,7 @@
     on(v, 'playing', function () {
       spin(false);
       engineProgressDone();   /* real frames rolling — drop the engine-wait overlay */
+      if (S && !S.ttffSent) { S.ttffSent = true; if (window.HPBeacon) HPBeacon.emit('playing', { ttff_ms: Date.now() - (S.tOpen || Date.now()) }); }
       /* first real frame: undo the muted-autoplay guard and honour the user's saved
          volume/mute. Unmuting a playing element is allowed even outside a gesture,
          so this is where silent-live-autoplay actually gets its sound. */
@@ -1031,6 +1033,7 @@
      so it plays the right place fast, YouTube-style. Direct Range streams seek natively. */
   function seekTo(T, commit) {
     if (!S) return;
+    if (window.HPBeacon) HPBeacon.emit('seek', { from: Math.round(effT()), to: Math.round(T) });
     var d = effDur(); if (isFinite(d) && d > 0) T = Math.max(0, Math.min(d - 0.5, T));
     else T = Math.max(0, T);
     var v = S.el.video, off = S.streamOffset || 0, r = streamRange();
@@ -1487,6 +1490,7 @@
 
   function fail(msg, extraHtml) {
     if (!S) return;
+    if (window.HPBeacon) HPBeacon.emit('fail', { msg: String(msg || '').slice(0, 300) });
     spin(false);
     var box = card(
       '<h3>Can’t play this stream</h3>' +
@@ -1672,6 +1676,7 @@
   /* the pre-existing local-engine cascade for torrent sources, unchanged */
   function routeTorrentEngine(magnet, ih, idx) {
     if (!S || S.destroyed) return;
+    var tRoute = Date.now();   /* beacon: how long the engine took to hand back a URL */
     var mg = magnet || (ih ? 'magnet:?xt=urn:btih:' + ih : '');
     /* THE LAW (fire17): a node may relay the WebRTC handshake but must NEVER carry the
        bytes — playback is peer-to-peer, straight from peers to the browser. So a browser
@@ -1730,6 +1735,7 @@
               if (!S || S.destroyed) return;
               if (j && j.ok && j.url) {
                 u = j.url;
+                if (window.HPBeacon) HPBeacon.emit('play_resolved', { kind: j.kind === 'hls' ? 'hls' : 'url', ms: Date.now() - tRoute, engine: viaRunner ? 'runner' : 'local' });
                 S.engineProbe = j.probe || null;
                 S.durTotal = (j.probe && j.probe.dur) || 0;   /* whole-film length for the seek bar */
                 S.streamOffset = j.offset || 0;               /* where this transcode starts in the film */
@@ -1741,6 +1747,7 @@
                                        : 'Streaming via ' + where, 3200);
                 start(j.kind === 'hls' ? 'hls' : 'url', u);
               } else {
+                if (window.HPBeacon) HPBeacon.emit('play_resolved', { kind: isHls(u) ? 'hls' : 'url', ms: Date.now() - tRoute, engine: viaRunner ? 'runner' : 'local' });
                 toast('Streaming via ' + where, 2600);
                 start(isHls(u) ? 'hls' : 'url', u);
               }
@@ -1831,6 +1838,7 @@
     fetch(base + '/status', { cache: 'no-store' }).then(function (r) {
       if (!S || S.destroyed) return;
       if (r && r.ok) {
+        if (window.HPBeacon) HPBeacon.emit('heal', { reason: String(reason || ''), n: 0, nudge: true });
         try { if (S.hls) S.hls.startLoad(); } catch (e) {}
         spin(true); toast('Buffering…', 1500);
       } else { healStream(reason); }
@@ -1850,6 +1858,7 @@
     var v = S.el.video, at = (isFinite(S.lastT) && S.lastT > 0) ? S.lastT : (v.currentTime || 0);
     toast('Reconnecting…', 4000);
     if (window.ErrLog) ErrLog.push('heal', 'reconnect #' + S.healN + ' (' + (reason || '') + ') at t=' + at.toFixed(1), '');
+    if (window.HPBeacon) HPBeacon.emit('heal', { reason: String(reason || ''), n: S.healN });
     var runnerOptIn = optIn(RUNNER_OPTIN);
     var refresh = (runnerOptIn && window.HPRunner)
       ? window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 8000 })['catch'](function () { return ''; })
@@ -3215,6 +3224,15 @@
     },
     close: function () { destroy(); },
     isOpen: function () { return !!S; },
+    /* thin, additive handles on the EXISTING seek/pause/resume paths. Added for the beta
+       C2 uplink (a signed, allowlisted `seek`/`pause`/`resume` command must go through
+       seekTo() so an engine transcode re-resolves properly, not straight at .currentTime). */
+    seek: function (t) { try { if (!S) return false; seekTo(+t || 0, true); return true; } catch (e) { return false; } },
+    pause: function () { try { if (!S) return false; S.el.video.pause(); return true; } catch (e) { return false; } },
+    resume: function () { try { if (!S) return false; var pp = S.el.video.play(); if (pp && pp['catch']) pp['catch'](function () {}); return true; } catch (e) { return false; } },
+    /* force the reconnect path on a live client — the beta C2 `heal` command. Only meaningful
+       on an engine stream; returns false (an honest ack ok:false) when there is nothing to heal. */
+    heal: function (reason) { try { if (!S || S.destroyed || !S.viaEngine) return false; healStream(String(reason || 'c2-test')); return true; } catch (e) { return false; } },
     /* tier stack for mobile BACK = Esc; app.js owns the history mirror via these seams. */
     tierDepth: tierDepth,
     overlayOpen: overlayOpen,
@@ -3283,6 +3301,22 @@
     onclose: null,
     version: '1.1.0'
   };
+
+  /* Beacon heartbeat: the playback half of `hb` (the view name comes from app.js). Read-only
+     — a probe must never touch player state, and a throw here is swallowed by the beacon. */
+  if (window.HPBeacon) HPBeacon.probe(function () {
+    if (!S || S.destroyed) return { playing: false, engine: 'idle' };
+    var v = S.el && S.el.video, buf = 0;
+    try { if (v && v.buffered && v.buffered.length) buf = Math.max(0, v.buffered.end(v.buffered.length - 1) - v.currentTime); } catch (e) {}
+    return {
+      playing: !!(v && !v.paused && !v.ended && v.readyState >= 3),
+      ih: S.engineIh || null,
+      t: Math.round(effT()),
+      buf: Math.round(buf * 10) / 10,
+      engine: S.viaEngine ? ('engine:' + (S.engineKind || 'url') + (S.engineBaseUsed && S.engineBaseUsed.indexOf('http://127.') === 0 ? ':local' : ':runner')) : 'browser',
+      healN: S.healN || 0
+    };
+  });
 
   window.Player = Player;
 })(window, document);
