@@ -1449,10 +1449,46 @@
     else if (v.hasAttribute('crossorigin')) v.removeAttribute('crossorigin');
   }
 
+  /* Chaturbate addon streams hand over a VIDEO-ONLY chunklist (chunklist_N_video_…);
+     the AAC audio is an alternate rendition only the (tokened, short-lived) master
+     references — so the room played silent. The sibling audio chunklist shares the same
+     path, numeric id and session param, and the edge serves it CORS-open. Probe it and
+     synthesize a two-line master that binds video + audio. No resolver needed. */
+  var CB_VCHUNK = /^(https:\/\/[^/]*\.live\.mmcdn\.com\/.*\/)chunklist_\d+_video_(\d+[^?]*\.m3u8)(\?.*)?$/;
+  function cbMasterFor(url) {
+    var m = CB_VCHUNK.exec(url);
+    if (!m) return Promise.resolve(null);
+    var tries = [];
+    for (var i = 9; i >= 0; i--) tries.push(m[1] + 'chunklist_' + i + '_audio_' + m[2] + (m[3] || ''));
+    var probe = function (k) {
+      if (k >= tries.length) return Promise.resolve(null);
+      return fetch(tries[k], { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) return probe(k + 1);
+        return r.text().then(function (t) { return t.slice(0, 7) === '#EXTM3U' ? tries[k] : probe(k + 1); });
+      })['catch'](function () { return probe(k + 1); });
+    };
+    return probe(0).then(function (au) {
+      if (!au) return null;
+      var txt = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="cb",NAME="audio",DEFAULT=YES,AUTOSELECT=YES,URI="' + au + '"\n' +
+                '#EXT-X-STREAM-INF:BANDWIDTH=3000000,AUDIO="cb"\n' + url + '\n';
+      return URL.createObjectURL(new Blob([txt], { type: 'application/vnd.apple.mpegurl' }));
+    });
+  }
+
   function start(kind, url) {
     if (!S) return;
     var v = S.el.video;
     S.playUrl = url;
+    if (kind === 'hls' && !S.cbAudioFixed && CB_VCHUNK.test(url)) {
+      S.cbAudioFixed = true;              /* one attempt per open; fall through on failure */
+      spin(true);
+      cbMasterFor(url).then(function (u2) {
+        if (!S || S.destroyed) return;
+        if (u2) S.blobs.push(u2);
+        start(kind, u2 || url);
+      });
+      return;
+    }
     applyCORS(v, !!(S.opts && S.opts.crossOrigin));
     attachSubs();
 
