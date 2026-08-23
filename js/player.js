@@ -45,9 +45,9 @@
   var HLS_URL = (function () {
     try {
       var s = document.currentScript;
-      if (s && s.src) return new URL('../vendor/hls.js', s.src).href;
+      if (s && s.src) return new URL('../vendor/hls.js?v=83b3e31f', s.src).href;
     } catch (e) {}
-    return 'vendor/hls.js';
+    return 'vendor/hls.js?v=83b3e31f';
   })();
 
   // ------------------------------------------------------------------- styles
@@ -1817,6 +1817,26 @@
      have changed), re-asks /play, reloads the source, and seeks back. Debounced, capped,
      and scoped to engine streams; direct-MP4 (Range) resumes exactly, an HLS transcode
      resumes at the transcoded head. */
+  /* A growing engine transcode is a LIVE (sliding-window) playlist: hls.js reloads the
+     m3u8 every few seconds, and on a slow tunnel one reload can time out while the runner
+     is perfectly alive and still pacing the next segment. Tearing the stream down and
+     re-resolving on every such blip is exactly what spun the "reconnecting… then fail"
+     loop. So gate it: ping /status first — reachable means the runner is fine and just the
+     growing playlist hiccuped (nudge hls to keep loading, stay put); only a genuinely
+     unreachable origin escalates to a full re-resolve. */
+  function healOrRetry(reason) {
+    if (!S || S.destroyed || !S.viaEngine || S.healing) return;
+    var base = S.engineBaseUsed || engineBase();
+    if (!base) { healStream(reason); return; }
+    fetch(base + '/status', { cache: 'no-store' }).then(function (r) {
+      if (!S || S.destroyed) return;
+      if (r && r.ok) {
+        try { if (S.hls) S.hls.startLoad(); } catch (e) {}
+        spin(true); toast('Buffering…', 1500);
+      } else { healStream(reason); }
+    })['catch'](function () { if (S && !S.destroyed) healStream(reason); });
+  }
+
   function healStream(reason) {
     if (!S || S.destroyed || !S.viaEngine || S.healing || S.engineIh == null) return;
     S.healN = (S.healN || 0) + 1;
@@ -1924,18 +1944,26 @@
         hls.on(Hls.Events.ERROR, function (evt, data) {
           if (!data || !data.fatal) return;
           var det = data.details || '';
-          /* the whole playlist/base is unreachable (the hosted runner cycled to a new URL,
-             or the tunnel dropped) — startLoad cannot fix a dead origin, so re-resolve the
-             engine and resume from the last good time instead */
-          var playlistGone = /manifestLoad|manifestParsing|levelLoad|levelEmpty/i.test(det);
-          if (S && S.viaEngine && playlistGone) { healStream('hls:' + det); return; }
+          if (window.ErrLog) ErrLog.push('hls', 'fatal ' + (data.type || '') + ' / ' + det, (S && S.playUrl || '').slice(0, 200));
+          /* First contact with the master/level failed (manifestLoad/Parsing): the origin
+             really is gone (runner cycled to a new URL, tunnel dropped) — startLoad cannot
+             fix a dead origin, so re-resolve straight away. */
+          var manifestGone = /manifestLoad|manifestParsing/i.test(det);
+          if (S && S.viaEngine && manifestGone) { healStream('hls:' + det); return; }
+          /* an engine decode hiccup recovers in place — no need to touch the origin */
+          if (S && S.viaEngine && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            try { hls.recoverMediaError(); toast('Recovering the video stream…', 2000); return; } catch (e) {}
+          }
+          /* Everything else on an engine stream — a levelLoad/level reload timeout on the
+             growing playlist, a fragment stall, a generic network fatal — is far more often
+             a slow-but-alive runner than a dead one. Never tear it down on a guess: /status
+             decides (nudge if alive, re-resolve only if truly unreachable). */
+          if (S && S.viaEngine) { healOrRetry('hls:' + det); return; }
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
             try { hls.startLoad(); toast('Network hiccup — reconnecting…', 2000); return; } catch (e) {}
           } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             try { hls.recoverMediaError(); toast('Recovering the video stream…', 2000); return; } catch (e) {}
           }
-          if (window.ErrLog) ErrLog.push('hls', 'fatal ' + (data.type || '') + ' / ' + det, (S && S.playUrl || '').slice(0, 200));
-          if (S && S.viaEngine) { healStream('hls-fatal'); return; }   /* one more shot before giving up */
           try { hls.destroy(); } catch (e) {}
           S.hls = null;
           fail('The HLS stream failed (' + esc(det || data.type || 'fatal error') + ').');
