@@ -87,6 +87,13 @@
     'color:var(--c);background:var(--cbg);border:1px solid var(--cbd);',
     'transition:background .18s var(--e4),border-color .18s var(--e4)}',
     '.plr-chip svg{width:11px;height:11px;fill:currentColor;display:block;flex:0 0 auto}',
+    /* engine observability chip — tappable, accent-lit when a hosted runner is doing the work */
+    '.plr-eng-chip{cursor:pointer;text-transform:none;letter-spacing:.3px}',
+    '.plr-eng-chip:hover{filter:brightness(1.18)}',
+    '.plr-eng-chip.plr-eng-runner{--c:#3ddc97;--cbg:rgba(61,220,151,.14);--cbd:rgba(61,220,151,.44)}',
+    '.plr-eng-info p{margin:0 0 9px;font-size:13px;line-height:1.5;color:#c7d2dd}',
+    '.plr-eng-info code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:12px;word-break:break-all}',
+    '.plr-eng-info .plr-eng-sub{color:#8a95a2;font-size:11.5px}',
     '.plr-chip .plr-gl{font-style:normal;font-size:11px;line-height:1;flex:0 0 auto}',
     '.plr-chip .plr-lb{display:block;line-height:1;flex:0 0 auto}',
     /* lane colours match the canvas wall lane badges exactly */
@@ -794,7 +801,8 @@
     on(v, 'stalled', function () { spin(true); });
     on(v, 'timeupdate', function () {
       paintTime();
-      if (!v.paused && v.currentTime !== S.lastT) { S.lastT = v.currentTime; spin(false); S.healN = 0; }
+      var mt = effT();   /* movie-time (accounts for an engine transcode's seek offset) */
+      if (!v.paused && mt !== S.lastT) { S.lastT = mt; spin(false); S.healN = 0; }
     });
     on(v, 'progress', paintBuf);
     on(v, 'durationchange', function () { paintTime(); paintBuf(); });
@@ -942,14 +950,15 @@
   function noop() {}
 
   function applySeek(p, commit) {
-    var v = S.el.video, d = effDur();
+    var d = effDur();
     if (!isFinite(d) || d <= 0) return;
     var t = p * d;
     S.el.fill.style.width = (p * 100) + '%';
     S.el.knob.style.left = (p * 100) + '%';
     S.el.time.innerHTML = '<b>' + esc(fmt(t)) + '</b> / ' + esc(fmt(d));
-    try { v.currentTime = t; } catch (e) {}
-    if (commit) save();
+    /* only commit the seek on release — re-transcoding on every drag frame would thrash the
+       engine. seekTo picks native (in-window) vs re-transcode (jump anywhere) automatically. */
+    if (commit) seekTo(t, true);
   }
 
   function toggle(burst) {
@@ -1004,9 +1013,64 @@
     return S.el.video.duration;
   }
 
+  /* movie-time of the playhead. An engine transcode stream is 0-based but may begin partway
+     into the film (after a seek), so the real position is streamOffset + <video>.currentTime.
+     Everything the user SEES (time label, seek fill, saved position) uses this. */
+  function effT() {
+    if (!S) return 0;
+    return (S.streamOffset || 0) + S.el.video.currentTime;
+  }
+  /* the movie-time span the CURRENT stream can seek natively (its transcoded/buffered window) */
+  function streamRange() {
+    var v = S.el.video, off = S.streamOffset || 0;
+    try { if (v.seekable && v.seekable.length) return { lo: off + v.seekable.start(0), hi: off + v.seekable.end(v.seekable.length - 1) }; } catch (e) {}
+    return { lo: off, hi: off + (isFinite(v.duration) ? v.duration : 0) };
+  }
+  /* Seek to movie-time T. Inside the current stream's window → instant native seek. Outside
+     it (an engine transcode only covers a sliding window) → re-transcode from T over the wire
+     so it plays the right place fast, YouTube-style. Direct Range streams seek natively. */
+  function seekTo(T, commit) {
+    if (!S) return;
+    var d = effDur(); if (isFinite(d) && d > 0) T = Math.max(0, Math.min(d - 0.5, T));
+    else T = Math.max(0, T);
+    var v = S.el.video, off = S.streamOffset || 0, r = streamRange();
+    if (S.viaEngine && S.engineKind === 'hls' && (T < r.lo - 1.5 || T > r.hi + 0.5)) {
+      seekTranscode(T);
+    } else {
+      try { v.currentTime = Math.max(0, T - off); } catch (e) {}
+    }
+    if (commit) save();
+  }
+  /* re-resolve the transcode at offset T (engine ?t=) and swap the HLS source to it */
+  function seekTranscode(T) {
+    if (!S || S.destroyed || S.seeking) return;
+    S.seeking = true;
+    var v = S.el.video;
+    spin(true); toast('Seeking to ' + fmt(T) + '…', 1500);
+    var base = engineBase();
+    if (!base || S.engineIh == null) { S.seeking = false; spin(false); return; }
+    fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx) + '?t=' + Math.floor(T), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+      .then(function (j) {
+        if (!S || S.destroyed) return;
+        if (!(j && j.ok && j.url)) { S.seeking = false; spin(false); toast('Seek failed — try again', 2000); return; }
+        S.streamOffset = (j.offset != null) ? j.offset : Math.floor(T);
+        S.engineKind = j.kind === 'hls' ? 'hls' : 'url';
+        var done = function () { S.seeking = false; spin(false); var pp = v.play(); if (pp && pp['catch']) pp['catch'](function () {}); paintTime(); };
+        if (S.engineKind === 'hls' && S.hls && window.Hls) {
+          var once = function () { try { S.hls.off(window.Hls.Events.MANIFEST_PARSED, once); } catch (e) {} done(); };
+          S.hls.on(window.Hls.Events.MANIFEST_PARSED, once);
+          S.hls.loadSource(j.url); S.hls.startLoad();
+        } else {
+          v.addEventListener('loadedmetadata', function h() { v.removeEventListener('loadedmetadata', h); done(); }, false);
+          v.src = j.url; v.load();
+        }
+      });
+  }
+
   function paintTime() {
     if (!S || S.dragging) return;
-    var v = S.el.video, d = effDur(), t = v.currentTime;
+    var v = S.el.video, d = effDur(), t = effT();
     var p = (isFinite(d) && d > 0) ? Math.max(0, Math.min(1, t / d)) : 0;
     S.el.fill.style.width = (p * 100) + '%';
     S.el.knob.style.left = (p * 100) + '%';
@@ -1017,11 +1081,11 @@
   }
   function paintBuf() {
     if (!S) return;
-    var v = S.el.video, d = effDur(), out = '';
+    var v = S.el.video, d = effDur(), out = '', off = S.streamOffset || 0;
     if (isFinite(d) && d > 0) {
       try {
         for (var i = 0; i < v.buffered.length; i++) {
-          var s = v.buffered.start(i), e = v.buffered.end(i);
+          var s = off + v.buffered.start(i), e = off + v.buffered.end(i);
           out += '<span style="left:' + (s / d * 100).toFixed(3) + '%;width:' + ((e - s) / d * 100).toFixed(3) + '%"></span>';
         }
       } catch (e) {}
@@ -1098,16 +1162,16 @@
     v.volume = x; v.muted = x === 0; lsSet(VOL_KEY, String(x));
   }
   function nudge(d) {
-    var v = S.el.video;
-    if (!isFinite(v.duration) || v.duration <= 0) return;
-    v.currentTime = Math.max(0, Math.min(v.duration - 0.25, v.currentTime + d));
+    var tot = effDur();
+    if (!isFinite(tot) || tot <= 0) return;
+    seekTo(effT() + d, true);   /* movie-time relative; re-transcodes if it leaves the window */
     toast((d > 0 ? '+' : '') + d + 's', 900);
   }
 
   // ------------------------------------------------------------------- saving
   function save(ended) {
     if (!S || S.destroyed) return;
-    var v = S.el.video, d = v.duration, t = v.currentTime;
+    var d = effDur(), t = effT();   /* movie-time, so continue-watching saves the real spot */
     if (!isFinite(d) || d <= 0 || !isFinite(t)) return;
     if (ended || t >= d * 0.95) { cwDrop(S.cwId, S.cwVid); return; }
     /* "far enough in to be worth remembering" is proportional, not a flat 5s:
@@ -1123,7 +1187,7 @@
   function maybeResume() {
     if (!S || S.resumed) return;
     S.resumed = true;
-    var v = S.el.video, d = v.duration;
+    var v = S.el.video, d = effDur();
     var rec = cwGet(S.cwId, S.cwVid);
     if (!rec || !isFinite(d) || d <= 0) return;
     var pos = Number(rec.position);
@@ -1146,7 +1210,7 @@
     );
     var go = function (what) {
       closeCard();
-      if (what === 'resume') { try { v.currentTime = pos; } catch (e) {} }
+      if (what === 'resume') { seekTo(pos, false); }   /* movie-time; re-transcodes if deep */
       var p = v.play(); if (p && p['catch']) p['catch'](noop);
     };
     box.querySelector('[data-go="resume"]').addEventListener('click', function () { go('resume'); });
@@ -1220,6 +1284,66 @@
       });
     };
     setTimeout(tick, 2500);
+  }
+
+  /* ---------------------------------------------- engine observability (in-player)
+     A chip in the player header answers, at a glance, WHERE the torrent work is happening:
+     a hosted GitHub-Actions runner (⚡) or the local engine (🖥), and whether the stream is
+     transcoded or direct. Tapping it opens live proof — the exact server, its uptime and
+     torrent count fetched from /status, the codecs, and where in the film we are. */
+  function engineInfo() {
+    var base = (S && S.engineBaseUsed) || engineBase() || '';
+    var host = base; try { host = base ? new URL(base).host : ''; } catch (e) {}
+    var runner = !!base && base.indexOf('http://127.') !== 0 && base.indexOf('//localhost') === -1;
+    return { base: base, host: host, runner: runner };
+  }
+  function engineHud() {
+    if (!S || !S.el || !S.el.chips) return;
+    var chips = S.el.chips, chip = chips.querySelector('.plr-eng-chip');
+    if (!S.viaEngine) { if (chip) chip.remove(); return; }
+    if (!chip) {
+      chip = document.createElement('button');
+      chip.className = 'plr-chip plr-eng-chip'; chip.type = 'button';
+      chip.title = 'Where is this streaming from? (tap for details)';
+      chip.addEventListener('click', engineHudDetail);
+      chips.appendChild(chip);
+    }
+    var info = engineInfo();
+    chip.innerHTML = (info.runner ? '⚡ ' : '🖥 ') + esc(info.runner ? 'Runner' : 'Local engine') +
+      (S.engineKind === 'hls' ? ' · transcoded' : ' · direct');
+    chip.classList.toggle('plr-eng-runner', info.runner);
+  }
+  function engineHudDetail() {
+    if (!S) return;
+    var info = engineInfo(), pr = S.engineProbe || {};
+    var rows = [
+      (info.runner
+        ? '⚡ <b>Hosted GitHub-Actions runner</b><br><span class="plr-eng-sub">in-memory engine on a GHA runner, streamed to your browser over https — the p2p floor only carried the handshake</span>'
+        : '🖥 <b>Local engine</b> on your own machine'),
+      'Server · <code class="plr-eng-host">' + esc(info.host || '—') + '</code>',
+      'Connection · <span class="plr-eng-live">checking…</span>',
+      'Stream · ' + (S.engineKind === 'hls'
+        ? 'transcoded (' + esc(pr.audio || '?') + ' → AAC, ' + esc(pr.video || '?') + ' copied)'
+        : 'direct — browser-native container'),
+      (S.streamOffset ? 'Playing from · <b>' + esc(fmt(S.streamOffset)) + '</b> into the film' : 'Playing from · start'),
+      (S.engineFile ? 'File · <code>' + esc(S.engineFile) + '</code>' : '')
+    ].filter(Boolean);
+    var box = card('<h3>Streaming engine</h3><div class="plr-eng-info">' +
+      rows.map(function (r) { return '<p>' + r + '</p>'; }).join('') +
+      '</div><div class="plr-acts"><button class="plr-a" data-go="close">Close</button></div>');
+    box.querySelector('[data-go="close"]').addEventListener('click', closeCard);
+    /* live proof: hit the server's /status so the panel shows it's genuinely reachable,
+       with uptime + how many torrents it is serving right now */
+    var liveEl = box.querySelector('.plr-eng-live');
+    if (info.base && liveEl) {
+      fetch(info.base + '/status', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+        .then(function (j) {
+          if (!liveEl.isConnected) return;
+          if (j && j.ok) liveEl.innerHTML = '<b style="color:var(--ok,#3ddc97)">● connected</b> · up ' + esc(fmt(j.uptime || 0)) + ' · serving ' + (j.torrents || 0) + ' torrent' + ((j.torrents === 1) ? '' : 's');
+          else liveEl.innerHTML = '<b style="color:var(--warn,#f0b429)">● unreachable</b>';
+        });
+    }
   }
 
   /* ---------------------------------------------- direct-P2P observability panel
@@ -1608,6 +1732,11 @@
                 u = j.url;
                 S.engineProbe = j.probe || null;
                 S.durTotal = (j.probe && j.probe.dur) || 0;   /* whole-film length for the seek bar */
+                S.streamOffset = j.offset || 0;               /* where this transcode starts in the film */
+                S.engineKind = j.kind === 'hls' ? 'hls' : 'url';
+                S.engineFile = j.file || null;
+                S.engineBaseUsed = base;
+                engineHud();                                  /* show the "where is this served from" chip */
                 toast(j.kind === 'hls' ? 'Streaming via ' + where + ': audio → AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ')'
                                        : 'Streaming via ' + where, 3200);
                 start(j.kind === 'hls' ? 'hls' : 'url', u);
@@ -1709,15 +1838,21 @@
       if (!S || S.destroyed) return Promise.reject();
       var base = engineBase();
       if (!base) return Promise.reject(new Error('no engine'));
-      return fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx), { cache: 'no-store' })
+      /* resume at the movie-time we left off: a transcode re-seeks with ?t so it comes back
+         exactly where the viewer was, not at t=0 */
+      return fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx) + (at > 2 ? '?t=' + Math.floor(at) : ''), { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; });
     }).then(function (j) {
       if (!S || S.destroyed) return;
       if (!(j && j.ok && j.url)) throw new Error('re-resolve failed');
       S.durTotal = (j.probe && j.probe.dur) || S.durTotal || 0;
       var url = j.url, kind = j.kind === 'hls' ? 'hls' : 'url';
+      S.engineKind = kind;
+      /* an hls transcode is 0-based FROM the offset (?t); a direct Range stream is 0-based
+         from the file start, so it seeks back to `at` after loading */
+      S.streamOffset = (kind === 'hls') ? ((j.offset != null) ? j.offset : Math.floor(at)) : 0;
       var seekBack = function () {
-        try { if (at > 0.5) v.currentTime = at; } catch (e) {}
+        if (kind !== 'hls') { try { if (at > 0.5) v.currentTime = at; } catch (e) {} }
         S.healing = false;
         var pp = v.play(); if (pp && pp['catch']) pp['catch'](function () {});
       };
