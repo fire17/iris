@@ -7,7 +7,19 @@
   'use strict';
 
   // ---------------------------------------------------------------- constants
-  var ENGINE = 'http://127.0.0.1:11470';
+  var ENGINE = 'http://127.0.0.1:11470';        // local opt-in engine (unchanged)
+  var RUNNER_OPTIN = 'hp.torrent.runnerEngine';  // hosted-runner opt-in (mirrors hp.torrent.localEngine)
+  var LOCAL_OPTIN = 'hp.torrent.localEngine';
+  var RUNNER_ROOM = 'iris-hp-runner-v1';
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function optIn(k) { return lsGet(k) === '1'; }
+  /* The ACTIVE engine base: a fresh discovered runner (https-safe) when the runner opt-in
+     is on, else the local engine when its opt-in is on, else '' (no engine → honest magnet). */
+  function engineBase() {
+    if (optIn(RUNNER_OPTIN) && window.HPRunner) { var rb = window.HPRunner.cachedBase(); if (rb) return rb; }
+    if (optIn(LOCAL_OPTIN)) return ENGINE;
+    return '';
+  }
   var CW_KEY = 'cw';
   var VOL_KEY = 'plr.vol';
   var MUTE_KEY = 'plr.muted';   /* persisted mute choice, shared across every video */
@@ -501,19 +513,22 @@
     return m;
   }
 
-  var engineCache = { at: 0, up: false };
-  function engineUp() {
+  var engineCache = { at: 0, up: false, base: '' };
+  function engineUp(base) {
+    base = base || engineBase();
+    if (!base) return Promise.resolve(false);
     /* https origin -> http://127.0.0.1 is always blocked (mixed content / PNA); probing
-       only spams CORS errors to the console. Localhost-app feature: skip on https. */
-    if (location.protocol === 'https:' && ENGINE.indexOf('http://127.') === 0)
+       only spams CORS errors. An https runner base (trycloudflare) is fine on https —
+       only the http://127 local base is skipped on an https page. */
+    if (location.protocol === 'https:' && base.indexOf('http://127.') === 0)
       return Promise.resolve(false);
     var now = (new Date()).getTime();
-    if (now - engineCache.at < 5000) return Promise.resolve(engineCache.up);
-    return fetchT(ENGINE + '/status', 1000, { cache: 'no-store' }).then(function (r) {
-      engineCache = { at: (new Date()).getTime(), up: !!(r && r.ok) };
+    if (base === engineCache.base && now - engineCache.at < 5000) return Promise.resolve(engineCache.up);
+    return fetchT(base + '/status', 1000, { cache: 'no-store' }).then(function (r) {
+      engineCache = { at: (new Date()).getTime(), up: !!(r && r.ok), base: base };
       return engineCache.up;
     }, function () {
-      engineCache = { at: (new Date()).getTime(), up: false };
+      engineCache = { at: (new Date()).getTime(), up: false, base: base };
       return false;
     });
   }
@@ -1299,6 +1314,19 @@
         closeCard(); route();
       });
     });
+    /* Runner-engine (hosted, experimental): offer the opt-in when the discovery client is
+       loaded and the runner opt-in is off. One click sets hp.torrent.runnerEngine=1 and
+       re-routes (which triggers floor discovery). Handshake-only, at-own-risk framing. */
+    if (window.HPRunner && !optIn(RUNNER_OPTIN)) {
+      var rp = document.createElement('p');
+      rp.className = 'plr-note';
+      rp.innerHTML = 'Experimental: play via a <b>hosted runner-engine</b> — a GitHub-Actions runner streams the bytes to your browser over https; the p2p floor only carries the handshake, never the media. At-own-risk. <button class="plr-a plr-pri" data-go="runneroptin">Try the hosted runner</button>';
+      box.appendChild(rp);
+      rp.querySelector('[data-go="runneroptin"]').addEventListener('click', function () {
+        try { localStorage.setItem(RUNNER_OPTIN, '1'); } catch (e) {}
+        closeCard(); route();
+      });
+    }
     var ta = box.querySelector('textarea');
     var copy = box.querySelector('[data-go="copy"]');
     copy.addEventListener('click', function () {
@@ -1439,48 +1467,68 @@
        through a node (which would break the law), we say so honestly and hand over the
        magnet. A local byte-streaming engine stays available ONLY behind an explicit
        opt-in, because using it violates the browser-only-p2p law by design. */
-    var engineOptIn = false;
-    try { engineOptIn = localStorage.getItem('hp.torrent.localEngine') === '1'; } catch (e) {}
-    if (!engineOptIn) {
+    var localOptIn = optIn(LOCAL_OPTIN);
+    var runnerOptIn = optIn(RUNNER_OPTIN);
+    if (!localOptIn && !runnerOptIn) {
       spin(false);
       magnetPanel(mg, 'Browsers can only play a torrent peer-to-peer when its swarm has WebRTC peers — our own catalog, or a magnet carrying a wss:// tracker or a web-seed. This swarm is TCP-only, so no browser-reachable peer exists (a relay may punch the handshake, but it must never carry the bytes). Copy the magnet into a torrent client to watch it there.');
       return;
     }
-    if (!ih) { spin(false); magnetPanel(mg, 'This torrent has no infoHash for the local engine.'); return; }
-    engineUp().then(function (up) {
+    if (!ih) { spin(false); magnetPanel(mg, 'This torrent has no infoHash for the engine.'); return; }
+    /* Runner opt-in: discover a hosted runner on the floor before probing, if none is
+       cached fresh. Discovery carries only the URL (handshake-only); the runner then
+       streams bytes over https (cloudflared) — the floor never sees media. */
+    var ready = (runnerOptIn && window.HPRunner && !window.HPRunner.cachedBase())
+      ? window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 8000 })['catch'](function () { return ''; })
+      : Promise.resolve('');
+    ready.then(function () {
+      if (!S || S.destroyed) return;
+      var base = engineBase();
+      var viaRunner = runnerOptIn && base && base.indexOf('http://127.') !== 0;
+      if (!base) {
+        spin(false);
+        magnetPanel(mg, runnerOptIn && !localOptIn
+          ? 'Runner-engine opt-in is on but no hosted runner was discoverable right now (the pool may be between runs). Copy the magnet into your torrent client, or retry.'
+          : 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
+        return;
+      }
+      engineUp(base).then(function (up) {
         if (!S || S.destroyed) return;
         if (up) {
-          var u = ENGINE + '/stream/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx);
+          var u = base + '/stream/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx);
           S.viaEngine = true;
           S.magnet = mg;
+          var where = viaRunner ? 'hosted runner (experimental — not browser-p2p)' : 'the local engine (opt-in — not browser-p2p)';
           /* Ask the engine HOW to play first: browser-native containers stream direct with
              Range; MKVs with Dolby/DTS audio come back as an ffmpeg HLS transcode (audio →
-             AAC) — otherwise Chrome plays them as a silent movie. Old engines without
-             /play fall through to the direct URL. */
-          fetch(ENGINE + '/play/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx), { cache: 'no-store' })
+             AAC) — otherwise Chrome plays them silent. Old engines without /play fall through. */
+          fetch(base + '/play/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx), { cache: 'no-store' })
             .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
             .then(function (j) {
               if (!S || S.destroyed) return;
               if (j && j.ok && j.url) {
                 u = j.url;
                 S.engineProbe = j.probe || null;
-                toast(j.kind === 'hls' ? 'Local engine: audio transcoded to AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ' → AAC) · not browser-p2p'
-                                       : 'Streaming via the local engine (opt-in — not browser-p2p)', 3200);
+                toast(j.kind === 'hls' ? 'Streaming via ' + where + ': audio → AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ')'
+                                       : 'Streaming via ' + where, 3200);
                 start(j.kind === 'hls' ? 'hls' : 'url', u);
               } else {
-                toast('Streaming via the local engine (opt-in — not browser-p2p)', 2600);
+                toast('Streaming via ' + where, 2600);
                 start(isHls(u) ? 'hls' : 'url', u);
               }
             });
         } else {
           spin(false);
-          magnetPanel(mg, 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
+          magnetPanel(mg, viaRunner
+            ? 'A hosted runner was discovered but did not answer. Copy the magnet into your torrent client, or retry.'
+            : 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
         }
       })['catch'](function () {
         if (!S || S.destroyed) return;
         spin(false);
-        magnetPanel(mg, 'Local engine did not answer. Copy the magnet into your torrent client.');
+        magnetPanel(mg, 'Engine did not answer. Copy the magnet into your torrent client.');
       });
+    });
   }
 
   /* CORS on a media element is a cost, not a safety feature, and it has to be
