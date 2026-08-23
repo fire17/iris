@@ -30,4 +30,3 @@ badge and the live-watch loop. Real sources are curated locally and never commit
 | Mux HLS test stream | demo | https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8 |  | HLS streaming |
 | Mux HLS (pts-shift) | demo | https://test-streams.mux.dev/pts_shift/master.m3u8 |  | live HLS streaming |
 | Sintel (torrent — no server) | demo | magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent | https://picsum.photos/seed/hp-torrent/480/720 | web-seeded magnet: plays fully in-browser via window.BT (ws=/xs=), zero servers |
-| PERF PROBE SW 2 | demo | https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_5MB.mp4 | SFW perf probe row 2 |
