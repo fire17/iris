@@ -2752,7 +2752,7 @@
          Player.glance({stream, poster, live, onWatch})
          Player.glanceStop()                — close the glance only
        inlineStats() reports the live video + Hls + pool count for the leak check. */
-    preview: function (opts) { try { return poolPromote(opts || {}); } catch (e) { return null; } },
+    preview: function (opts) { try { return poolPromote(opts || {}); } catch (e) { try { console.error('[preview] threw', e); if (window.ErrLog) ErrLog.push('preview', 'preview failed to start: ' + (e && e.message || e), String(e && e.stack || '').slice(0, 600)); } catch (e2) {} return null; } },
     previewStop: function (key) {
       try {
         if (key == null) { poolClear(); return; }          /* no arg -> whole pool */
