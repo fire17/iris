@@ -2574,8 +2574,33 @@
 
     var playMuted = function () { var pr = v.play(); if (pr && pr['catch']) pr['catch'](function () {}); };
 
+    /* CB addon streams are VIDEO-ONLY chunklists (their AAC lives in a separate
+       rendition only a master binds). The full player already synthesizes that master;
+       previews need it too, or the 🔊 button has no audio track to unmute — exactly the
+       public-site symptom, where the resolver is unreachable and every preview is
+       addon-fed. Background upgrade: video-only starts NOW, the synthetic master swaps
+       in when the probe lands; mute state and the pinned tile untouched. */
+    var upgradeCbAudio = function () {
+      if (!CB_VCHUNK.test(url)) return;
+      cbMasterFor(url).then(function (u2) {
+        if (!u2 || p.destroyed || p.video !== v) return;
+        try { if (p.hls) p.hls.destroy(); } catch (e) {}
+        p.hls = null;
+        loadHls().then(function (Hls) {
+          if (p.destroyed || p.video !== v || !Hls.isSupported()) return;
+          var h2 = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 8, liveSyncDurationCount: 3, startFragPrefetch: true });
+          p.hls = h2;
+          h2.on(Hls.Events.MANIFEST_PARSED, function () {
+            try { var lsp = h2.liveSyncPosition; if (isFinite(lsp) && lsp > 0) v.currentTime = lsp; } catch (e) {}
+            var pr = v.play(); if (pr && pr['catch']) pr['catch'](function () {});
+          });
+          h2.loadSource(u2); h2.attachMedia(v);
+        });
+      });
+    };
+
     if (isHls(url)) {
-      if (nativeHls(v)) { v.src = url; playMuted(); return p; }
+      if (nativeHls(v)) { v.src = url; playMuted(); upgradeCbAudio(); return p; }
       loadHls().then(function (Hls) {
         if (p.destroyed || p.video !== v) return;
         if (!Hls.isSupported()) {
@@ -2612,6 +2637,7 @@
         });
         hls.loadSource(url);
         hls.attachMedia(v);
+        upgradeCbAudio();
       }, function () {
         if (p.destroyed || p.video !== v) return;
         if (v.canPlayType('application/vnd.apple.mpegurl')) { v.src = url; playMuted(); }
