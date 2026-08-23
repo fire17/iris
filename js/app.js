@@ -217,6 +217,21 @@ function boot() {
 
   if (window.Addons) { start(); }
   else { openGate(); pollModules(); }
+
+  /* Warm-on-visit (lazy in a good way): shortly after first paint, if the runner opt-in is
+     on and no runner is warm yet, discover one — and if the pool is momentarily empty, ping
+     the floor to wake one — so a runner is ready by the time the user picks something to
+     watch, instead of a ~30–40s cold wait at play time. Handshake-only, no media. */
+  setTimeout(warmRunner, 1200);
+}
+
+function warmRunner() {
+  try { if (localStorage.getItem("hp.torrent.runnerEngine") !== "1") return; } catch (e) { return; }
+  if (!window.HPRunner || window.HPRunner.cachedBase()) return;
+  window.HPRunner.discover({ room: "iris-hp-runner-v1", timeoutMs: 8000 })["catch"](function () { return ""; })
+    .then(function (url) {
+      if (!url && window.HPRunner.wake) { try { window.HPRunner.wake({ room: "iris-hp-runner-v1" }); } catch (e) {} }
+    });
 }
 
 /* Modules may arrive late (dynamic injection / slow network). */

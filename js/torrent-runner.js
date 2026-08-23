@@ -78,5 +78,24 @@
     return '';
   }
 
-  window.HPRunner = { discover: discover, cachedBase: cachedBase, BASE_KEY: BASE_KEY };
+  /* wake(): publish a one-way {t:'wake'} ping on the floor so the isolated dispatcher spins
+     up a runner when the pool is momentarily empty. Handshake-only and fire-and-forget — it
+     carries no data, expects no reply, and (like discovery) reaches the dispatcher only via
+     the neutral broker, so no machine IP is ever exposed. Sent a few times for broker
+     flakiness, then the socket closes. */
+  function wake(opts) {
+    opts = opts || {};
+    var room = opts.room || 'iris-hp-runner-v1';
+    return import(FLOOR).then(function (mod) {
+      return mod.joinFloor({ room: room }).then(function (f) {
+        var n = 0;
+        var ping = function () { try { f.send(enc.encode(JSON.stringify({ t: 'wake', ts: Date.now() }))); } catch (e) {} };
+        ping();
+        var iv = setInterval(function () { ping(); if (++n >= 3) { clearInterval(iv); try { f.close(); } catch (e) {} } }, 1200);
+        return true;
+      }, function () { return false; });
+    }, function () { return false; });
+  }
+
+  window.HPRunner = { discover: discover, cachedBase: cachedBase, wake: wake, BASE_KEY: BASE_KEY };
 })(window);

@@ -202,6 +202,13 @@
     'animation:plr-rot .8s linear infinite;display:none}',
     '.plr-spin.plr-show{display:block}',
     '@keyframes plr-rot{to{transform:rotate(360deg)}}',
+    /* engine-wait progress bar (cold-start / preparing overlay) */
+    '.hp-eng-msg{color:#c7d2dd;font-size:14px;margin:2px 0 14px;line-height:1.5}',
+    '.hp-eng-bar{position:relative;height:7px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin:0 0 20px}',
+    '.hp-eng-bar>i{position:absolute;left:0;top:0;bottom:0;width:40%;border-radius:999px;background:var(--acc);',
+    'box-shadow:0 0 10px rgba(var(--accRGB),.6);transition:width .5s var(--e4)}',
+    '.hp-eng-bar>i.hp-indet{width:34%;animation:hp-indet 1.15s var(--e5) infinite}',
+    '@keyframes hp-indet{0%{left:-36%}100%{left:104%}}',
     '.plr-burst{position:absolute;width:74px;height:74px;border-radius:50%;background:rgba(10,12,15,.62);',
     'display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.82)}',
     '.plr-burst svg{width:30px;height:30px;fill:#fff}',
@@ -777,6 +784,7 @@
     on(v, 'waiting', function () { spin(true); });
     on(v, 'playing', function () {
       spin(false);
+      engineProgressDone();   /* real frames rolling — drop the engine-wait overlay */
       /* first real frame: undo the muted-autoplay guard and honour the user's saved
          volume/mute. Unmuting a playing element is allowed even outside a gesture,
          so this is where silent-live-autoplay actually gets its sound. */
@@ -1149,6 +1157,7 @@
   // -------------------------------------------------------------------- cards
   function card(html) {
     closeCard();
+    if (S) S.engCard = false;   /* any new card replaces the engine-wait overlay */
     var wrap = h('div', 'plr-card');
     var box = h('div', 'plr-box', html);
     wrap.appendChild(box);
@@ -1159,6 +1168,58 @@
   }
   function closeCard() {
     if (S && S.card) { try { S.card.remove(); } catch (e) {} S.card = null; }
+  }
+
+  /* ENGINE-WAIT PROGRESS OVERLAY: a single card with a status line + progress bar shown
+     while an engine stream is being set up — waking a cold runner, loading the torrent,
+     preparing the transcode. pct null = indeterminate sweep; a number = filled to that %.
+     Dismissed by engineProgressDone() the moment playback actually starts ('playing'). */
+  function engineProgress(msg, pct) {
+    if (!S || S.destroyed || S.engCancel) return;
+    if (!S.engCard) {
+      var b = card(
+        '<h3>' + esc(S.title) + '</h3>' +
+        '<p class="hp-eng-msg"></p>' +
+        '<div class="hp-eng-bar"><i></i></div>' +
+        '<div class="plr-acts">' +
+        (S.magnet ? '<button class="plr-a" data-go="mag">Copy magnet instead</button>' : '') +
+        '<button class="plr-a" data-go="close">Close</button></div>');
+      S.engCard = true;
+      var mb = b.querySelector('[data-go="mag"]');
+      if (mb) mb.addEventListener('click', function () { S.engCancel = true; S.engCard = false; closeCard(); magnetPanel(S.magnet, 'Copy the magnet to watch it in a torrent client instead.'); });
+      b.querySelector('[data-go="close"]').addEventListener('click', function () { S.engCancel = true; Player.close(); });
+    }
+    var root = S.card; if (!root) return;
+    var m = root.querySelector('.hp-eng-msg'); if (m) m.textContent = msg;
+    var bar = root.querySelector('.hp-eng-bar > i');
+    if (bar) {
+      if (pct == null) { bar.classList.add('hp-indet'); bar.style.width = ''; }
+      else { bar.classList.remove('hp-indet'); bar.style.width = Math.max(3, Math.min(100, pct)) + '%'; }
+    }
+  }
+  function engineProgressDone() { if (S && S.engCard) { S.engCard = false; closeCard(); } }
+
+  /* COLD START: no runner was discoverable, so ping the floor to wake one (the isolated
+     dispatcher spins it up), show progress, poll discovery, and auto-continue the play the
+     instant a runner comes up — instead of the old dead-end "no runner, copy the magnet". */
+  function coldStartWake(mg, ih, idx) {
+    if (!S || S.destroyed) return;
+    S.engCancel = false;
+    engineProgress('Waking a hosted runner… (~30–40s the first time)', 5);
+    if (window.HPRunner && window.HPRunner.wake) { try { window.HPRunner.wake({ room: RUNNER_ROOM }); } catch (e) {} }
+    var t0 = Date.now(), DEADLINE = 110000, EST = 45000;
+    var tick = function () {
+      if (!S || S.destroyed || S.engCancel) return;
+      window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 6000 })['catch'](function () { return ''; }).then(function (url) {
+        if (!S || S.destroyed || S.engCancel) return;
+        if (url) { engineProgress('Runner ready — loading…', 96); routeTorrentEngine(mg, ih, idx); return; }
+        var el = Date.now() - t0;
+        if (el >= DEADLINE) { engineProgressDone(); magnetPanel(mg, 'A hosted runner did not come up in time (the pool may be busy). Copy the magnet into your torrent client, or retry.'); return; }
+        engineProgress('Waking a hosted runner… (~30–40s the first time)', Math.min(94, 5 + (el / EST) * 89));
+        setTimeout(tick, 2000);
+      });
+    };
+    setTimeout(tick, 2500);
   }
 
   /* ---------------------------------------------- direct-P2P observability panel
@@ -1518,9 +1579,11 @@
       var viaRunner = runnerOptIn && base && base.indexOf('http://127.') !== 0;
       if (!base) {
         spin(false);
-        magnetPanel(mg, runnerOptIn && !localOptIn
-          ? 'Runner-engine opt-in is on but no hosted runner was discoverable right now (the pool may be between runs). Copy the magnet into your torrent client, or retry.'
-          : 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
+        if (runnerOptIn) {
+          coldStartWake(mg, ih, idx);   /* wake a runner + progress bar + auto-play — no dead-end */
+        } else {
+          magnetPanel(mg, 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
+        }
         return;
       }
       engineUp(base).then(function (up) {
@@ -1530,6 +1593,9 @@
           S.viaEngine = true;
           S.magnet = mg;
           S.engineIh = ih; S.engineIdx = idx;   /* kept so healStream() can re-resolve */
+          /* the /play call blocks until the first HLS segment is transcoded (~10s for an
+             mkv) — show progress so the wait isn't a blank screen; dismissed on 'playing' */
+          engineProgress('Preparing the stream…', null);
           var where = viaRunner ? 'hosted runner (experimental — not browser-p2p)' : 'the local engine (opt-in — not browser-p2p)';
           /* Ask the engine HOW to play first: browser-native containers stream direct with
              Range; MKVs with Dolby/DTS audio come back as an ffmpeg HLS transcode (audio →
