@@ -2022,6 +2022,7 @@ function playStream(stream, video) {
     bindPlayerClose();
     window.Player.play({ stream: stream, meta: meta, video: video || null });
   } catch (e) {
+    if (window.ErrLog) ErrLog.push('player', 'Player.play threw: ' + (e && e.message), (stream && stream.url || stream && stream.infoHash || '').slice ? String(stream.url || stream.infoHash).slice(0, 200) : '');
     toast("The player refused this stream.", "err", "Playback failed");
   }
 }

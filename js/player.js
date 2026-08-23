@@ -744,6 +744,7 @@
     on(v, 'volumechange', paintVol);
     on(v, 'ended', function () { save(true); });
     on(v, 'error', function () {
+      if (window.ErrLog && v.error) ErrLog.push('video', 'mediaError code=' + v.error.code + ' ' + (v.error.message || ''), (v.currentSrc || '').slice(0, 200));
       var e = v.error;
       if (!e) return;
       var m = { 1: 'Playback aborted.', 2: 'Network error while loading the stream.',
@@ -1474,7 +1475,7 @@
       })['catch'](function () { return probe(k + 1); });
     };
     return probe(0).then(function (au) {
-      if (!au) return null;
+      if (!au) { if (window.ErrLog) ErrLog.push('cb-audio', 'no audio rendition found for video chunklist', url.slice(0, 200)); return null; }
       var txt = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="cb",NAME="audio",DEFAULT=YES,AUTOSELECT=YES,URI="' + au + '"\n' +
                 '#EXT-X-STREAM-INF:BANDWIDTH=3000000,AUDIO="cb"\n' + url + '\n';
       return URL.createObjectURL(new Blob([txt], { type: 'application/vnd.apple.mpegurl' }));
@@ -1531,6 +1532,7 @@
           } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             try { hls.recoverMediaError(); toast('Recovering the video stream…', 2000); return; } catch (e) {}
           }
+          if (window.ErrLog) ErrLog.push('hls', 'fatal ' + (data.type || '') + ' / ' + (data.details || ''), (S && S.playUrl || '').slice(0, 200));
           try { hls.destroy(); } catch (e) {}
           S.hls = null;
           fail('The HLS stream failed (' + esc(data.details || data.type || 'fatal error') + ').');
@@ -2449,8 +2451,10 @@
     var markPlaying = function () { if (!p.destroyed && p.wrap) p.wrap.classList.add('plr-pv-playing'); };
     v.addEventListener('playing', markPlaying);
     v.addEventListener('loadeddata', function () { if (v.readyState >= 2) markPlaying(); });
-    /* a preview error is not worth a dialog — keep the poster, stay silent */
-    v.addEventListener('error', function () {});
+    /* a preview error is not worth a dialog — keep the poster; still record it */
+    v.addEventListener('error', function () {
+      if (window.ErrLog && v.error) ErrLog.push('preview', 'mediaError code=' + v.error.code, (stream.url || '').slice(0, 200));
+    });
 
     var playMuted = function () { var pr = v.play(); if (pr && pr['catch']) pr['catch'](function () {}); };
 
