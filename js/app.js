@@ -223,6 +223,7 @@ function boot() {
      the floor to wake one — so a runner is ready by the time the user picks something to
      watch, instead of a ~30–40s cold wait at play time. Handshake-only, no media. */
   setTimeout(warmRunner, 1200);
+  initEngineStat();
 }
 
 function warmRunner() {
@@ -232,6 +233,60 @@ function warmRunner() {
     .then(function (url) {
       if (!url && window.HPRunner.wake) { try { window.HPRunner.wake({ room: "iris-hp-runner-v1" }); } catch (e) {} }
     });
+}
+
+/* Engine status pill (topbar): shows, at a glance, whether a hosted GitHub-Actions runner
+   is LIVE (a signed announce on the floor), CONNECTED (its /status answers over https), and
+   READY to stream. OFF when the opt-in is disabled — clicking it turns the engine on. */
+var ENGINE_ROOM = "iris-hp-runner-v1";
+function engineOptedIn() { try { return localStorage.getItem("hp.torrent.runnerEngine") === "1"; } catch (e) { return false; } }
+function initEngineStat() {
+  var el = document.getElementById("enginestat");
+  if (!el) return;
+  var lab = el.querySelector(".es-label");
+  var busy = false;
+  function set(state, text, title) {
+    el.classList.remove("es-off", "es-warm", "es-ready");
+    el.classList.add("es-" + state);
+    if (lab) lab.textContent = text;
+    el.title = title || text;
+  }
+  function refresh() {
+    if (busy) return;
+    if (!window.HPRunner) { set("off", "Engine", "Discovery client not loaded yet"); return; }
+    if (!engineOptedIn()) { set("off", "Engine off", "Hosted streaming engine is off — tap to enable"); return; }
+    busy = true;
+    var base = window.HPRunner.cachedBase();
+    if (!base) set("warm", "Warming…", "Looking for a live runner…");
+    var find = base ? Promise.resolve(base)
+      : window.HPRunner.discover({ room: ENGINE_ROOM, timeoutMs: 8000 })["catch"](function () { return ""; });
+    find.then(function (url) {
+      if (!url) {
+        set("warm", "Warming…", "No runner live yet — waking one (~30–40s)");
+        if (window.HPRunner.wake) { try { window.HPRunner.wake({ room: ENGINE_ROOM }); } catch (e) {} }
+        busy = false; return;
+      }
+      /* a signed URL means a runner is LIVE on GitHub Actions; confirm we can reach it */
+      var ctl = null, to = null;
+      try { ctl = new AbortController(); to = setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 6000); } catch (e) {}
+      fetch(url + "/status", ctl ? { cache: "no-store", signal: ctl.signal } : { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })["catch"](function () { return null; })
+        .then(function (j) {
+          if (to) clearTimeout(to);
+          busy = false;
+          if (j && j.ok) set("ready", "Engine ready", "Connected to a live GitHub-Actions runner — ready to stream any torrent");
+          else set("warm", "Connecting…", "Runner found — checking the link…");
+        });
+    });
+  }
+  el.addEventListener("click", function () {
+    if (!engineOptedIn()) { try { localStorage.setItem("hp.torrent.runnerEngine", "1"); } catch (e) {} set("warm", "Warming…", "Enabling the hosted engine…"); }
+    refresh();
+  });
+  refresh();
+  setInterval(refresh, 30000);
+  window.addEventListener("focus", refresh);
+  window.addEventListener("online", refresh);
 }
 
 /* Modules may arrive late (dynamic injection / slow network). */
