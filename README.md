@@ -34,7 +34,7 @@ The stack that normally needs an origin server, a transcoding farm, a subtitle s
 - **Speech-to-subtitle-timing happens in your tab.** A vendored `transformers.js` 4.2.0 and the `whisper-tiny.en_timestamped` ONNX model compute true word-level timestamps (`return_timestamps: 'word'`, DTW over the model's alignment heads). Receipt: `js/whisper-tiny.js:60` sets `env.allowRemoteModels = false` with the comment `never hit a CDN at runtime`, and `localModelPath` plus the ONNX Runtime `wasmPaths` are both pinned to same-origin `/vendor/`. The weights are two files in this repo — `encoder_model_fp16.onnx` (16,477,869 B) and `decoder_model_merged_quantized.onnx` (30,729,881 B), **47.2 MB on disk, 33.4 MB gzipped over the wire.**
 - **The database is a markdown table a human owns.** [`verified_sources.md`](verified_sources.md) — 7 rows today (4 `demo`, 2 `performer-verified`, 1 `ai-generated`), published and auditable at <https://iris.akeyo.io/verified_sources.md>. [`js/registry.js`](js/registry.js) is the only code that touches it and it only ever reads: one `fetch(FILE, {cache:'no-store'})` on load and every 2500 ms, with a **whole-body** string compare as the change detector — not `Last-Modified` (lies at one-second resolution), not `Content-Length` (defeated by an equal-length edit). Edit a row and it appears in the running app in about 3 seconds, no reload. There is no `POST`/`PUT`/`PATCH`/`DELETE`, no `XMLHttpRequest` and no `sendBeacon` anywhere in `js/`.
 - **A registry typo can only remove a trust claim.** The parser bakes the badge into each item's display name — 🤖 `ai-generated` · ✅ `performer-verified` · 🧪 `demo` — and an unrecognized lane is assigned `demo` at `js/registry.js:79`. There is no spelling of anything that accidentally manufactures a ✅. *(A shipped gap in the neighbouring addon path is disclosed in [Defects](#defects-the-process-caught) — we found it, so we printed it.)*
-- **All of it is 15 JavaScript modules** — 12,124 lines the day this was written, and the count moves as the app does, so re-derive it with `wc -l js/*.js` rather than trusting this sentence. No build step, no bundler, no runtime CDN. First page load is **under 600 KB uncompressed** (593 KB at the time of writing: `index.html` + `style.css` + all 15 scripts). Live now at **<https://iris.akeyo.io>** over HTTP/2 from GitHub Pages, alongside **19 published build reports** — 11 lane close-outs plus 8 standalone proof reports — at **<https://iris.akeyo.io/reports/>**.
+- **All of it is 15 JavaScript modules** — 12,124 lines the day this was written, and the count moves as the app does, so re-derive it with `wc -l js/*.js` rather than trusting this sentence. No build step, no bundler, no runtime CDN. First page load is **under 600 KB uncompressed** (593 KB at the time of writing: `index.html` + `style.css` + all 15 scripts). Live now at **<https://iris.akeyo.io>** over HTTP/2 from GitHub Pages, alongside **20 published build reports** — 12 lane close-outs plus 8 standalone proof reports — at **<https://iris.akeyo.io/reports/>**.
 
 **The boundary, stated plainly:** what plays are *web-seeded* torrents. Arbitrary TCP/uTP-only magnets — ordinary torrents with no web seed — do not play, and cannot in any browser: a browser can obtain bytes over exactly four transports (WebRTC, WebSocket, WebTransport, fetch/XHR) and a vanilla BitTorrent peer speaks none of them. Bridging that gap means putting a node in the byte path, which this project forbids itself. The full argument, with live measurements, is in **[Why arbitrary torrents cannot play in a browser](#-why-arbitrary-torrents-cannot-play-in-a-browser)**.
 
@@ -226,7 +226,7 @@ No solo human wrote this. It was designed, built, verified and documented by a f
 | Agent isolation | 17 branches, **16** of them named `worktree-agent-<hash>` — one per isolated lane — and 11 registered worktrees |
 | Lane traffic | 22 commit subjects mention a lane, the swarm or an agent |
 | Authorship trailers | 39 commits stamped `Claude Opus 4.8`, 21 stamped `Claude Fable 5` |
-| Close-outs | 19 report pages, all published at [`/reports/`](https://iris.akeyo.io/reports/) — 11 lane close-outs and 8 proof reports — with screenshot and timeline-JSON evidence beside them |
+| Close-outs | 20 report pages, all published at [`/reports/`](https://iris.akeyo.io/reports/) — 12 lane close-outs and 8 proof reports — with screenshot and timeline-JSON evidence beside them |
 
 ```mermaid
 flowchart TD
@@ -235,7 +235,7 @@ flowchart TD
   F["fleet of agent lanes<br/><i>one subsystem each</i>"]
   WT["isolated git worktrees<br/><i>16 worktree-agent branches</i>"]
   M["merge-back + honest verification<br/><i>post-merge audit vs. what actually reached git</i>"]
-  R["19 published build reports<br/><i>11 lane close-outs + 8 proof reports</i>"]
+  R["20 published build reports<br/><i>12 lane close-outs + 8 proof reports</i>"]
   D["static deploy subset<br/><i>94 files · no build step · everything vendored</i>"]
   P["GitHub Pages — iris.akeyo.io"]
 
@@ -299,7 +299,7 @@ There is **no CI on this repo.** The deployed tree carries no `.github/workflows
 
 What enforces the claims instead:
 
-1. **Every lane published a close-out report** — 11 of them, plus 8 standalone proof reports: 19 static pages under [`/reports/`](https://iris.akeyo.io/reports/), served from the same origin as the app, with their screenshot and timeline evidence beside them.
+1. **Every lane published a close-out report** — 12 of them, plus 8 standalone proof reports: 20 static pages under [`/reports/`](https://iris.akeyo.io/reports/), served from the same origin as the app, with their screenshot and timeline evidence beside them.
 2. **The physics verdict is a reproducible harness, not an opinion.** The impossible case is demonstrated by a test you can re-run, which is why the app offers a copy-magnet panel instead of a dead play button.
 3. **The app instruments its own central claim.** `wireBreakdown()` reports bytes by transport, so the byte-path claim is measurable in the running player rather than only assertable in a README.
 4. **Every number on this page was observed by command** — line counts, byte sizes, gzip transfer sizes, HTTP status codes, file and commit counts. What could not be observed is listed below rather than omitted.
@@ -350,7 +350,7 @@ If a claim does not hold, open an issue — that is worth more than a star. If t
 ## 🔗 Related
 
 - **Live site** — <https://iris.akeyo.io>
-- **Dev Showcase — 19 build reports (11 lane close-outs + 8 proof reports)** — <https://iris.akeyo.io/reports/>
+- **Dev Showcase — 20 build reports (12 lane close-outs + 8 proof reports)** — <https://iris.akeyo.io/reports/>
 - **The registry, published and auditable** — <https://iris.akeyo.io/verified_sources.md>
 - **Source** — <https://github.com/fire17/iris>
 
