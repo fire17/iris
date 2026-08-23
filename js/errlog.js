@@ -51,7 +51,7 @@
     return origErr.apply(null, arguments);
   };
   /* failed fetches — skip the deliberate pollers and localhost health probes */
-  var IGNORE = /verified_sources\.md|\/health$|\/status$|127\.0\.0\.1:114/;
+  var IGNORE = /verified_sources\.md|\/health$|\/status$|127\.0\.0\.1:114|chunklist_\d+_audio_/;  /* audio-probe 404s are diagnostics, not failures (cb-audio reports the outcome) */
   var origFetch = window.fetch;
   window.fetch = function (input, init) {
     var url = String((input && input.url) || input || '');

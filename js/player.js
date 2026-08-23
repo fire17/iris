@@ -1463,18 +1463,27 @@
   function cbMasterFor(url) {
     var m = CB_VCHUNK.exec(url);
     if (!m) return Promise.resolve(null);
-    /* audio renditions sit right after the video ones (video 0..N, audio N+1, N+2) —
-       probe ascending from just above OUR video index; first hit is almost always it */
-    var vi = parseInt(m[2], 10) || 0, tries = [];
-    for (var i = vi + 1; i <= vi + 6 && i <= 12; i++) tries.push(m[1] + 'chunklist_' + i + '_audio_' + m[3] + (m[4] || ''));
-    var probe = function (k) {
-      if (k >= tries.length) return Promise.resolve(null);
-      return fetch(tries[k], { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) return probe(k + 1);
-        return r.text().then(function (t) { return t.slice(0, 7) === '#EXTM3U' ? tries[k] : probe(k + 1); });
-      })['catch'](function () { return probe(k + 1); });
+    /* the audio rendition's index varies per room — seen BELOW the videos (audio 0,
+       video 1..4) and ABOVE them (video 0..3, audio 4..5). No directional guess works,
+       and some edges stall ~9s on non-existent llhls playlists. So: probe EVERY index
+       0..12 (minus our own) in PARALLEL, each aborted at 2.5s; highest-index hit wins
+       (higher audio index = higher bitrate where two exist). */
+    var vi = parseInt(m[2], 10) || 0, cands = [];
+    for (var i = 0; i <= 12; i++) if (i !== vi) cands.push(i);
+    var one = function (idx) {
+      var au = m[1] + 'chunklist_' + idx + '_audio_' + m[3] + (m[4] || '');
+      var ac = ('AbortController' in window) ? new AbortController() : null;
+      var opt = { cache: 'no-store' }; if (ac) opt.signal = ac.signal;
+      var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } }, 2500);
+      return fetch(au, opt).then(function (r) {
+        clearTimeout(tm);
+        if (!r.ok) return null;
+        return r.text().then(function (t) { return t.slice(0, 7) === '#EXTM3U' ? { i: idx, u: au } : null; });
+      })['catch'](function () { clearTimeout(tm); return null; });
     };
-    return probe(0).then(function (au) {
+    return Promise.all(cands.map(one)).then(function (rs) {
+      var hits = rs.filter(Boolean);
+      var au = hits.length ? hits.sort(function (x, y) { return y.i - x.i; })[0].u : null;
       if (!au) { if (window.ErrLog) ErrLog.push('cb-audio', 'no audio rendition found for video chunklist', url.slice(0, 200)); return null; }
       var txt = '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="cb",NAME="audio",DEFAULT=YES,AUTOSELECT=YES,URI="' + au + '"\n' +
                 '#EXT-X-STREAM-INF:BANDWIDTH=3000000,AUDIO="cb"\n' + url + '\n';
@@ -1487,14 +1496,18 @@
     var v = S.el.video;
     S.playUrl = url;
     if (kind === 'hls' && !S.cbAudioFixed && CB_VCHUNK.test(url)) {
-      S.cbAudioFixed = true;              /* one attempt per open; fall through on failure */
-      spin(true);
+      S.cbAudioFixed = true;              /* one attempt per open */
+      /* NEVER block playback on the probe (a slow edge once cost 45s of black screen):
+         video starts NOW with the video-only chunklist; when the probe lands, hls.js is
+         restarted onto the synthetic master and the audio joins ~a second later. */
+      var S0 = S, url0 = url;
       cbMasterFor(url).then(function (u2) {
-        if (!S || S.destroyed) return;
-        if (u2) S.blobs.push(u2);
-        start(kind, u2 || url);
+        if (!u2 || S !== S0 || S.destroyed || S.playUrl !== url0) return;
+        S.blobs.push(u2);
+        if (S.hls) { try { S.hls.destroy(); } catch (e) {} S.hls = null; }
+        toast('Audio track attached', 2000);
+        start('hls', u2);
       });
-      return;
     }
     applyCORS(v, !!(S.opts && S.opts.crossOrigin));
     attachSubs();
