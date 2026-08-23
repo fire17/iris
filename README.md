@@ -7,7 +7,7 @@
 [![torrents](https://img.shields.io/badge/torrents-run%20in%20the%20tab-7cc4ff?labelColor=141417)](#-the-byte-path)
 [![whisper](https://img.shields.io/badge/whisper-in--browser-f0b64b?labelColor=141417)](#-what-it-does)
 [![static](https://img.shields.io/badge/build%20step-none-868c96?labelColor=141417)](#-quickstart)
-[![receipts](https://img.shields.io/badge/receipts-19%20published%20reports-c2c7cf?labelColor=141417)](https://iris.akeyo.io/reports/)
+[![receipts](https://img.shields.io/badge/receipts-20%20published%20reports-c2c7cf?labelColor=141417)](https://iris.akeyo.io/reports/)
 [![built by](https://img.shields.io/badge/built%20by-an%20agent%20fleet-ff6a9e?labelColor=141417)](#-built-by-a-fleet-of-agents)
 [![stars](https://img.shields.io/github/stars/fire17/iris?style=social)](https://github.com/fire17/iris/stargazers)
 
