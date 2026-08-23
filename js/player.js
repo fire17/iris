@@ -285,6 +285,12 @@
     'transition:background .15s var(--e4),transform .15s var(--e4),border-color .15s var(--e4)}',
     '.plr-pv-b:hover{background:var(--acc);color:#20040e;border-color:transparent;transform:translateY(-1px)}',
     '.plr-pv-b:active{transform:scale(.92)}',
+    /* DESKTOP only: a pool card's buttons fade in on hover (the wall drives .plr-pv-hot,
+       since the wrap is pointer-events:none and CSS :hover never fires on it). */
+    '@media (hover:hover) and (pointer:fine){',
+    '.plr-pv-wrap:not(.plr-pv-glance) .plr-pv-btns{opacity:0;transition:opacity .13s var(--e4)}',
+    '.plr-pv-wrap.plr-pv-hot:not(.plr-pv-glance) .plr-pv-btns{opacity:1}',
+    '}',
     '.plr-pv-b svg{width:16px;height:16px;fill:currentColor;display:block;pointer-events:none}',
     '.plr-pv-wrap.plr-pv-audible .plr-pv-mute{background:var(--acc);color:#20040e;border-color:transparent}',
     '.plr-pv-hint{position:absolute;bottom:9px;left:10px;padding:4px 9px;border-radius:8px;background:rgba(8,9,11,.72);',
@@ -2315,7 +2321,8 @@
      the same .plr-pv-wrap surface. Leak invariant: DOM .plr-pv-wrap video count
      never exceeds POOL.length (<= PV_MAX) + at most one glance. */
   var PV_MAX = 6;
-  var POOL = [];        /* [entry] oldest -> newest; each entry pins one tile */
+  var POOL = [];
+  var hotKey = null;   /* desktop: which pool card currently shows its buttons */        /* [entry] oldest -> newest; each entry pins one tile */
   var GL = null;        /* the glance singleton, independent of the pool */
 
   /* live counts, for the leak check. Videos are counted from the DOM (the source
@@ -2505,6 +2512,7 @@
               onWatch: (typeof opts.onWatch === 'function' ? opts.onWatch : null), keyH: null,
               muteBtn: muteBtn, origin: opts.origin || null, title: opts.title || '' };
 
+    if (mode === 'preview' && opts.key != null && opts.key === hotKey) wrap.classList.add('plr-pv-hot');
     document.body.appendChild(wrap);
     positionPv(wrap, mode, opts.rect);
     void wrap.offsetWidth;
@@ -2538,6 +2546,14 @@
       p.keyH = function (e) { if (e.key === 'Escape') { e.preventDefault(); glanceStopFn(); } };
       document.addEventListener('keydown', p.keyH, true);
       scrim.addEventListener('click', function () { glanceStopFn(); });
+      /* double-click the extended view -> fullscreen, carrying the live media */
+      var goFull = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        var ow = p.onWatch, t = extractTransfer(p);
+        pvStopAll();
+        if (ow) { try { ow(t); } catch (e2) {} }
+      };
+      wrap.addEventListener('dblclick', goFull);
     }
 
     /* ADOPTION: media handed over from another preview/glance keeps playing in this
@@ -2761,10 +2777,33 @@
     },
     previewSetRect: previewSetRectFn,
     previewHas: function (key) { try { return poolFind(key) >= 0; } catch (e) { return false; } },
+    /* open the EXTENDED (glance) tier for a tile. If a preview is already playing
+       in the pool under this key, its live media is adopted straight in (no refetch);
+       otherwise the passed stream feeds a fresh one. Esc/collapse hands the media
+       back to the pool tile; a dblclick/watch promotes it to fullscreen. */
+    expand: function (opts) {
+      try {
+        opts = opts || {};
+        var i = (opts.key != null) ? poolFind(opts.key) : -1;
+        var adopt = (i >= 0) ? extractTransfer(POOL[i]) : (opts.adopt || null);
+        var origin = (adopt && adopt.back && adopt.back.origin) || opts.origin || {
+          key: opts.key, stream: opts.stream, rect: opts.rect, poster: opts.poster,
+          title: opts.title, live: opts.live, onWatch: opts.onWatch, reduced: opts.reduced };
+        return openGlance({ stream: opts.stream, poster: opts.poster, live: opts.live,
+                            title: opts.title, onWatch: opts.onWatch, reduced: opts.reduced,
+                            rect: opts.rect, adopt: adopt || undefined, origin: origin });
+      } catch (e) { return null; }
+    },
     adoptPreview: function (key) {
       try { var i = poolFind(key); return i >= 0 ? extractTransfer(POOL[i]) : null; } catch (e) { return null; }
     },
     previewKeys: function () { try { return POOL.map(function (e) { return e.key; }); } catch (e) { return []; } },
+    /* desktop hover: reveal ONLY the hovered card's buttons (wall-driven). */
+    previewHot: function (key) {
+      hotKey = key;
+      try { for (var i = 0; i < POOL.length; i++) { var e = POOL[i]; if (!e.wrap) continue;
+        e.wrap.classList[e.key === key ? 'add' : 'remove']('plr-pv-hot'); } } catch (e) {}
+    },
     glance: function (opts) { try { return openGlance(opts || {}); } catch (e) { return null; } },
     glanceStop: glanceStopFn,
     isInline: function () { return POOL.length > 0 || !!GL; },

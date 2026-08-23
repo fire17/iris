@@ -629,6 +629,11 @@ function WallView(canvas, opts) {
   var emptyText = opts.emptyText || "";
   var cbSelect = typeof opts.onSelect === "function" ? opts.onSelect : null;
   var cbHover = typeof opts.onHover === "function" ? opts.onHover : null;
+  var cbExpand = typeof opts.onExpand === "function" ? opts.onExpand : null;
+  /* single tap = expand (extended); double tap = fullscreen. Disambiguate with a
+     short window — a lone tap fires expand after it, a quick second tap cancels it
+     and flies in to fullscreen instead. */
+  var DBL_MS = 280, tapTimer = null, lastTapT = 0, lastTapI = -1;
   var cbDeselect = typeof opts.onDeselect === "function" ? opts.onDeselect : null;
   var cbLayout = typeof opts.onLayout === "function" ? opts.onLayout : null;
   var pendingNotify = null, pendingNotifyAt = 0;
@@ -1898,8 +1903,22 @@ function WallView(canvas, opts) {
     if (wasDrag && moved <= 6) {
       var p = localPt(e);
       var ti = tileAt(p);
-      if (ti >= 0) toggleSelect(ti, true);
-      else if (selected != null) deselect();
+      if (ti >= 0) {
+        var now = performance.now();
+        if (tapTimer && lastTapI === ti && (now - lastTapT) < DBL_MS) {
+          clearTimeout(tapTimer); tapTimer = null; lastTapI = -1;
+          toggleSelect(ti, true);                 /* DOUBLE tap -> fly-in + fullscreen */
+        } else {
+          if (tapTimer) clearTimeout(tapTimer);
+          lastTapT = now; lastTapI = ti;
+          var fi = ti;
+          tapTimer = setTimeout(function () {
+            tapTimer = null; lastTapI = -1;
+            if (cbExpand && items[fi]) { try { cbExpand(items[fi], fi); } catch (er) {} }  /* SINGLE tap -> extended */
+            else if (items[fi]) toggleSelect(fi, true);   /* no expand handler: old behaviour */
+          }, DBL_MS);
+        }
+      } else if (selected != null) deselect();
     }
     kick();
   }
@@ -2133,6 +2152,7 @@ function WallView(canvas, opts) {
   this.setOrder = function (o) { setOrder(o); return this; };
   this.onSelect = function (cb) { cbSelect = typeof cb === "function" ? cb : null; return this; };
   this.onHover = function (cb) { cbHover = typeof cb === "function" ? cb : null; return this; };
+  this.onExpand = function (cb) { cbExpand = typeof cb === "function" ? cb : null; return this; };
   this.onDeselect = function (cb) { cbDeselect = typeof cb === "function" ? cb : null; return this; };
   this.onLayout = function (cb) { cbLayout = typeof cb === "function" ? cb : null; return this; };
   this.focusIndex = function (i) { select(i | 0, false); return this; };
@@ -2249,7 +2269,8 @@ function WallView(canvas, opts) {
     cache.forEach(function (e) { if (e.el) { e.el.onload = null; e.el.onerror = null; e.el.src = ""; } });
     cache.clear(); queue.length = 0; hiLRU.length = 0;
     tiles = []; items = []; order = []; cur = null;
-    cbSelect = cbHover = cbDeselect = cbLayout = null;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+    cbSelect = cbHover = cbDeselect = cbLayout = cbExpand = null;
     canvas.style.cursor = "";
   };
   this.layouts = LAYOUTS;

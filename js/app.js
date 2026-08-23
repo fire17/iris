@@ -396,6 +396,7 @@ function initWall() {
       S.wallMode = "canvas";
       call(S.wall, "onSelect", onWallSelect);
       call(S.wall, "onHover", onWallHover);
+      call(S.wall, "onExpand", onWallExpand);
       camRestore();
       camSaverStart();
       show(D.wall, true);
@@ -437,6 +438,30 @@ function onWallSelect(a) {
     return;
   }
   if (id) location.hash = "#detail/" + enc(type) + "/" + enc(id);
+}
+/* SINGLE tap on a tile = open the EXTENDED (glance) tier. For a live cam it adopts the
+   hover preview if one is already playing (instant, no refetch) and resolves a fresh
+   master otherwise; a second dbl-tap / dblclick on the glance promotes it to fullscreen,
+   and Esc / collapse hands the feed back to the canvas tile. Non-live items have no
+   extended tier -> fall through to the normal select (detail / fullscreen). */
+function onWallExpand(a) {
+  var it = (typeof a === "number") ? S.wallList[a] : a;
+  if (!it) return;
+  if (it.meta && it.meta.hpUrl) { previewClear(); playRegistry(it.meta); return; }   /* registry = the stream itself */
+  if (!cbRoom(it)) { onWallSelect(it); return; }                                     /* no live extended tier */
+  var tKey = txt(it.id);
+  var id = it.mid || (it.meta && it.meta.id) || it.id;
+  var type = it.type || (it.meta && it.meta.type) || S.type || "movie";
+  resolveLiveShared(it).then(function (res) {   /* reuses the hover-time resolve when <8s old */
+    if (!window.Player || typeof Player.expand !== "function") { if (res && res.url) watchResolved(res); return; }
+    if (res && res.url) {
+      Player.expand({ key: tKey, stream: { url: res.url, live: res.live, hls: res.hls },
+                      live: res.live, poster: res.poster || "", title: res.title || "",
+                      onWatch: function (t) { watchResolved(res, t); } });
+    } else if (window.Player.previewHas && Player.previewHas(tKey)) {
+      Player.expand({ key: tKey, live: true, onWatch: function (t) { watchResolved({ url: t.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, t); } });
+    } else if (id) { location.hash = "#detail/" + enc(type) + "/" + enc(id); }
+  });
 }
 /* Contract: onHover(cb) calls cb(item, index) — the index is the SECOND
    argument; the item has no .index; cb(null, -1) means "nothing hovered". */
@@ -868,6 +893,8 @@ function tileRect(idx) {
 
 /* ---- lifecycle ------------------------------------------------------------ */
 function previewHover(item, idx) {
+  /* desktop: only the hovered card shows its buttons (smooth fade) */
+  if (window.Player && typeof window.Player.previewHot === "function") window.Player.previewHot((item && item.id) || null);
   if (idx < 0 || !item) { previewCancelPending(); return; }
   if (S.wallMode !== "canvas") return;
   if (window.Player && typeof window.Player.isOpen === "function" && window.Player.isOpen()) { previewClear(); return; }
