@@ -1,0 +1,413 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iris-readme — lane close-out</title>
+<style>
+:root{
+  --bg:#fbfbfc; --s1:#ffffff; --s2:#f4f4f6;
+  --line:#e2e2e8; --line-soft:#ececf0;
+  --fg:#16171a; --fg-1:#3f434b; --fg-2:#6b7178;
+  --pink:#e11d68; --pink-hi:#c01659; --pink-tint:rgba(225,29,104,.07);
+  --ok:#0f9d6b; --ok-tint:rgba(15,157,107,.10);
+  --no:#d83a4e; --no-tint:rgba(216,58,78,.09);
+  --info:#1f6fd6; --info-tint:rgba(31,111,214,.10);
+  --warn:#c07a00; --warn-tint:rgba(192,122,0,.10);
+  --shadow:0 1px 2px rgba(20,20,30,.04),0 8px 30px rgba(20,20,30,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+    --line:#2a2a32; --line-soft:#202027;
+    --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+    --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+    --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+    --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+    --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+    --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0c0f; --s1:#151519; --s2:#1b1b21;
+  --line:#2a2a32; --line-soft:#202027;
+  --fg:#f0f1f4; --fg-1:#c2c7cf; --fg-2:#868c96;
+  --pink:#f5387b; --pink-hi:#ff6a9e; --pink-tint:rgba(245,56,123,.09);
+  --ok:#3ddc97; --ok-tint:rgba(61,220,151,.11);
+  --no:#ff6478; --no-tint:rgba(255,100,120,.11);
+  --info:#7cc4ff; --info-tint:rgba(124,196,255,.11);
+  --warn:#f0b64b; --warn-tint:rgba(240,182,75,.12);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1000px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+a{color:var(--pink-hi);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.86em;color:var(--fg-1);background:var(--s2);padding:.08em .38em;border-radius:5px;border:1px solid var(--line-soft)}
+b{color:var(--fg);font-weight:600}
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.topnav .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.topnav .brand{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--fg-1);display:flex;align-items:center;gap:8px}
+.topnav .brand::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--pink);transform:rotate(45deg)}
+.topnav .sp{flex:1}
+.tglbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--fg-2);background:var(--s2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.tglbtn:hover{color:var(--fg);border-color:var(--pink)}
+header.hero{padding:clamp(40px,7vw,78px) 0 clamp(30px,4vw,44px);border-bottom:1px solid var(--line-soft)}
+.tagline{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-2);margin:0 0 16px;display:flex;align-items:center;gap:10px}
+.tagline::before{content:"";width:20px;height:2px;background:var(--pink);flex:none}
+h1{font-size:clamp(28px,5.4vw,50px);letter-spacing:-.035em;line-height:1.06;margin:0 0 .28em;color:var(--fg)}
+h1 .accent{color:var(--pink)}
+.lede{max-width:70ch;font-size:clamp(16px,2.1vw,19px);color:var(--fg-1);margin:.1em 0 0}
+.herometa{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:26px;display:flex;flex-wrap:wrap;gap:8px 22px}
+.herometa b{color:var(--fg-1);font-weight:500}
+section{padding:clamp(32px,5vw,52px) 0;border-top:1px solid var(--line-soft)}
+h2{font-size:clamp(20px,2.9vw,27px);letter-spacing:-.02em;margin:0 0 .2em;color:var(--fg)}
+h3{font-size:16.5px;margin:26px 0 8px;color:var(--fg)}
+.sub{color:var(--fg-2);max-width:74ch;margin:.3em 0 1.4em}
+p{max-width:78ch;color:var(--fg-1)}
+ul{max-width:78ch;color:var(--fg-1);padding-left:1.15em}
+li{margin:.34em 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 4px;font-size:14.2px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-2);
+  border-bottom:1px solid var(--line);font-weight:600}
+tbody tr:hover{background:var(--s2)}
+td code{white-space:nowrap}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.t-ok{color:var(--ok);background:var(--ok-tint);border-color:color-mix(in srgb,var(--ok) 34%,transparent)}
+.t-no{color:var(--no);background:var(--no-tint);border-color:color-mix(in srgb,var(--no) 34%,transparent)}
+.t-info{color:var(--info);background:var(--info-tint);border-color:color-mix(in srgb,var(--info) 34%,transparent)}
+.t-warn{color:var(--warn);background:var(--warn-tint);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:8px}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--s1);padding:16px 18px;box-shadow:var(--shadow)}
+.card .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-2)}
+.card .v{font-size:26px;letter-spacing:-.02em;color:var(--fg);margin-top:4px;line-height:1.15}
+.card .n{font-size:13px;color:var(--fg-2);margin-top:5px}
+.note{border:1px solid var(--line);border-left:3px solid var(--pink);border-radius:0 12px 12px 0;
+  background:var(--s1);padding:14px 18px;margin:18px 0;box-shadow:var(--shadow)}
+.note.warnbox{border-left-color:var(--warn)}
+.note.okbox{border-left-color:var(--ok)}
+.note p{margin:.35em 0}
+pre{background:var(--s2);border:1px solid var(--line-soft);border-radius:10px;padding:13px 15px;
+  overflow-x:auto;font-family:var(--mono);font-size:12.6px;color:var(--fg-1);line-height:1.55}
+.ft{padding:34px 0 60px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:11.5px;
+  color:var(--fg-2);letter-spacing:.03em}
+.scroller{overflow-x:auto}
+</style>
+
+<nav class="topnav"><div class="wrap">
+  <span class="brand">honestporn · close-out reports</span>
+  <span class="sp"></span>
+  <a href="index.html">← all reports</a>
+  <button class="tglbtn" onclick="__toggleTheme()">theme</button>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <p class="tagline">lane close-out · iris-readme</p>
+  <h1>The public README for <span class="accent">github.com/fire17/iris</span></h1>
+  <p class="lede">A README built to the <code>/awesome-readme</code> bar for the static deploy at
+  <a href="https://iris.akeyo.io">iris.akeyo.io</a> — and then attacked by eighteen adversarial Opus
+  agents until every claim it makes is one a stranger can falsify with a single command. Six headline
+  claims went into that gauntlet. <b>All six came out reworded.</b></p>
+  <p class="herometa">
+    <span><b>date</b> 2026-08-23</span>
+    <span><b>lane</b> iris-readme</span>
+    <span><b>workflows</b> 6</span>
+    <span><b>agents</b> 31 (all <code>model: 'opus'</code>, explicit)</span>
+    <span><b>outputs</b> <code>.grand/deploy-README.md</code> · <code>.grand/deploy-assets/banner.svg</code></span>
+    <span><b>pushed</b> no — orchestrator holds the token</span>
+  </p>
+</div></header>
+
+<section><div class="wrap">
+  <h2>What was produced</h2>
+  <p class="sub">Two files, both staged for the orchestrator to wire into the deploy build. Nothing was
+  pushed, nothing under <code>.deploy/</code> was touched, and <code>tools/build-deploy.sh</code> was not edited.</p>
+
+  <div class="scroller"><table>
+    <thead><tr><th>Artifact</th><th>What it is</th><th>Verified</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>.grand/deploy-README.md</code></td>
+        <td>370 lines / ~5,900 words. Hero + 8 live badges, epigraph and nav row, a receipted
+          "part that should stop you", two styled mermaid diagrams, a quickstart, four linked tables,
+          two <code>&lt;details&gt;</code> depth blocks, a making-of section with observed provenance
+          receipts and a six-item defect list, a safety/undo table, a trust section, a star CTA in the
+          project's own voice with a star-history chart, third-party attribution, and a license line.</td>
+        <td><span class="tag t-ok">9 tables · 0 column mismatches</span>
+            <span class="tag t-ok">2 mermaid · 0 unquoted labels</span>
+            <span class="tag t-ok">17/17 relative links resolve</span>
+            <span class="tag t-ok">9/9 anchors match a heading</span></td>
+      </tr>
+      <tr>
+        <td><code>.grand/deploy-assets/banner.svg</code></td>
+        <td>9,206 bytes. Hand-crafted eight-bladed camera-iris aperture — the image and the project name
+          are the same idea — with an aperture-scale tick ring, a Georgia wordmark, an italic subtitle and
+          a letterspaced receipts rail. Won a four-way blind judging round, then rebuilt by the judge
+          (the original blades rendered as a pie chart) and grafted with the runners-up's best ideas.</td>
+        <td><span class="tag t-ok">XML valid</span>
+            <span class="tag t-ok">0 &lt;script&gt;</span>
+            <span class="tag t-ok">no external refs</span>
+            <span class="tag t-ok">system fonts only</span>
+            <span class="tag t-ok">opaque dark bg — legible both themes</span></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The honesty gauntlet</h2>
+  <p class="sub">Six headline claims were handed to six hostile skeptics, each told to default to
+  <em>refuted</em> under uncertainty and to read the shipped code and live HTTP rather than the project's
+  own documentation. Every one of the six was refuted or qualified. The README publishes the survivors.</p>
+
+  <div class="cards">
+    <div class="card"><div class="k">claims attacked</div><div class="v">6</div><div class="n">headline claims sent to skeptics</div></div>
+    <div class="card"><div class="k">survived as written</div><div class="v">0</div><div class="n">every one needed rewording</div></div>
+    <div class="card"><div class="k">fatal findings</div><div class="v">2</div><div class="n">both fixed before publication</div></div>
+    <div class="card"><div class="k">review findings</div><div class="v">69</div><div class="n">across 5 review lenses</div></div>
+  </div>
+
+  <h3>Findings that changed the README, and how each resolved</h3>
+  <div class="scroller"><table>
+    <thead><tr><th>Finding</th><th>Severity</th><th>Resolution in the published text</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>"Zero servers" is self-refuting.</b> GitHub Pages is an origin server, and worse:
+          <code>js/addons.js:723</code> auto-installs the Cinemeta metadata addon on first page load,
+          before any user action — a third-party API backed by a third-party database. Poster images come
+          from <code>images.metahub.space</code>; subtitles default to <code>opensubtitles-v3.strem.io</code>;
+          torrent playback announces to three public <code>wss</code> trackers and uses WebTorrent's built-in
+          Google and Twilio STUN servers.</td>
+        <td><span class="tag t-no">fatal</span></td>
+        <td><b>Reframed to "no backend of our own", everywhere</b> — including the banner, whose receipts
+          line now reads <code>NO BACKEND OF OURS</code> instead of <code>0 SERVERS</code>. A new section,
+          <b>"Every server it talks to"</b>, publishes the complete third-party host list with when and
+          why each is contacted. The weakness became the strongest honesty section on the page.</td>
+      </tr>
+      <tr>
+        <td><b>"Peer-to-peer" is not true of the shipped demo row.</b> <code>js/torrent.js</code> fetches
+          the <code>xs=</code> <code>.torrent</code> from webtorrent.io on every play, and two independent
+          live probes of that infohash returned zero WebRTC peer offers — so in practice the bytes arrive
+          over the magnet's HTTP web seed.</td>
+        <td><span class="tag t-no">fatal</span></td>
+        <td>Headline and badge changed to <b>"the torrent client runs in your tab"</b>. A
+          <code>[!WARNING]</code> box in the byte-path section states the web-seed nuance up front and
+          separates "no node <i>we</i> run is in the byte path" (true, and the rule the project actually
+          holds) from "pure peer-to-peer" (not claimed).</td>
+      </tr>
+      <tr>
+        <td><b>Whisper is not purely lazy.</b> <code>js/whisper-tiny.js:113</code> fires an unconditional
+          2,197-byte <code>config.json</code> probe on every page load. And the first-autosync download is
+          not the 47.2 MB the code comment implies — that is the ONNX pair alone.</td>
+        <td><span class="tag t-warn">needs qualifier</span></td>
+        <td>The quickstart note now names the probe explicitly, and gives both figures measured against
+          the live site: <b>47.2 MB on disk, 33.4 MB gzipped for the weights, roughly 40 MB gzipped for
+          the whole first autosync</b> including the ONNX Runtime WASM, tokenizer and library.</td>
+      </tr>
+      <tr>
+        <td><b>"Opus 5" is not provable.</b> <code>SWARM.md</code> asserts it, but no <code>MODEL:</code>
+          artifact survives on disk, and the actual commit trailers record 39 × <code>Claude Opus 4.8</code>
+          and 21 × <code>Claude Fable 5</code>.</td>
+        <td><span class="tag t-no">overstated</span></td>
+        <td>All model-tier claims removed. The making-of section now publishes only <b>observed</b>
+          receipts — 97 commits, 17 branches of which 16 are <code>worktree-agent-*</code>, 11 registered
+          worktrees, 22 lane-mentioning commit subjects, the 8 h 52 m first-day span — and states plainly
+          that <code>SWARM.md</code> records the <i>plan</i>, not the measurement.</td>
+      </tr>
+      <tr>
+        <td><b>Trust escalation is enforced in the registry parser, not app-wide.</b>
+          <code>js/registry.js:79</code> never promotes an unknown lane, but the addon path only stamps
+          metas as <code>external</code> — it never strips a <code>lane</code> field. A third-party addon
+          returning <code>"lane":"performer-verified"</code> would render the verified badge.</td>
+        <td><span class="tag t-no">shipped defect</span></td>
+        <td>A genuinely new defect, found by this lane's review. It is <b>published in the README's own
+          "Defects the process caught" list</b> rather than left for someone else to find. It contradicts
+          the honesty law written in <code>js/addons.js</code> itself and is now on the record.</td>
+      </tr>
+      <tr>
+        <td><b>"Find an origin belonging to this project" is a challenge the reader wins in five seconds</b>
+          — <code>iris.akeyo.io</code> serves the app code and 47 MB of Whisper weights.</td>
+        <td><span class="tag t-no">major</span></td>
+        <td>Both challenge bullets now say <b>find a <i>media</i> byte</b> served by an origin this project
+          operates, and concede in the same breath that app code and model weights come from ours.</td>
+      </tr>
+      <tr>
+        <td><b>The <code>honestporn</code> branding was never disclosed.</b> A reader clicking through
+          would land on a tab titled <code>honestporn · the honest ledger</code> with no warning.</td>
+        <td><span class="tag t-no">major</span></td>
+        <td>A <code>&lt;sub&gt;</code> line directly under the hero states it before the click, together
+          with the zero-adult-content fact and the SFW test registry.</td>
+      </tr>
+      <tr>
+        <td><b>The service worker was undisclosed and the undo instructions were incomplete.</b>
+          <code>js/torrent.js:93</code> registers <code>/sw.min.js</code> at scope <code>/</code>, which
+          survives deleting the folder.</td>
+        <td><span class="tag t-no">major</span></td>
+        <td>The safety table now lists both storage mechanisms and every <code>localStorage</code> key,
+          and the undo row tells you to clear site data to unregister the worker.</td>
+      </tr>
+      <tr>
+        <td><b>Three relative links pointed at <code>test/novel-path/</code></b>, which exists only in the
+          development tree and not in the deploy repo — including the CTA bullet telling skeptics where to
+          go check. And <code>.grand/SWARM.md</code> was linked with an href that went somewhere else.</td>
+        <td><span class="tag t-no">fatal (link)</span></td>
+        <td>All four repointed at <a href="physics-verdict.html">the published transport-law verdict</a>,
+          which carries the same measurements and actually resolves. All 17 remaining relative links were
+          then re-verified against the deploy tree.</td>
+      </tr>
+      <tr>
+        <td><b>Stale line counts.</b> The deploy tree gained 39 lines mid-review, then more — three
+          occurrences of <code>12,070</code> and one <code>2,483</code> were already wrong by the time the
+          reviewers ran <code>wc</code>.</td>
+        <td><span class="tag t-warn">major</span></td>
+        <td>Per-module line counts were <b>removed</b> rather than re-pinned, and the total is now phrased
+          self-verifyingly — the figure is given for the day, with <code>wc -l js/*.js</code> named as the
+          authority. A number that churns hourly cannot be a receipt.</td>
+      </tr>
+      <tr>
+        <td><b>"19 lane close-out reports" conflates two things.</b> There are 11 lane close-outs and 8
+          standalone proof reports — and the README's own next section said as much.</td>
+        <td><span class="tag t-warn">major</span></td>
+        <td>Every occurrence now reads <b>19 build reports — 11 lane close-outs plus 8 proof reports</b>,
+          including the mermaid node and the Related list.</td>
+      </tr>
+      <tr>
+        <td><b>Third-party work was uncredited</b> and the license placeholder would have shipped as the
+          literal string <code>{{LICENSE-LINE}}</code>.</td>
+        <td><span class="tag t-no">fatal</span></td>
+        <td>A <b>"Standing on other people's work"</b> section names WebTorrent, hls.js, transformers.js,
+          ONNX Runtime, the whisper-tiny model and OpenAI Whisper with their licenses. The license section
+          states the true position: no LICENSE file exists, so all rights are reserved by default.</td>
+      </tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Numbers published, and where each came from</h2>
+  <p class="sub">Every figure in the README was produced by a command run this session. The volatile ones
+  were deliberately not pinned.</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Figure</th><th>Value</th><th>How it was observed</th></tr></thead>
+    <tbody>
+      <tr><td>Whisper ONNX weights</td><td>16,477,869 B + 30,729,881 B = 47.2 MB</td><td><code>stat -f %z</code> on the two vendored <code>.onnx</code> files</td></tr>
+      <tr><td>Same, gzipped over the wire</td><td>33.4 MB</td><td><code>curl -H 'Accept-Encoding: gzip'</code> against the live URLs</td></tr>
+      <tr><td>Page-load whisper probe</td><td>2,197 B</td><td><code>stat</code> on <code>vendor/whisper-tiny.en_timestamped/config.json</code>, code path at <code>js/whisper-tiny.js:113</code></td></tr>
+      <tr><td>First page load</td><td>under 600 KB (593 KB on the day)</td><td>parsed <code>index.html</code> for every <code>src</code>/<code>href</code>, summed <code>os.path.getsize</code></td></tr>
+      <tr><td>Published files</td><td>94</td><td><code>find . -type f -not -path './.git/*' | wc -l</code></td></tr>
+      <tr><td>Clone size</td><td>149 MB (87 MB vendored)</td><td><code>du -sh .</code> in the deploy repo</td></tr>
+      <tr><td>Registry</td><td>7 rows — 4 demo, 2 performer-verified, 1 ai-generated</td><td>parsed the pipe rows of <code>verified_sources.md</code></td></tr>
+      <tr><td>Reports</td><td>19 = 11 lane + 8 proof; 17 linked from the index</td><td><code>ls reports/hp-*.html</code>, <code>ls reports/*.html</code>, <code>comm</code> against the index's hrefs</td></tr>
+      <tr><td>Provenance</td><td>97 commits · 17 branches · 16 <code>worktree-agent-*</code> · 11 worktrees · 22 lane commits · 8 h 52 m first-day span</td><td><code>git rev-list --count</code>, <code>git branch -a</code>, <code>git worktree list</code>, <code>git log --format</code></td></tr>
+      <tr><td>Commit authorship trailers</td><td>39 Claude Opus 4.8 · 21 Claude Fable 5</td><td><code>git log --format=%b | grep -i co-authored-by | uniq -c</code></td></tr>
+      <tr><td>Physics measurements</td><td>54 seeders · 76 TCP peers · 0 WebRTC seeders · 38 dead-ends / 7 bypass-possible / 2 boundaries</td><td>text-extracted from the <b>published</b> <a href="physics-verdict.html">verdict page</a>, so a reader can check them too</td></tr>
+      <tr><td>Badges</td><td>8, all resolving</td><td><code>curl</code> on every shields.io and star-history URL → all 200</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note okbox">
+    <p><b>Deliberately not pinned.</b> The deploy tree moved three times during this lane
+    (<code>8246413</code> → <code>04041d5</code> → <code>2dd59f6</code>), and <code>js/</code> grew from
+    12,070 to 12,124 lines while the reviewers were counting. Rather than publish a number guaranteed to
+    be stale, the README gives the figure for the day and names <code>wc -l js/*.js</code> as the
+    authority. Per-module line counts were removed entirely.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>NOT verified — stated plainly</h2>
+  <p class="sub">The README carries this same list in its own words. Nothing below was observed, and
+  nothing below is claimed.</p>
+  <ul>
+    <li><b>No browser was driven.</b> Wall rendering, search, filters, playback, and an end-to-end Whisper
+      transcription are HTTP-plausible — every asset returns 200, every shipped script parses, every
+      registry source range-serves — but none of it was observed <em>running</em>. The README says exactly
+      this in a <code>[!IMPORTANT]</code> box.</li>
+    <li><b>Anchor ids are computed, not fetched.</b> The page is not pushed yet, so GitHub's rendered
+      <code>user-content-*</code> ids could not be curled. All nine anchors were computed against GitHub's
+      slug rule and every heading emoji was checked for a U+FE0F variation selector — <b>none carries one</b>,
+      so the ids should be exactly as listed. The battery still needs to run after push.</li>
+    <li><b>The secret-scanner event's GitHub-side output was never seen.</b> What exists on disk is the
+      deploy repo's reflog — <code>cef59ef vendor: split Mistral3ForConditionalGeneration literal (GitHub
+      secret-scanner false positive)</code> — plus the corroborating fact that the contiguous literal
+      appears zero times in the tree while the split form appears once per vendored bundle. The README
+      attributes it that way and does not quote a rejection message nobody captured.</li>
+    <li><b>Model tiers of the build fleet.</b> No <code>MODEL:</code> artifact survives. The commit
+      trailers are the only evidence, and they are what the README publishes.</li>
+    <li><b>The banner was rasterised, not viewed on GitHub.</b> It renders correctly under
+      <code>rsvg-convert</code> at 1280 px and 640 px; how GitHub's own image pipeline treats it is
+      unconfirmed until push.</li>
+    <li><b>Whether the Sintel row plays today.</b> The only playback evidence is a dated comment in
+      <code>js/player.js</code> from 2026-08-21. The README does not assert live playback.</li>
+  </ul>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How it was run</h2>
+  <p class="sub">Six dynamic ultracode workflows, held 3–5 deep the whole time. Every
+  <code>agent()</code> call carried an explicit <code>model: 'opus'</code>; the naked-spawn and
+  non-opus greps returned empty before each launch.</p>
+  <div class="scroller"><table>
+    <thead><tr><th>Workflow</th><th>Agents</th><th>What it did</th></tr></thead>
+    <tbody>
+      <tr><td><code>iris-ground-truth</code></td><td>6</td><td>Five parallel observers (deploy inventory, live-site battery, whisper, torrent physics, provenance) into one ledger-keeper that spot-checked their commands.</td></tr>
+      <tr><td><code>iris-banner</code></td><td>5</td><td>Four independent SVG directions — aperture, peer mesh, media wall, whisper waveform — scored blind on craft, theme-safety and truthfulness, then rebuilt by the judge.</td></tr>
+      <tr><td><code>iris-readme-prose</code></td><td>5</td><td>Section writers for hero/killer, diagrams, tables, making-of and closers, each forbidden to invent a number.</td></tr>
+      <tr><td><code>iris-refute-claims</code></td><td>7</td><td>Six hostile skeptics, one per headline claim, plus a synthesiser producing the final claim contract.</td></tr>
+      <tr><td><code>iris-readme-review</code></td><td>5</td><td>Five lenses over the assembled draft: numbers, links and anchors, honesty, render, completeness.</td></tr>
+      <tr><td><code>iris-readme-final</code></td><td>4</td><td>Cold fresh-eyes pass after every correction landed.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <p><b>The method that did the work.</b> Nothing in the README was written from the project's own
+    documentation. Every skeptic was told the same thing: <em>docs state intent and may be stale; code and
+    live HTTP responses are evidence.</em> That single instruction is what caught the Cinemeta auto-install,
+    the web-seed reality of the demo row, the whisper probe, and the addon lane-escalation defect — four
+    things the repo's own <code>README.md</code>, <code>ARCHITECTURE.md</code> and <code>UNKNOWNS.md</code>
+    would each have let through.</p>
+  </div>
+  <div class="note warnbox">
+    <p><b>One grep note worth keeping.</b> <code>js/addons.js</code> contains a non-UTF8 byte, so plain
+    <code>grep</code> treats it as binary and silently matches nothing. Any audit that greps it without
+    <code>-a</code> will miss the Cinemeta auto-install entirely — which is exactly how a "no API" claim
+    survives an audit that looked like it was done properly.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Handoff</h2>
+  <ul>
+    <li><b>Copy</b> <code>.grand/deploy-README.md</code> → <code>.deploy/README.md</code> and
+      <code>.grand/deploy-assets/banner.svg</code> → <code>.deploy/assets/banner.svg</code>
+      (the path already serves as <code>image/svg+xml</code>; it currently holds the older honestporn banner).</li>
+    <li><b>Decide the license.</b> No LICENSE file exists in either tree and the GitHub API reports
+      <code>"license": null</code>. The README states that honestly rather than inventing one — but it is
+      the one open decision blocking a clean publish.</li>
+    <li><b>Run the anchor battery after push</b> against GitHub's rendered
+      <code>user-content-*</code> ids. The nine anchors are listed in the handoff message.</li>
+    <li><b>Two published reports are unlinked</b> from <code>reports/index.html</code>:
+      <code>subs-stream-audio.html</code> and <code>verify-harden.html</code>. The README links both
+      directly, so they are now reachable — but the Showcase index still does not list them.</li>
+    <li><b>Nothing was pushed.</b> No <code>.deploy/</code> file was touched, and
+      <code>tools/build-deploy.sh</code> was not edited.</li>
+  </ul>
+</div></section>
+
+<footer class="ft"><div class="wrap">
+  honestporn · iris-readme lane close-out · 2026-08-23 · the aesthetic is honesty ·
+  six claims attacked, six claims reworded, nothing pushed.
+</div></footer>
+
+<script>
+(function(){var K='hp-report-theme';var r=document.documentElement;try{var s=localStorage.getItem(K);if(s)r.setAttribute('data-theme',s);}catch(e){}})();
+function cur(){var r=document.documentElement;var a=r.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+window.__toggleTheme=function(){var r=document.documentElement;var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('hp-report-theme',n);}catch(e){}};
+</script>

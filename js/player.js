@@ -1404,8 +1404,25 @@
           var u = ENGINE + '/stream/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx);
           S.viaEngine = true;
           S.magnet = mg;
-          toast('Streaming via the local engine (opt-in — not browser-p2p)', 2600);
-          start(isHls(u) ? 'hls' : 'url', u);
+          /* Ask the engine HOW to play first: browser-native containers stream direct with
+             Range; MKVs with Dolby/DTS audio come back as an ffmpeg HLS transcode (audio →
+             AAC) — otherwise Chrome plays them as a silent movie. Old engines without
+             /play fall through to the direct URL. */
+          fetch(ENGINE + '/play/' + encodeURIComponent(ih) + '/' + encodeURIComponent(idx), { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+            .then(function (j) {
+              if (!S || S.destroyed) return;
+              if (j && j.ok && j.url) {
+                u = j.url;
+                S.engineProbe = j.probe || null;
+                toast(j.kind === 'hls' ? 'Local engine: audio transcoded to AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ' → AAC) · not browser-p2p'
+                                       : 'Streaming via the local engine (opt-in — not browser-p2p)', 3200);
+                start(j.kind === 'hls' ? 'hls' : 'url', u);
+              } else {
+                toast('Streaming via the local engine (opt-in — not browser-p2p)', 2600);
+                start(isHls(u) ? 'hls' : 'url', u);
+              }
+            });
         } else {
           spin(false);
           magnetPanel(mg, 'Local-engine opt-in is on but the engine is not running. Copy the magnet into your torrent client, or start the engine.');
@@ -1461,7 +1478,9 @@
            latency path and the live edge; VOD keeps the deep back-buffer. */
         var hls = new Hls(S.live
           ? { enableWorker: true, lowLatencyMode: true, backBufferLength: 12, liveSyncDurationCount: 3, startPosition: -1 }
-          : { enableWorker: true, lowLatencyMode: false, backBufferLength: 90 });
+          /* an engine transcode is a GROWING event playlist (no ENDLIST yet) — hls.js would
+             treat it as live and start at the edge; it is a film, so start at 0 */
+          : { enableWorker: true, lowLatencyMode: false, backBufferLength: 90, startPosition: S.viaEngine ? 0 : -1 });
         S.hls = hls;
         hls.on(Hls.Events.ERROR, function (evt, data) {
           if (!data || !data.fatal) return;

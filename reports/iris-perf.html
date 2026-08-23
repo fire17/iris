@@ -1,0 +1,337 @@
+<title>iris-perf Close-Out</title>
+<style>
+  :root{--bg:#0d0d0f;--panel:#141418;--line:#26262d;--ink:#e9e9ee;--dim:#9a9aa6;
+        --pink:#f5387b;--ok:#3ecf8e;--warn:#f5b942;--bad:#ff5c5c;--blue:#6aa9ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    padding:48px 28px 96px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:29px;margin:0 0 6px;letter-spacing:-.02em}h1 b{color:var(--pink)}
+  h2{font-size:18px;margin:42px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:14.5px;margin:26px 0 8px;color:var(--ink)}
+  .sub{color:var(--dim);margin:0 0 26px;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:13.5px}
+  .scroll{overflow-x:auto}
+  th{text-align:left;color:var(--dim);font-weight:600;font-size:11.5px;letter-spacing:.06em;
+     text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:10px;border-bottom:1px solid #1c1c22;vertical-align:top}
+  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d6e5;
+    background:#1b1b21;padding:1.5px 5px;border-radius:4px}
+  pre{background:#111116;border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+    overflow-x:auto;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d6e5}
+  .ok{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
+  .unv{color:var(--warn);font-weight:700}.na{color:var(--dim);font-weight:700}
+  .note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--pink);
+    border-radius:8px;padding:14px 18px;margin:20px 0}
+  .note b{color:var(--pink)}
+  ul{padding-left:20px}li{margin:6px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:22px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card b{display:block;font-size:23px;color:var(--pink);letter-spacing:-.02em}
+  .card span{color:var(--dim);font-size:12px}
+  .notlive{background:linear-gradient(180deg,#2a1a06,#1a1206);border:1px solid #6b4a12;
+    border-left:4px solid var(--warn);border-radius:10px;padding:16px 20px;margin:24px 0}
+  .notlive .tag{display:inline-block;background:var(--warn);color:#1a1206;font-weight:800;
+    font-size:11px;letter-spacing:.08em;padding:3px 9px;border-radius:5px;margin-bottom:9px}
+  .notlive p{margin:6px 0 0}
+  .incident{background:linear-gradient(180deg,#2a0d12,#1a0a0d);border:1px solid #6b1f2c;
+    border-left:4px solid var(--bad);border-radius:10px;padding:16px 20px;margin:24px 0}
+  .incident .tag{display:inline-block;background:var(--bad);color:#1a0a0d;font-weight:800;
+    font-size:11px;letter-spacing:.08em;padding:3px 9px;border-radius:5px;margin-bottom:9px}
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+  .win{color:var(--ok);font-weight:700}
+</style>
+
+<div class="wrap">
+
+<h1>Lane <b>iris-perf</b> — close-out</h1>
+<p class="sub">Live speed audit of <code>https://iris.akeyo.io</code> against <code>.grand/BUDGETS.md</code>, plus an
+app-shell service worker built and locally proven · 2026-08-23 03:09 +0300 · source baseline <code>4a9c7c8</code> ·
+Chrome 151.0.7922.174 headless, puppeteer-core 23.11.1 · 20 Opus agents across 5 parallel workflows.</p>
+
+<div class="grid">
+  <div class="card"><b>8 / 8</b><span>testable budget rows PASS live</span></div>
+  <div class="card"><b>445 ms</b><span>live cold → wall painted (median)</span></div>
+  <div class="card"><b>193 KB</b><span>own-origin cold load, on the wire</span></div>
+  <div class="card"><b>0 B</b><span>of the 87 MB whisper vendor fetched</span></div>
+  <div class="card"><b>194 KB</b><span>re-downloaded on every &gt;10-min return visit <em>today</em></span></div>
+</div>
+
+<div class="notlive">
+  <span class="tag">NOT YET LIVE</span>
+  <p><b>The service worker described in this report is NOT deployed.</b> It exists only in the working tree at
+  <code>sw.min.js</code> (sha256 <code>245bdbd2…</code>) plus one registration line in <code>index.html</code>
+  (sha256 <code>1239dd43…</code>). The live site still serves the original 1,297-byte vendored WebTorrent worker
+  (<code>9aa1f71d…</code>) and <b>registers no service worker at all on a normal load</b>.</p>
+  <p>Every service-worker number below is labelled <b>(local, not live)</b> and was measured against
+  <code>python3 -m http.server</code> on 127.0.0.1. It becomes live only when the lead rebuilds with
+  <code>tools/build-deploy.sh</code> and pushes. Nothing in this lane was pushed.</p>
+</div>
+
+<h2>1 · The verdict</h2>
+
+<p>The live site is genuinely fast. A cold visit paints the wall in <b>445 ms</b> (median, n=3) over the real
+internet, well inside a budget that was written for localhost, and every one of the eight budget rows that can
+honestly be judged from a deployed static host passes. The 87 MB vendored whisper stack is confirmed lazy —
+exactly one 1,220-byte capability probe touches <code>vendor/</code> on load. There is no performance defect to fix.</p>
+
+<p>The service worker is therefore <b>not</b> a rescue. It is worth shipping for one specific, measured reason, and
+the naive case for it is wrong. GitHub Pages serves every asset with <code>cache-control: max-age=600</code>, so a
+repeat visit <em>inside ten minutes</em> is already near-instant from the browser's own HTTP cache — 88 ms
+first-contentful-paint, 56 of 58 resources served with zero network. A service worker adds almost nothing there,
+and reporting the cold-vs-warm delta as "what the service worker buys" would have been a serious overclaim.</p>
+
+<div class="note">
+  <b>The real finding.</b> We waited out the full ten-minute freshness window and measured a genuine stale-cache
+  return visit. Chrome did <b>not</b> revalidate cheaply — it re-downloaded <b>all 17 own-origin assets in full,
+  194,111 bytes</b>, with <b>zero</b> 304 responses. Wall-clock load went from 423 ms (fresh cache) to 525 ms, i.e.
+  essentially a second cold load. <b>So today, every visit more than ten minutes after the last one costs the user a
+  complete 194 KB re-download of the app shell.</b> That is the cost the shell cache removes, and it is the only
+  honest headline for this change.
+</div>
+
+<h2>2 · Budgets on the LIVE site</h2>
+
+<p>Measured against <code>https://iris.akeyo.io</code>, headless Chrome, fresh profile per run, n=3, median (min / max).
+Raw: <code>.grand/perf/raw-budgetrows.json</code>, <code>raw-coldwarm.json</code>, <code>raw-waterfall.json</code>.</p>
+
+<div class="scroll">
+<table>
+<tr><th>#</th><th>Vision phrase</th><th>Threshold</th><th>Observed live</th><th>Verdict</th></tr>
+<tr><td>1</td><td>"blazing player" — open</td><td>≤ 600 ms click → <code>.plr-root.plr-in</code></td><td>398.4 ms (393.6 / 568.2)</td><td class="ok">PASS</td></tr>
+<tr><td>2</td><td>"blazing player" — first frame</td><td>≤ 2.5 s <code>currentTime &gt; 0</code></td><td>1003.9 ms (876.1 / 1645.5)</td><td class="ok">PASS</td></tr>
+<tr><td>3</td><td>"blazing" app — cold → rows painted</td><td>≤ 1 s <em>(bar authored for localhost)</em></td><td>445.5 ms (433.4 / 471.4)</td><td class="ok">PASS</td></tr>
+<tr><td>4</td><td>"watch it live" — registry edit → card</td><td>≤ 5 s, no reload</td><td>not testable against a read-only deploy — proven locally instead, see §4</td><td class="na">N/A-live</td></tr>
+<tr><td>5</td><td>"could be streaming" — HLS plays</td><td>plays; currentTime advances</td><td>plays; advances at 1853.9 ms (1822.9 / 4170.5)</td><td class="ok">PASS</td></tr>
+<tr><td>6</td><td>"honest" — lane badges</td><td>100% of cards</td><td>7/7 badged, 7/7 lane, missing = []</td><td class="ok">PASS</td></tr>
+<tr><td>7</td><td>"honest" — read-only registry</td><td>0 write paths</td><td>0 — <code>registry.js:11</code> + <code>:111</code>, GET only</td><td class="ok">PASS</td></tr>
+<tr><td>8</td><td>ZERO adult content in repo</td><td>0 items</td><td>live wall SFW-only; repo not auditable from a browser</td><td class="na">N/A-live</td></tr>
+<tr><td>9</td><td>zero console errors, any view</td><td>0</td><td>0 <code>console.error</code>, 0 <code>pageerror</code>, all 3 runs</td><td class="ok">PASS</td></tr>
+<tr><td>10</td><td>search finds registry items</td><td>title substring hits</td><td>"sintel" → 3 registry cards, all 3 runs</td><td class="ok">PASS</td></tr>
+<tr><td>11</td><td>60 fps / no skew above zoom 1.4</td><td>no visible jank</td><td>not measured — needs a frame trace + human eyes</td><td class="na">SKIPPED</td></tr>
+<tr><td>12</td><td>production gate</td><td>BLOCKED until built</td><td>policy row, not a runtime metric</td><td class="na">N/A</td></tr>
+</table>
+</div>
+
+<p><b>8 PASS · 0 FAIL · 3 N/A-live · 1 skipped.</b> Two honest asterisks: row 3's threshold was written for
+<code>python3 -m http.server</code> and we judged it against a CDN, so the comparison is indicative rather than a
+pass against the written budget; and row 1's slowest of three samples (568.2 ms) sits at 94.7% of its 600 ms
+allowance, on the run where 167 wall tiles were laid out instead of 7. Three samples is not a margin worth
+defending — row 1 deserves a wider-n check.</p>
+
+<h2>3 · Live cold / warm / stale</h2>
+
+<p>Three regimes matter, and only the third is interesting. "Warm" is a second navigation seconds later, inside the
+<code>max-age=600</code> window. "Stale" is a real return visit measured after a genuine 630-second wait.</p>
+
+<div class="scroll">
+<table>
+<tr><th>metric</th><th>COLD (empty cache)</th><th>WARM (&lt; 10 min)</th><th>STALE (&gt; 10 min)</th></tr>
+<tr><td>TTFB (responseStart − requestStart)</td><td>62.1 ms</td><td>0.3 ms</td><td>—</td></tr>
+<tr><td>domContentLoadedEventEnd</td><td>473.4 ms</td><td>66.5 ms</td><td>—</td></tr>
+<tr><td>first-contentful-paint</td><td>476 ms (312 / 680)</td><td>88 ms (80 / 92)</td><td>—</td></tr>
+<tr><td>wall items ready</td><td>488.1 ms</td><td>87.6 ms</td><td>—</td></tr>
+<tr><td>first wall <code>drawImage</code></td><td>512.2 ms</td><td>70.0 ms</td><td>—</td></tr>
+<tr><td>loadEventEnd</td><td>423 ms</td><td>—</td><td><b>525 ms</b></td></tr>
+<tr><td>own-origin resources fetched</td><td>17</td><td>~0 (56/58 from HTTP cache)</td><td><b>17 — all in full</b></td></tr>
+<tr><td>own-origin bytes on the wire</td><td>193,507 B</td><td>≈ 0</td><td><b>194,111 B</b></td></tr>
+<tr><td>304 responses</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+</table>
+</div>
+
+<p>Cross-validated independently with curl (no browser automation involved): the cold-load set is
+<b>19 files, 193,166 bytes compressed, 610,780 bytes uncompressed</b> — matching the browser figure to within 0.3%.
+Root-document latency from this machine, n=10: median 198 ms, p90 207 ms, every response <code>x-cache: HIT</code>
+from <code>cache-fra</code>.</p>
+
+<h3>Where the load weight actually is</h3>
+<p>First-party code is the <em>small</em> half of the page. In the load window the site pulls
+<b>1,013,133 bytes</b> total, of which own-origin is only <b>199,212 B across 22 requests</b> — the other
+<b>~814 KB (80%)</b> is third-party: Cinemeta catalog JSON and picsum/metahub posters. A shell cache cannot touch
+any of that. The largest own-origin asset, <code>js/player.js</code>, is 40,248 B on the wire and ranks only
+<b>ninth</b> overall behind seven third-party images and catalogs.</p>
+
+<div class="scroll">
+<table>
+<tr><th>#</th><th>wire bytes</th><th>type</th><th>origin</th><th>url</th></tr>
+<tr><td>1</td><td>104,201</td><td>Image</td><td>third-party</td><td>fastly.picsum.photos/id/959/480/720.jpg</td></tr>
+<tr><td>2</td><td>99,762</td><td>Fetch</td><td>third-party</td><td>cinemeta-catalogs.strem.io/top/catalog/series/top.json</td></tr>
+<tr><td>3</td><td>98,997</td><td>Fetch</td><td>third-party</td><td>cinemeta-catalogs.strem.io/imdbRating/…/imdbRating.json</td></tr>
+<tr><td>4</td><td>84,300</td><td>Image</td><td>third-party</td><td>fastly.picsum.photos/id/1047</td></tr>
+<tr><td>9</td><td><b>40,248</b></td><td>Script</td><td><b>own</b></td><td><b>iris.akeyo.io/js/player.js</b> — largest own-origin asset</td></tr>
+<tr><td>12</td><td>32,393</td><td>Script</td><td>own</td><td>iris.akeyo.io/js/app.js</td></tr>
+</table>
+</div>
+
+<h3>The 87 MB vendor stack — confirmed lazy</h3>
+<p>A regex for <code>whisper|transformers|onnx|\.bin|\.safetensors|tokenizer</code> across every request in three
+45-second waterfalls plus six cold/warm loads matched exactly three URLs per run: <code>js/whisper-engine.js</code>,
+<code>js/whisper-tiny.js</code>, and one <code>vendor/whisper-tiny.en_timestamped/config.json</code> — a
+<b>1,220-byte capability probe</b> from <code>js/whisper-tiny.js:29</code>. <b>Zero</b> model blobs: no
+<code>.onnx</code>, no <code>.wasm</code>, no tokenizer, nothing under <code>vendor/transformers/</code>. The lazy law
+holds. The only tightening available is deferring that 1.2 KB probe to first subtitle intent.</p>
+
+<h2>4 · The service worker <span class="unv">(built + locally verified — NOT yet live)</span></h2>
+
+<p><b>What existed before.</b> <code>sw.min.js</code> was a byte-identical copy of
+<code>vendor/webtorrent-sw.min.js</code> — the vendored WebTorrent 3.x streaming bridge, 1,297 bytes. It caches
+nothing, and it is registered <em>lazily</em>, only by <code>js/torrent.js:93</code> inside
+<code>ensureServer()</code>, which runs only when a torrent stream is about to play. On a normal load the live site
+has <b>no service worker at all</b> — confirmed on the live site: <code>navigator.serviceWorker.controller === null</code>
+at every 400 ms sample across 45 s in all three runs, <code>getRegistrations()</code> returned <code>[]</code>, and
+<code>sw.min.js</code> was never requested.</p>
+
+<h3>The design, and why each line is there</h3>
+<p>The new worker is 86 lines and ends with <code>importScripts('vendor/webtorrent-sw.min.js')</code>, so the vendored
+bridge stays <b>pristine and unmodified</b>. Ours registers its fetch listener first and <em>returns without
+responding</em> for anything it does not own, letting the vendored listener see the event untouched.</p>
+<pre>if (req.method !== 'GET') return;                        // HEAD pings from netmon.js
+if (url.origin !== self.location.origin) return;         // Cinemeta, posters, CDNs
+if (url.pathname.indexOf('/webtorrent/') !== -1) return; // the vendored bridge owns these
+if (req.headers.has('range')) return;                    // never intercept ranged media
+if (req.cache === 'no-store' || req.cache === 'reload') return;   // ← THE ESCAPE HATCH
+if (url.pathname.indexOf('/vendor/') === 0) return;      // the 87 MB stack, never cached</pre>
+
+<div class="note">
+<b>The escape hatch is the whole safety argument.</b> <code>js/registry.js</code> polls
+<code>verified_sources.md</code> and <code>js/dev.js</code> polls the core files — <em>both</em> with
+<code>fetch(…, {cache:'no-store'})</code>. Honouring that one flag preserves the live registry watch (budget row 4)
+and devmode hot-reload simultaneously, with a single condition. We did not assume the flag survives into the worker;
+we <b>measured it</b> in real Chrome: a worker probe reported <code>request.cache</code> as <code>"default"</code>,
+<code>"no-store"</code> and <code>"reload"</code> for the three corresponding call sites. The
+<code>verified_sources.md</code> network-first rule below it is belt-and-braces for a future refactor that drops the flag.
+</div>
+
+<p>The app shell uses <b>stale-while-revalidate</b> — instant paint from a versioned cache
+(<code>hp-shell-v1</code>), fresh copy fetched in the background — so a redeploy self-heals within one further load
+with no manual version bump. Install uses per-entry <code>cache.add().catch()</code> rather than atomic
+<code>addAll()</code>, so one 404 in a half-synced deploy degrades to a partial shell instead of leaving the site
+with no worker at all.</p>
+
+<h3>Local proof — every claim with its observed evidence</h3>
+<p>Served from <code>python3 -m http.server</code> on 127.0.0.1 (port 8060, the live dev server, was never touched).
+Raw: <code>.grand/perf/local-sw-proof.json</code>, <code>local-sw-proof-CD.json</code>, <code>local-sw-livewatch.json</code>.</p>
+
+<div class="scroll">
+<table>
+<tr><th>#</th><th>Claim</th><th>Observed evidence</th><th>Verdict</th></tr>
+<tr><td>A</td><td>First load populates the cache</td><td>cache <code>hp-shell-v1</code> holds exactly <b>19/19</b> shell URLs; <code>vendorEntries: []</code>; <code>verifiedSourcesEntries: []</code></td><td class="ok">PASS</td></tr>
+<tr><td>B</td><td>Second load is served by the worker</td><td><b>18</b> responses with <code>fromServiceWorker: true</code>; <code>controller</code> = <code>/sw.min.js</code>, state <code>activated</code></td><td class="ok">PASS</td></tr>
+<tr><td>C</td><td>Warm load speed (local)</td><td>DCL 84.8 ms without → <b>78.3 ms</b> with; see the honest reading below</td><td class="unv">measured, small</td></tr>
+<tr><td>D</td><td><b>Live-watch (budget row 4) survives</b></td><td><b>4/4 trials</b>, registry 7 → 8 while the SW controlled the page; latency <b>496 / 872 / 932 / 2246 ms</b> (median ~900 ms, bar 3000 ms); <code>verified_sources.md</code> served from the SW <b>0 of 13</b> times and never entered the cache</td><td class="ok">PASS</td></tr>
+<tr><td>E</td><td>Devmode hot-reload survives</td><td><code>no-store</code> polls of <code>index.html</code>, <code>style.css</code>, <code>js/app.js</code>: <b>36 requests, 0 served by the worker</b></td><td class="ok">PASS</td></tr>
+<tr><td>F</td><td>Stale-while-revalidate self-heals</td><td>probe file: load 3 returned stale <code>V1</code>, load 4 returned fresh <code>V2-EDITED</code> — exactly SWR semantics</td><td class="ok">PASS</td></tr>
+<tr><td>G</td><td>WebTorrent bridge intact</td><td><code>/webtorrent/keepalive/</code> → <b>200, <code>fromServiceWorker: true</code>, 0 bytes</b> (the vendored empty <code>Response</code>); a control path returned 404 from the server, proving the bridge — not the server — answered</td><td class="ok">PASS</td></tr>
+<tr><td>H</td><td>Zero console errors</td><td>0, excluding one deliberate 404 control probe</td><td class="ok">PASS</td></tr>
+</table>
+</div>
+
+<h3>The honest reading of the local speed delta</h3>
+<p>Local warm DCL improved only <b>84.8 ms → 78.3 ms</b>. That number is <em>not</em> the value of this change and
+must not be quoted as such. On 127.0.0.1 a revalidation round trip costs almost nothing, so eliminating nineteen of
+them saves almost nothing. The saving scales with round-trip time, and the live measurement in §1 is what makes the
+case: on the real deploy a stale return visit re-downloads <b>194,111 bytes across 17 requests with zero 304s</b>.
+The shell cache turns that into zero network and a cache-served paint. We have <b>not</b> measured that improvement
+live, because the worker is not deployed — it is a projection from two measured endpoints, and it is labelled as one.</p>
+
+<h2>5 · What changed on disk</h2>
+<div class="scroll">
+<table>
+<tr><th>file</th><th>change</th><th>sha256</th></tr>
+<tr><td><code>sw.min.js</code></td><td>1,297 → 4,543 bytes; +88 / −1 lines. Shell cache prepended; vendored bridge now loaded via <code>importScripts</code> instead of being inlined.</td><td><code>245bdbd2…</code></td></tr>
+<tr><td><code>index.html</code></td><td><b>+1 line only</b> (line 41): register <code>/sw.min.js</code> on the window <code>load</code> event. Identical URL and scope to the <code>js/torrent.js</code> call, so the registration is idempotent and the torrent path is unaffected.</td><td><code>1239dd43…</code></td></tr>
+</table>
+</div>
+<p>Nothing else was touched. <code>js/player.js</code>, <code>js/app.js</code> and <code>style.css</code> are
+untouched, as required. No worktrees were used — the change is two files in owned paths, so a branch would have
+stranded work amid ten other live agent worktrees. Nothing was committed and nothing was pushed.</p>
+
+<h2>6 · Is it safe to rebuild and push?</h2>
+<p><b>Yes, with one caveat about timing.</b> A full sha256 audit of the deployed tree found <b>13/13 files
+byte-identical</b> between <code>.deploy/</code> and what the live site serves. Comparing the source tree against
+<code>.deploy/</code>, exactly <b>two</b> files would change the live site:</p>
+<ul>
+  <li><code>sw.min.js</code> — the intended change.</li>
+  <li><code>index.html</code> — the registration line, which is what actually switches the worker on for every visitor.</li>
+</ul>
+<p>Three other dirty files (<code>verified_sources.md</code>, both <code>vendor/transformers</code> bundles) are
+uncommitted in the source repo but were <em>already</em> built into <code>.deploy</code> and are already live, so a
+rebuild is a no-op for them. Nothing from <code>server/</code>, <code>test/</code>, <code>node_modules/</code>,
+<code>tools/</code>, the root docs or the agent worktrees can ride along — <code>build-deploy.sh</code> copies an
+explicit whitelist. The <code>&gt;95 MB</code> per-file gate passes; the largest single file is the 29.3 MB whisper
+decoder.</p>
+<p><b>The caveat is timing, not scope.</b> <code>build-deploy.sh</code> snapshots the <em>working tree</em> at the
+moment it runs, and several agents are editing this repo concurrently. Building at the wrong instant can ship a
+half-written file. Verify <code>sw.min.js</code> is <code>245bdbd2…</code> immediately before building.</p>
+
+<div class="incident">
+  <span class="tag">INCIDENT — MY LANE, DISCLOSED</span>
+  <p>Proving budget row 4 requires editing <code>verified_sources.md</code> while the app is running. My proof agent
+  did that against the <b>real</b> repo and restored two of three probe rows, leaving one behind. A concurrent agent
+  ran <code>build-deploy.sh</code> and pushed inside that window, so the row
+  <code>| PERF PROBE SW 2 | demo | …Sintel_720_10s_5MB.mp4 | … |</code> reached the live site and rendered as a bogus
+  demo card on the honest ledger. Content was SFW, so no scope law was breached, but a fabricated registry row is
+  exactly what this product must never have.</p>
+  <p><b>Resolved in source.</b> The row is removed and <code>verified_sources.md</code> is byte-identical to its
+  pre-probe state, sha256 <code>6bd1979b…</code>. A second copy of the row propagated back once via a probe script's
+  own stale backup; that was cleaned too and a guard was armed for the rest of the session. <b>The live site stays
+  wrong until the next rebuild + push</b>, which clears it automatically. All subsequent live-watch testing was moved
+  to an isolated <code>/tmp</code> copy, which is where the 4/4 row-4 proof above was taken.</p>
+  <p><b>Lesson for every lane:</b> this repo is built and pushed on a short cycle, so any mutation of a build-copied
+  path can go public within minutes. Treat <code>index.html</code>, <code>style.css</code>, <code>js/</code>,
+  <code>assets/</code>, <code>vendor/</code>, <code>verified_sources.md</code> and <code>.grand/reports/</code> as
+  live surfaces, never as scratch space.</p>
+</div>
+
+<h2>7 · Recommendations we did NOT apply</h2>
+<p>This lane owns only <code>sw.min.js</code> and one line of <code>index.html</code>. The following are measured
+observations for whoever owns the boot path — <b>nothing below was changed</b>.</p>
+<ol>
+  <li><b>Eleven of the sixteen head scripts paint no wall pixel.</b> <code>player.js</code>, <code>torrent.js</code>,
+  <code>netmon.js</code>, <code>dev.js</code>, <code>whisper-engine.js</code>, <code>whisper-tiny.js</code> and the
+  five <code>subs-*.js</code> total <b>98,211 of the 187,216 pre-paint wire bytes (52.5%)</b> and are all loaded
+  <code>defer</code> in <code>&lt;head&gt;</code>. Moving them behind the window <code>load</code> event is an
+  estimated 85–110 ms off first wall paint. <b>Risk to weigh:</b> <code>player.js</code> must still be resident before
+  a click, or budget rows 1 and 2 suffer — this trade needs measuring, not assuming.</li>
+  <li><b>Idle polling never lets the page go quiet.</b> <code>registry.js</code> polls every 2.5 s and
+  <code>netmon.js</code> HEAD-pings every 1.5 s, costing <b>~29 KB per 45 s, forever</b>, and the page never reaches
+  network-idle. Correct for a live registry; worth a backoff when the tab is hidden.</li>
+  <li><b>The 1.2 KB whisper probe on every load</b> could be deferred to first subtitle intent.</li>
+  <li><b>The 30 <code>net::ERR_ABORTED</code> per run are not real failures</b> — they are <code>netmon.js</code> HEAD
+  pings cancelled by navigation. Harmless, but they will show as errors in any synthetic monitor watching this site.</li>
+</ol>
+
+<h2>8 · Verification status (honest)</h2>
+<ul>
+  <li>All live numbers come from <b>one macOS machine, one network</b>, through the Fastly edge <code>cache-fra</code>,
+  headless Chrome 151.0.7922.174 at 1440×900. One vantage point, not the user experience.</li>
+  <li>Every live response carried <code>x-cache: HIT</code> with an age of 5–150 s — even our cold runs hit a
+  <b>warm CDN edge</b>. A visitor whose nearest edge is cold will be slower than any number here.</li>
+  <li>Sample sizes are <b>n=3</b> (n=4 for the registry-watch row, n=10 for curl root latency). Median with min/max.
+  <b>There is no p95 in this data and none should be quoted.</b></li>
+  <li>Variance is large on some metrics: cold FCP ranged 312–680 ms, cold first-poster-tile 676–4211 ms. Single
+  figures for those are not meaningful.</li>
+  <li>Budget row 3's threshold was authored for <code>python3 -m http.server</code>; we judged it against a CDN. The
+  comparison is indicative, not a pass against the written budget.</li>
+  <li><code>transferSize</code> reads 0 both for cache hits <em>and</em> for cross-origin responses lacking
+  <code>Timing-Allow-Origin</code>, so it is <b>not</b> a cache-hit counter. Warm "193 KB" is decompressed-from-cache
+  payload, not bytes off the wire; real warm first-party network cost was ≈ 0.</li>
+  <li>Cold and warm did not render the same workload (7 wall items cold vs 80–200 warm), so the cold→warm delta mixes
+  a cache effect with a different amount of work.</li>
+  <li>The service worker was verified <b>functionally and locally</b>, never live. The stale-visit saving is a
+  <b>projection from two measured endpoints</b>, not an observed live improvement.</li>
+  <li><b>Not measured:</b> offline behaviour end-to-end, throttled/mobile/low-end devices, a non-headless run, a
+  second network vantage point, budget row 11 (60 fps / zoom skew), and row 8's repo-side audit.</li>
+  <li>Measurements were taken while other agents edited the source tree. The <b>deployed</b> site did not change
+  during the live measurement window, so the live numbers are unaffected; source-file statements are pinned to the
+  sha256 values recorded above.</li>
+</ul>
+
+<footer>
+  honestporn · lane <b>iris-perf</b> · 2026-08-23 03:09 +0300 · 20 Opus agents / 5 parallel workflows ·
+  raw evidence in <code>.grand/perf/</code> · service worker built + locally verified, <b>NOT yet live</b> ·
+  no push, no publish — all local.
+</footer>
+
+</div>
