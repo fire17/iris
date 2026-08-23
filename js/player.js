@@ -40,7 +40,7 @@
 
   // ------------------------------------------------------------------- styles
   var CSS = [
-    '.plr-root{position:fixed;inset:0;z-index:99999;background:#08090b;color:#e9edf2;',
+    '.plr-root{position:fixed;inset:0;z-index:99999;background:#08090b;color:#e9edf2;touch-action:none;',
     'font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;',
     '-webkit-font-smoothing:antialiased;opacity:0;overflow:hidden;',
     /* one accent + two easings drive the entire sheet, so the chrome moves as one
@@ -265,7 +265,7 @@
     'pointer-events:none;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;',
     'color:#e9edf2;contain:layout paint;will-change:transform,opacity}',
     '.plr-pv-wrap.plr-pv-in{opacity:1;transform:none}',
-    '.plr-pv-wrap.plr-pv-glance{pointer-events:auto;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(var(--accRGB),.4)}',
+    '.plr-pv-wrap.plr-pv-glance{pointer-events:auto;touch-action:none;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(var(--accRGB),.4)}',
     '.plr-pv-wrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block}',
     '.plr-pv-wrap.plr-pv-glance video{object-fit:contain}',
     '.plr-pv-poster{position:absolute;inset:0;background:#0a0c0f center/cover no-repeat;transition:opacity .3s var(--e4);opacity:1}',
@@ -724,6 +724,7 @@
     } else {
       route();
     }
+    fireTier();
     return S;
   }
 
@@ -883,6 +884,15 @@
     on(window, 'pagehide', function () { save(); });
     on(window, 'beforeunload', function () { save(); });
 
+    /* fullscreen tier gestures: pinch-in / wheel-out -> unwind to extended/canvas
+       by recorded origin (escBack), gated to sessions that HAVE an unwind origin
+       so a fresh-opened video is a no-op instead of closing. pinch-out / wheel-in
+       -> native browser fullscreen. */
+    S.detachTier = attachTierGestures(S.el.root, {
+      down: function () { if (S) hpRequestBack(); },   /* history-correct collapse (fs -> extended/canvas) */
+      up:   function () { toggleFs(); }
+    });
+
     kick();
   }
 
@@ -1010,13 +1020,13 @@
     if (!S) return;
     var t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
-      if (e.key === 'Escape') { escBack(); e.preventDefault(); }
+      if (e.key === 'Escape') { hpRequestBack(); e.preventDefault(); }
       return;
     }
     var v = S.el.video, k = e.key;
     if (k === 'Escape') {
       if (document.fullscreenElement || document.webkitFullscreenElement) return; // browser exits fs first
-      escBack(); e.preventDefault(); return;
+      hpRequestBack(); e.preventDefault(); return;
     }
     if (S.card) return; // modal card owns the rest
     if (k === ' ' || k === 'Spacebar' || k === 'k') { toggle(true); e.preventDefault(); }
@@ -2290,6 +2300,7 @@
       v.load();
     } catch (e) {}
 
+    if (s.detachTier) { try { s.detachTier(); } catch (e) {} s.detachTier = null; }
     for (var i = 0; i < s.off.length; i++) { try { s.off[i](); } catch (e) {} }
     for (var j = 0; j < s.timers.length; j++) { try { s.timers[j](); } catch (e) {} }
     clearTimeout(s.idle);
@@ -2305,6 +2316,7 @@
     S = null;
     if (s.onClose) { try { s.onClose(); } catch (e) {} }
     if (typeof Player.onclose === 'function') { try { Player.onclose(); } catch (e) {} }
+    fireTier();
   }
 
   // ============================================================ inline preview
@@ -2362,6 +2374,7 @@
     p.video = null; p.hls = null; p.destroyed = true;
     for (var i = 0; i < p.timers.length; i++) { try { clearTimeout(p.timers[i]); } catch (e) {} }
     if (p.keyH) { try { document.removeEventListener('keydown', p.keyH, true); } catch (e) {} }
+    if (p.detachTier) { try { p.detachTier(); } catch (e) {} p.detachTier = null; }
     var k = POOL.indexOf(p); if (k >= 0) POOL.splice(k, 1);
     if (GL === p) GL = null;
     try { p.wrap.remove(); } catch (e) {}
@@ -2374,6 +2387,7 @@
     p.destroyed = true;
     for (var i = 0; i < p.timers.length; i++) { try { clearTimeout(p.timers[i]); } catch (e) {} }
     if (p.keyH) { try { document.removeEventListener('keydown', p.keyH, true); } catch (e) {} }
+    if (p.detachTier) { try { p.detachTier(); } catch (e) {} p.detachTier = null; }
     if (p.hls) { try { p.hls.destroy(); } catch (e) {} p.hls = null; }
     if (p.video) {
       var v = p.video; p.video = null;
@@ -2543,9 +2557,9 @@
       if (ow) { try { ow(t); } catch (e2) {} }
     });
     if (mode === 'glance') {
-      p.keyH = function (e) { if (e.key === 'Escape') { e.preventDefault(); glanceStopFn(); } };
+      p.keyH = function (e) { if (e.key === 'Escape') { e.preventDefault(); hpRequestBack(); } };
       document.addEventListener('keydown', p.keyH, true);
-      scrim.addEventListener('click', function () { glanceStopFn(); });
+      scrim.addEventListener('click', function () { hpRequestBack(); });
       /* double-click the extended view -> fullscreen, carrying the live media */
       var goFull = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2554,6 +2568,12 @@
         if (ow) { try { ow(t); } catch (e2) {} }
       };
       wrap.addEventListener('dblclick', goFull);
+      /* pinch-out / wheel-in -> fullscreen (adopt via goFull); pinch-in / wheel-out
+         -> canvas (glanceStopFn hands media back to the pool tile). Feed alive. */
+      p.detachTier = attachTierGestures(wrap, {
+        up:   function () { goFull(); },
+        down: function () { hpRequestBack(); }   /* history-correct collapse (glance -> canvas) */
+      });
     }
 
     /* ADOPTION: media handed over from another preview/glance keeps playing in this
@@ -2716,9 +2736,55 @@
 
   /* Open/replace the glance singleton (a bigger centered look), kept SEPARATE
      from the pool so it never evicts a preview and a preview never evicts it. */
+  /* Free-zoom across tiers. One gesture = ONE latched transition; pinch by
+     distance ratio, trackpad/mouse by wheel (ctrl-wheel = pinch). Lives ONLY on
+     the overlay elements (glance wrap z 99990, fullscreen root z 99999), never
+     on the wall canvas, so the wall's own 0.35..400 pinch/wheel zoom is
+     untouched. Every transition reuses the existing adoption chain -> feed stays
+     alive. Returns a detach fn. */
+  function attachTierGestures(el, handlers) {
+    var pts = new Map(), base = 0, latched = false, wheelAcc = 0, coolT = 0;
+    function cooldown() { if (coolT) clearTimeout(coolT); coolT = setTimeout(function () { coolT = 0; }, 380); }
+    function onDown(e) {
+      pts.set(e.pointerId, e);
+      if (pts.size === 2) { var a = Array.from(pts.values());
+        base = Math.hypot(a[0].clientX - a[1].clientX, a[0].clientY - a[1].clientY); latched = false; }
+    }
+    function onMove(e) {
+      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e);
+      if (pts.size === 2 && base > 0 && !latched) { var a = Array.from(pts.values());
+        var r = Math.hypot(a[0].clientX - a[1].clientX, a[0].clientY - a[1].clientY) / base;
+        if (r > 1.25) { latched = true; if (handlers.up) handlers.up(); }
+        else if (r < 0.8) { latched = true; if (handlers.down) handlers.down(); } }
+    }
+    function onUp(e) { pts['delete'](e.pointerId); if (pts.size < 2) { base = 0; latched = false; } }
+    function onWheel(e) {
+      if (coolT) return;                                   /* 380ms latch: one gesture, one tier */
+      /* desktop mouse: a bare scroll must NOT flip tiers — require a real trackpad
+         pinch (ctrlKey). Coarse pointers (touch) rarely emit wheel; leave them open. */
+      var coarse = false; try { coarse = matchMedia('(pointer:coarse)').matches; } catch (e2) {}
+      if (!coarse && !e.ctrlKey) return;
+      if (!e.ctrlKey && Math.abs(e.deltaY) < 2) return;
+      wheelAcc += e.deltaY;
+      if (wheelAcc > 90) { e.preventDefault(); wheelAcc = 0; cooldown(); if (handlers.down) handlers.down(); }
+      else if (wheelAcc < -90) { e.preventDefault(); wheelAcc = 0; cooldown(); if (handlers.up) handlers.up(); }
+    }
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return function detach() {
+      el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp); el.removeEventListener('pointercancel', onUp);
+      el.removeEventListener('wheel', onWheel); if (coolT) clearTimeout(coolT);
+    };
+  }
+
   function openGlance(opts) {
     glanceStopFn();
     GL = makeEntry('glance', opts || {});
+    fireTier();
     return GL;
   }
 
@@ -2734,6 +2800,32 @@
   }
 
   // ---------------------------------------------------------------- public API
+  /* ===== tier stack (mobile BACK = Esc). S, GL, escBack, glanceStopFn all in scope. =====
+     tierDepth = number of BACK/Esc presses to reach canvas:
+       fullscreen-from-glance = 2, fullscreen-from-canvas = 1, glance-only = 1, none = 0. */
+  function tierDepth() {
+    if (S)  { var ao = S.adoptOrigin; return (ao && ao.level === 'glance') ? 2 : 1; }
+    if (GL) return 1;
+    return 0;
+  }
+  function overlayOpen() { return !!S || !!GL; }
+  /* the ONE function Esc AND popstate share. Collapses exactly one tier, feed kept alive. */
+  function collapseOne() {
+    if (S)  { escBack();      return true; }   /* fs -> glance OR canvas (S.adoptOrigin decides) */
+    if (GL) { glanceStopFn(); return true; }   /* glance -> canvas tile (media handed to POOL) */
+    return false;
+  }
+  /* Esc / on-screen close ASK the host to drive history.back(); real collapse happens in popstate.
+     Fallback to direct collapse if used standalone (no history host wired). */
+  function hpRequestBack() {
+    if (typeof Player.requestBack === 'function') { Player.requestBack(); return; }
+    collapseOne();
+  }
+  /* notify host after any tier open/close so it can push/pop guard history entries */
+  function fireTier() {
+    if (typeof Player.onTierChange === 'function') { try { Player.onTierChange(); } catch (e) {} }
+  }
+
   var Player = {
     play: function (opts) {
       opts = opts || {};
@@ -2749,6 +2841,12 @@
     },
     close: function () { destroy(); },
     isOpen: function () { return !!S; },
+    /* tier stack for mobile BACK = Esc; app.js owns the history mirror via these seams. */
+    tierDepth: tierDepth,
+    overlayOpen: overlayOpen,
+    collapseOne: collapseOne,
+    onTierChange: null,   /* app.js sets this (debounced history reconcile) */
+    requestBack: null,    /* app.js sets this (drives history.back) */
     /* continue-watching helpers, shared with app.js via localStorage key 'cw' */
     cw: cwAll,
     cwGet: cwGet,

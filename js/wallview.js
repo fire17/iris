@@ -634,6 +634,12 @@ function WallView(canvas, opts) {
      short window — a lone tap fires expand after it, a quick second tap cancels it
      and flies in to fullscreen instead. */
   var DBL_MS = 280, tapTimer = null, lastTapT = 0, lastTapI = -1;
+  /* touch has no hover -> a stationary long-press on a live tile starts its
+     preview via the SAME path desktop hover uses. Fired only for previewable
+     tiles; app.js decides what to do. Any finger travel > 8px cancels it. */
+  var LONGPRESS_MS = opts.longPressMs || 450;
+  var LP_MOVE_CANCEL = 8;   /* px of finger travel that cancels a charging press */
+  var cbLongPress = typeof opts.onLongPress === "function" ? opts.onLongPress : null;
   var cbDeselect = typeof opts.onDeselect === "function" ? opts.onDeselect : null;
   var cbLayout = typeof opts.onLayout === "function" ? opts.onLayout : null;
   var pendingNotify = null, pendingNotifyAt = 0;
@@ -1217,6 +1223,9 @@ function WallView(canvas, opts) {
     livePulseOnly = false;
     if (liveOnScreen && !REDUCED) { livePulseOnly = !active; active = true; }
 
+    /* keep the loop alive while a long-press ring is charging */
+    if (lpCharging) active = true;
+
     return active;
   }
 
@@ -1363,7 +1372,24 @@ function WallView(canvas, opts) {
     ctx.globalAlpha = 1;
     if (BADGES) drawBadges(badgeQ);
     ctx.globalAlpha = 1;
+    drawLongPressRing();
+    ctx.globalAlpha = 1;
     if (SHOW_CHROME) drawChrome();
+  }
+
+  /* screen-space charging ring over the long-pressed live tile */
+  function drawLongPressRing() {
+    if (!lpCharging || lpTileI < 0) return;
+    var tl = tiles[lpTileI]; if (!tl || !tl.vis) return;
+    var prog = clamp((performance.now() - lpT0) / LONGPRESS_MS, 0, 1);
+    var rad = Math.min(tl.dw, tl.dh) * tl.scale * tl.k * 0.30;
+    rad = Math.max(18, Math.min(64, rad));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.save();
+    ctx.beginPath(); ctx.arc(tl.sx, tl.sy, rad, 0, Math.PI * 2);
+    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(9,9,12,0.55)"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(tl.sx, tl.sy, rad, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
+    ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.strokeStyle = LIVE_COLOR; ctx.stroke();
+    ctx.restore();
   }
 
   /* ==================================================================== */
@@ -1763,6 +1789,28 @@ function WallView(canvas, opts) {
   var pointers = new Map();
   var pinchDist = 0;
   var scrubOffset = 0;
+  /* long-press-to-preview state (touch/pen only) */
+  var lpTimer = 0, lpTileI = -1, lpT0 = 0, lpCharging = false, lpFired = false;
+  var lpPointerId = -1, lpStartX = 0, lpStartY = 0;
+
+  function cancelLongPress() {
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = 0; }
+    if (lpCharging) { lpCharging = false; kick(); }
+    lpTileI = -1;
+  }
+  function armLongPress(e, p, ti) {
+    var tl = tiles[ti];
+    if (!tl || !liveThumbBase(tl)) return;        /* previewable/live tiles only */
+    lpTileI = ti; lpT0 = performance.now(); lpCharging = true; lpFired = false;
+    lpPointerId = e.pointerId; lpStartX = p.x; lpStartY = p.y;
+    lpTimer = setTimeout(function () {
+      lpTimer = 0; lpCharging = false; lpFired = true;
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
+      if (cbLongPress && items[ti]) { try { cbLongPress(items[ti], ti); } catch (er2) {} }
+      kick();
+    }, LONGPRESS_MS);
+    kick();
+  }
 
   function localPt(e) {
     var r = canvas.getBoundingClientRect();
@@ -1802,6 +1850,7 @@ function WallView(canvas, opts) {
       var arr = Array.from(pointers.values());
       pinchDist = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
       dragging = false;
+      cancelLongPress();
       return;
     }
 
@@ -1828,6 +1877,11 @@ function WallView(canvas, opts) {
     camVel.x = camVel.y = 0; camTween = null;
     try { canvas.setPointerCapture(e.pointerId); } catch (err2) {}
     canvas.style.cursor = "grabbing";
+    /* desktop mouse keeps real hover previews; only touch/pen arm the press */
+    if (e.pointerType !== "mouse") {
+      var lti = tileAt(p);
+      if (lti >= 0) armLongPress(e, p, lti);
+    }
     kick();
   }
 
@@ -1836,6 +1890,12 @@ function WallView(canvas, opts) {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, p);
     pumpChromeIdle();
 
+    /* a charging long-press dies the moment the finger travels — it must never
+       fight a pan or pinch */
+    if (lpCharging && e.pointerId === lpPointerId) {
+      if (Math.abs(p.x - lpStartX) + Math.abs(p.y - lpStartY) > LP_MOVE_CANCEL) cancelLongPress();
+    }
+
     /* pinch */
     if (pointers.size === 2) {
       var arr = Array.from(pointers.values());
@@ -1843,6 +1903,7 @@ function WallView(canvas, opts) {
       var mx = (arr[0].x + arr[1].x) / 2, my = (arr[0].y + arr[1].y) / 2;
       if (pinchDist > 0) zoomAt(mx, my, d / pinchDist);
       pinchDist = d;
+      cancelLongPress();
       return;
     }
 
@@ -1894,6 +1955,15 @@ function WallView(canvas, opts) {
   }
 
   function onPointerUp(e) {
+    /* a FIRED long-press consumes its own release so lift never also opens the
+       single-tap EXTENDED. Keyed on lpPointerId, before the dragId guard. */
+    if (e.pointerId === lpPointerId) {
+      var fired = lpFired; cancelLongPress(); lpFired = false; lpPointerId = -1;
+      if (fired) {
+        pointers.delete(e.pointerId); dragging = false; dragId = -1;
+        canvas.style.cursor = "grab"; kick(); return;
+      }
+    }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchDist = 0;
     if (e.pointerId !== dragId) return;
@@ -1924,6 +1994,7 @@ function WallView(canvas, opts) {
   }
 
   function onPointerLeave() {
+    cancelLongPress();
     arrowLT = arrowRT = 0;
     if (hoverTile >= 0 && tiles[hoverTile]) {
       tiles[hoverTile].hover = 0; hoverTile = -1; applyTargets();
@@ -2153,6 +2224,7 @@ function WallView(canvas, opts) {
   this.onSelect = function (cb) { cbSelect = typeof cb === "function" ? cb : null; return this; };
   this.onHover = function (cb) { cbHover = typeof cb === "function" ? cb : null; return this; };
   this.onExpand = function (cb) { cbExpand = typeof cb === "function" ? cb : null; return this; };
+  this.onLongPress = function (cb) { cbLongPress = typeof cb === "function" ? cb : null; return this; };
   this.onDeselect = function (cb) { cbDeselect = typeof cb === "function" ? cb : null; return this; };
   this.onLayout = function (cb) { cbLayout = typeof cb === "function" ? cb : null; return this; };
   this.focusIndex = function (i) { select(i | 0, false); return this; };
@@ -2270,7 +2342,8 @@ function WallView(canvas, opts) {
     cache.clear(); queue.length = 0; hiLRU.length = 0;
     tiles = []; items = []; order = []; cur = null;
     if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
-    cbSelect = cbHover = cbDeselect = cbLayout = cbExpand = null;
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = 0; }
+    cbSelect = cbHover = cbDeselect = cbLayout = cbExpand = cbLongPress = null;
     canvas.style.cursor = "";
   };
   this.layouts = LAYOUTS;

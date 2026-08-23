@@ -74,6 +74,18 @@ var homeCache   = new Map();   /* catalog key -> [meta]  (instant home revisit) 
 var metaCache   = new Map();   /* type:id -> meta */
 var searchTimer = null;
 
+/* history-driven overlay tier stack (mobile BACK = Esc). Player owns tier truth;
+   nav.depth just counts the same-URL guard entries we pushed. */
+var nav = { depth: 0, syncing: false, suppress: false, pending: false };
+
+/* --- viewport signals: 640px MUST equal the CSS breakpoint so JS and CSS agree.
+   isMobile() drives the shell chrome + wall construction opts; isTouch() is the
+   input signal. matchMedia is guarded — some embed contexts lack it. */
+var MQ_MOBILE = null, MQ_COARSE = null;
+try { MQ_MOBILE = matchMedia("(max-width: 640px)"); MQ_COARSE = matchMedia("(pointer: coarse)"); } catch (e) {}
+function isMobile() { return !!(MQ_MOBILE && MQ_MOBILE.matches); }
+function isTouch()  { return !!(MQ_COARSE && MQ_COARSE.matches) || ("ontouchstart" in window); }
+
 /* ------------------------------------------------------------------ dom */
 var D = {};
 function $(id) { return document.getElementById(id); }
@@ -189,6 +201,7 @@ document.addEventListener("DOMContentLoaded", boot);
 
 function boot() {
   cacheDom();
+  document.documentElement.classList.toggle("is-mobile", isMobile());
   S.library = lsGet(LS_LIB, {});
   S.cont    = cwList();
 
@@ -200,6 +213,7 @@ function boot() {
 
   renderContinue();
   expose();
+  bindHistory();   /* Player is loaded (both scripts defer; player.js runs before DOMContentLoaded) */
 
   if (window.Addons) { start(); }
   else { openGate(); pollModules(); }
@@ -270,6 +284,15 @@ function start() {
   }
   window.addEventListener("hashchange", route);
   window.addEventListener("resize", onResize);
+  /* Live retune across the 640px breakpoint (tablet rotate / resized desktop).
+     setRows() is the cheap LIVE knob and covers the main feel change; cellH/
+     chrome are construction-time only, so a device that crosses the breakpoint
+     mid-session keeps its original cellH/chrome until reload. Real phones never
+     cross 640px mid-session, so no reconstruct path — accepted limitation. */
+  if (MQ_MOBILE && MQ_MOBILE.addEventListener) MQ_MOBILE.addEventListener("change", function () {
+    document.documentElement.classList.toggle("is-mobile", isMobile());
+    if (S.wall && S.wallMode === "canvas") { call(S.wall, "setRows", isMobile() ? 2 : 3); call(S.wall, "resize"); }
+  });
   /* a wheel/trackpad zoom/pan keeps the wall live under anchored previews — the
      pin loop reprojects each pooled overlay onto its tile through the transform,
      so DON'T tear the pool; just make sure the follow loop is running. */
@@ -336,7 +359,7 @@ function route() {
 function setView(name) {
   S.view = name;
   if (D.app) D.app.dataset.view = name;
-  document.querySelectorAll(".navbtn").forEach(function (b) {
+  document.querySelectorAll(".navbtn, .tabbtn").forEach(function (b) {
     b.classList.toggle("on", b.dataset.nav === name);
   });
 }
@@ -360,6 +383,63 @@ function goBack() {
   /* Prefer real history so the browser's back button stays coherent. */
   if (history.length > 1) history.back();
   else location.hash = "#board";
+}
+
+/* ============================================ mobile BACK = Esc (History API) */
+/* Sync guard entries to the player's live tier depth (both directions). Opens push
+   same-URL guards (hash unchanged -> no hashchange, route() undisturbed); direct
+   closes drop the now-stale guards via a suppressed programmatic go(-n). */
+function reconcileHistory() {
+  if (!window.Player || typeof Player.tierDepth !== "function") return;
+  var d = Player.tierDepth();
+  while (nav.depth < d) {                 /* OPENS: push same-URL guard entries */
+    nav.depth++;
+    try { history.pushState({ hpTier: nav.depth }, "", location.href); } catch (e) {}
+  }
+  if (nav.depth > d) {                    /* DIRECT closes (x / scrim / supersede): drop stale guards */
+    var back = nav.depth - d;
+    nav.depth = d;
+    nav.suppress = true;                  /* the resulting popstate is programmatic, not a user back */
+    try { history.go(-back); } catch (e) { nav.suppress = false; }
+  }
+}
+/* debounced: collapse all intra-play() churn (pvStopAll+destroy+open) into one reconcile */
+function onTierChange() {
+  if (nav.syncing || nav.pending) return;
+  nav.pending = true;
+  Promise.resolve().then(function () { nav.pending = false; reconcileHistory(); });
+}
+/* THE single collapse driver for BACK / edge-swipe / Esc-via-requestBack */
+function onPopState(e) {
+  if (nav.suppress) { nav.suppress = false; return; }
+  var target = (e && e.state && typeof e.state.hpTier === "number") ? e.state.hpTier : 0;
+  if (window.Player && Player.overlayOpen && Player.overlayOpen()) {
+    nav.syncing = true;                   /* block onTierChange re-entry while collapsing */
+    var guard = 0;
+    while (Player.tierDepth() > target && Player.overlayOpen() && guard++ < 6) Player.collapseOne();
+    nav.syncing = false;
+    nav.depth = target;
+    return;                               /* overlay collapse only; hash unchanged so route() not needed */
+  }
+  nav.depth = target;                     /* no overlay open -> real hash nav; hashchange fires route() */
+}
+function bindHistory() {
+  window.addEventListener("popstate", onPopState);
+  if (window.Player) {
+    Player.onTierChange = onTierChange;
+    Player.requestBack = function () {    /* Esc / scrim -> drive the SAME popstate collapse path */
+      if (nav.depth > 0) { try { history.back(); } catch (e) {} }
+      else if (Player.overlayOpen && Player.overlayOpen() && Player.collapseOne) Player.collapseOne();
+    };
+  }
+  /* refresh/deep-link INSIDE an overlay: the live tier is memory-only and now gone.
+     Normalize the current entry to base so BACK isn't stuck popping a phantom guard;
+     the hash still drives the view. */
+  try {
+    if (history.state && typeof history.state.hpTier === "number" && history.state.hpTier > 0)
+      history.replaceState(null, "", location.href);
+  } catch (e) {}
+  nav.depth = 0;
 }
 
 /* ================================================================== wall */
@@ -392,11 +472,21 @@ function initWall() {
   if (S.wall || !D.wall) return;
   if (window.WallView) {
     try {
-      S.wall = new window.WallView(D.wall, { layout: "wall", rows: 3, background: "#050506" });
+      /* Desktop path unchanged. On phones: fewer + taller tiles (portrait-feed
+         feel), tighter gaps, and chrome OFF — the desktop WALL/HERO/SPIRAL/
+         CATALOG switcher + arrows + scrubber give way to the tab bar + native
+         pinch/pan, and the wall reclaims its 56px CHROME_H band for the canvas.
+         cellH 260 -> CELL_W=round(260*2/3)=173, PITCH_X~199 -> ~2 cols at 390px.
+         zoomMin/zoomMax stay default so the pinch range is intact; every
+         single/double-tap disambiguation stays in wallview (untouched). */
+      var wallOpts = { layout: "wall", rows: 3, background: "#050506" };
+      if (isMobile()) { wallOpts.rows = 2; wallOpts.cellH = 260; wallOpts.gapX = 26; wallOpts.gapY = 30; wallOpts.chrome = false; }
+      S.wall = new window.WallView(D.wall, wallOpts);
       S.wallMode = "canvas";
       call(S.wall, "onSelect", onWallSelect);
       call(S.wall, "onHover", onWallHover);
       call(S.wall, "onExpand", onWallExpand);
+      call(S.wall, "onLongPress", onWallLongPress);
       camRestore();
       camSaverStart();
       show(D.wall, true);
@@ -462,6 +552,17 @@ function onWallExpand(a) {
       Player.expand({ key: tKey, live: true, onWatch: function (t) { watchResolved({ url: t.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, t); } });
     } else if (id) { location.hash = "#detail/" + enc(type) + "/" + enc(id); }
   });
+}
+/* Touch has no hover -> live previews never auto-start on mobile. A ~450ms
+   stationary long-press on a live cam tile starts its pool preview via the SAME
+   path desktop hover uses. The wall only fires this for previewable/live tiles,
+   so no guard needed here beyond the open-player check. */
+function onWallLongPress(a, idx) {
+  var it = (typeof a === "number") ? S.wallList[a] : a;
+  var i  = (typeof idx === "number") ? idx : (typeof a === "number" ? a : -1);
+  if (!it || i < 0) return;
+  if (window.Player && Player.isOpen && Player.isOpen()) return;
+  previewHover(it, i);
 }
 /* Contract: onHover(cb) calls cb(item, index) — the index is the SECOND
    argument; the item has no .index; cb(null, -1) means "nothing hovered". */
@@ -2591,6 +2692,16 @@ function bindChrome() {
     cwWrite([]);
     toast("Continue watching cleared.", "info");
   });
+
+  /* Home/Board/Settings tabs are anchors (hashchange routes + closes overlays).
+     The Search tab is a <button> with no href — wire it to the search view. */
+  var stab = document.querySelector('.tabbtn[data-nav="search"]');
+  if (stab) stab.addEventListener("click", function () {
+    setView("search");
+    closeOverlays();
+    show(D.catalogbar, false);
+    if (D.search_input) D.search_input.focus();
+  });
 }
 
 function focusStage() {
@@ -2642,8 +2753,8 @@ function isTyping(t) {
 
 function bindKeys() {
   document.addEventListener("keydown", function (e) {
-    /* the player owns the keyboard while it is up */
-    if (window.Player && window.Player.isOpen && window.Player.isOpen()) return;
+    /* the player owns the keyboard while ANY tier is up (fullscreen OR extended/glance) */
+    if (window.Player && ((Player.isOpen && Player.isOpen()) || (Player.overlayOpen && Player.overlayOpen()))) return;
 
     if (e.key === "/" && !isTyping(e.target)) {
       e.preventDefault();

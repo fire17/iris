@@ -33,6 +33,7 @@
 
   --topbar-h: 56px;
   --catbar-h: 48px;
+  --tabbar-h: 56px;
 
   --shadow:    0 8px 30px rgba(0,0,0,.55);
   --shadow-lg: 0 24px 70px rgba(0,0,0,.7);
@@ -100,6 +101,10 @@ img { display: block; max-width: 100%; }
      boundary — keep it honest and low. */
   min-width: 320px;
 }
+
+/* Bottom tab nav is a phone-only surface: hidden off-mobile, and #app's
+   grid-template-areas omits its row on desktop so it reserves no space. */
+.tabbar { display: none; }
 
 /* =============================== topbar ================================= */
 #topbar {
@@ -479,6 +484,8 @@ img { display: block; max-width: 100%; }
 }
 .overlay[hidden] { display: none; }
 @keyframes overlay-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* mobile presents overlays as bottom sheets (applied only inside the <=640px block) */
+@keyframes overlay-sheet-in { from { opacity: .4; transform: translateY(100%); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .overlay { animation: none; } }
 
 .overlay-close {
@@ -1007,6 +1014,40 @@ img.d-poster.loaded { opacity: 1; }
 
 /* ============================== <= 640px ================================= */
 @media (max-width: 640px) {
+  /* ---- app-shell grid gains a real 5th row for the tab bar --------------
+     #stage becomes 1fr and shrinks by the tab-bar row, so the canvas resizes
+     clean (wall ResizeObserver repaints) with no overlap. Grid areas add
+     "tabnav"; #detail/#settings/#toasts are fixed/absolute and ignore the grid. */
+  #app {
+    grid-template-rows: var(--topbar-h) auto auto 1fr auto;
+    grid-template-areas: "top" "catbar" "cw" "stage" "tabnav";
+  }
+  .topnav { display: none; }   /* Home/Board/Settings now live in the tab bar */
+  .tabbar {
+    grid-area: tabnav; display: flex; align-items: stretch;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+    background: rgba(13,13,15,.92);
+    -webkit-backdrop-filter: saturate(160%) blur(14px); backdrop-filter: saturate(160%) blur(14px);
+    border-top: 1px solid var(--line-soft); z-index: 45;
+  }
+  .tabbtn {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: 0; color: var(--fg-3); text-decoration: none;
+    font: 550 10px/1 var(--font); cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: color .18s var(--ease);
+  }
+  /* the icon carries the tactile press: a quick scale-down on tap reads as a
+     real button on a phone, where there is no hover to lean on */
+  .tabbtn svg { width: 22px; height: 22px; transition: transform .12s var(--ease); }
+  .tabbtn.on { color: var(--accent); }
+  .tabbtn:active { background: var(--bg-2); }
+  .tabbtn:active svg { transform: scale(.9); }
+  /* toasts (z-index 120) must sit ABOVE the tab bar (z-index 45), not behind it */
+  .toasts { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px); }
+
   /* board chrome: same two rows, tighter bands, so the wall keeps the screen */
   .catalogbar { gap: 8px; padding-top: 6px; padding-bottom: 6px; }
   .pills { gap: 5px; scroll-padding-inline: 8px; }
@@ -1029,9 +1070,12 @@ img.d-poster.loaded { opacity: 1; }
      Bottom offset still clears the wall's 56px chrome strip
      (js/wallview.js:26 CHROME_H) — a trust surface never covers another
      lane's controls. */
+  /* wall chrome is OFF on mobile (initWall opts, app.js), so the ledger no
+     longer clears a 56px CHROME_H strip — and #stage now floats above the tab
+     bar (its own grid row), so the dock only needs to clear the stage floor. */
   .trustdock {
     left: max(10px, env(safe-area-inset-left));
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: 12px;
     max-width: calc(100% - 20px);
   }
   .trustdock.open {
@@ -1078,6 +1122,15 @@ img.d-poster.loaded { opacity: 1; }
   .pv-row > span:first-child { width: 68px; }
   .datarow { gap: 14px 18px; padding: 12px; }
   .datarow .btn { margin-left: 0; }
+
+  /* ---- overlays present as native sheets --------------------------------
+     Desktop keeps the 10px settle (overlay-in). On a phone #detail/#settings
+     are full-screen fixed panels, so sliding them up from the bottom edge is
+     the "present a modal" gesture every app uses — the wall stays visible
+     underneath for the fraction of a second the sheet travels. The global
+     prefers-reduced-motion block clamps this to ~0ms, so it degrades to an
+     instant swap for motion-sensitive users. */
+  .overlay { animation: overlay-sheet-in .28s var(--ease); }
 }
 
 /* ============================== <= 500px ================================= */
