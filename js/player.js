@@ -1458,12 +1458,14 @@
      references — so the room played silent. The sibling audio chunklist shares the same
      path, numeric id and session param, and the edge serves it CORS-open. Probe it and
      synthesize a two-line master that binds video + audio. No resolver needed. */
-  var CB_VCHUNK = /^(https:\/\/[^/]*\.live\.mmcdn\.com\/.*\/)chunklist_\d+_video_(\d+[^?]*\.m3u8)(\?.*)?$/;
+  var CB_VCHUNK = /^(https:\/\/[^/]*\.live\.mmcdn\.com\/.*\/)chunklist_(\d+)_video_(\d+[^?]*\.m3u8)(\?.*)?$/;
   function cbMasterFor(url) {
     var m = CB_VCHUNK.exec(url);
     if (!m) return Promise.resolve(null);
-    var tries = [];
-    for (var i = 9; i >= 0; i--) tries.push(m[1] + 'chunklist_' + i + '_audio_' + m[2] + (m[3] || ''));
+    /* audio renditions sit right after the video ones (video 0..N, audio N+1, N+2) —
+       probe ascending from just above OUR video index; first hit is almost always it */
+    var vi = parseInt(m[2], 10) || 0, tries = [];
+    for (var i = vi + 1; i <= vi + 6 && i <= 12; i++) tries.push(m[1] + 'chunklist_' + i + '_audio_' + m[3] + (m[4] || ''));
     var probe = function (k) {
       if (k >= tries.length) return Promise.resolve(null);
       return fetch(tries[k], { cache: 'no-store' }).then(function (r) {
