@@ -50,6 +50,7 @@ Built 2026-08-23, gear <b>LEAN</b> throughout (no nested agents, no workflows sp
   <span class="pill ok">build <b>exit 0</b></span>
   <span class="pill ok">nested agents <b>0</b></span>
   <span class="pill warn">playback emits <b>not yet exercised live</b></span>
+  <span class="pill ok">collector seam <b>cross-proven</b></span>
   <span class="pill warn">deployed site <b>not verified</b></span>
 </div>
 
@@ -178,6 +179,33 @@ events received live: ["engine","join","view","state","ack","pong","ack"]
 <p>Measured broker round trip on <code>ping</code>: <b>148 ms</b>. The <code>leave</code> line is the
 tab closing — the pagehide path fires too.</p>
 
+<h3>Cross-implementation seam — the collector lane's own sender driving this client</h3>
+<p>The one gap that mattered most at first close: my client and the collector's
+<code>beta/cmd.mjs</code> had never been run against each other, and a sign-input mismatch fails
+silently by design. Now run, with <code>IRIS_BETA_HOME</code> pointed at a throwaway store so the
+live one was never written (the copied private keys were deleted afterwards):</p>
+<pre>--- node beta/cmd.mjs 61d7c003 ping ---
+2026-08-23T22:45:11.883Z &lt;- 61d7c003 pong     {"rtt":270}
+2026-08-23T22:45:11.884Z &lt;- 61d7c003 ack      {"cmd":"ping","ok":true,"detail":"pong"}
+--- node beta/cmd.mjs 61d7c003 snapshot ---
+2026-08-23T22:45:17.511Z &lt;- 61d7c003 state    {"playing":false,"engine":"idle","view":"home","dropped":0,...}
+--- node beta/cmd.mjs 61d7c003 toast ---
+2026-08-23T22:45:23.051Z &lt;- 61d7c003 ack      {"cmd":"toast","ok":true,"detail":"shown"}
+--- node beta/cmd.mjs 61d7c003 heal ---
+2026-08-23T22:45:28.613Z &lt;- 61d7c003 ack      {"cmd":"heal","ok":false,"detail":"failed"}
+<b>RESULT: ALL PASS (cross-implementation seam)</b></pre>
+<p><b>One interop detail worth keeping.</b> <code>beta/cmd.mjs</code> sends
+<code>{...body, sig}</code> with no <code>t:'cmd'</code> field. This client accepts a frame whose
+<code>t</code> is absent and rejects only a <em>wrong</em> <code>t</code>. Had that check been
+strict, every command from the real sender would have been refused silently, with no ack. Do not
+tighten it.</p>
+<p><b>DEFECT-3, found by the collector lane and fixed here.</b> <code>join</code> is emitted once;
+if it flushes before a relay is up the frame is gone (QoS0 keeps no history) and the client sits
+in the roster with no <code>cpk</code>, permanently uncommandable — their only remedy was asking
+the human to reload. Every heartbeat now carries <code>cpk</code>, so such a client heals itself
+within 30&nbsp;s. <b>The collector must therefore learn <code>cpk</code> from any event carrying
+it, not only from <code>join</code>.</b></p>
+
 <h3>Gates</h3>
 <pre>$ node --check js/hp-beacon.js js/app.js js/player.js js/errlog.js
 <b>ALL FOUR SYNTAX OK</b>
@@ -206,11 +234,9 @@ absence of any IP-shaped string in a <code>join</code>.</div>
 <li><b>The deployed site.</b> Everything was proven against a local static server. Nothing has
   been pushed — deploys are the orchestrator's call, and nothing leaves this machine without
   fire17's confirmation.</li>
-<li><b>The collector's command sender.</b> <code>beta/cmd.mjs</code> did not exist when this lane
-  finished. The signing path is proven end to end with the real <code>ctrl_priv.jwk</code> by this
-  lane's own harness, against the ruling's byte-exact sign-input, so a conforming CLI will work —
-  but the two implementations have not yet been run against each other. A mismatch fails silently
-  by design (no ack), which is correct and hard to debug, so it is worth checking first.</li>
+<li><s>The collector's command sender.</s> <b>CLOSED</b> — see the cross-implementation section
+  above. Both sides agree byte-for-byte on the ruling's sign-input and the real sender drives this
+  client end to end.</li>
 <li><b>The <code>heal</code> command against a real engine stream.</b> Proven only in its honest
   negative: with no engine session open it acks <code>ok:false</code>. Forcing an actual
   <code>healStream()</code> reconnect on a live client is the single most valuable remaining test.</li>

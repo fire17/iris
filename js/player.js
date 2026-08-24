@@ -1095,6 +1095,33 @@
     }
     S.el.buf.innerHTML = out;
   }
+  /* Whole-film duration can land a few seconds AFTER /play: a non-faststart mp4 hides its
+     length in a trailing moov the engine fetches in the background. Until it arrives, effDur()
+     falls back to <video>.duration (the transcoded-so-far window) and the seek bar reads
+     "position / buffered" with jumps clamped to that window. So when an engine HLS stream
+     starts without a known total, re-poll /play (cheap — the job is cached) until the engine
+     reports dur, then repaint so the full film shows and seeking unlocks the whole timeline. */
+  function refreshDuration() {
+    if (!S || S.viaEngine !== true || S.engineKind !== 'hls') return;
+    if (Number.isFinite(S.durTotal) && S.durTotal > 0) return;
+    var base = S.engineBaseUsed || engineBase();
+    if (!base || S.engineIh == null) return;
+    var tries = 0;
+    var poll = function () {
+      if (!S || S.destroyed) return;
+      if (Number.isFinite(S.durTotal) && S.durTotal > 0) return;   /* already resolved (e.g. by a seek) */
+      if (tries++ >= 6) return;                                     /* bounded: ~2s + 5×4s ≈ 22s */
+      fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+        .then(function (j) {
+          if (!S || S.destroyed) return;
+          var d = j && j.probe && j.probe.dur;
+          if (d && d > 0) { S.durTotal = d; paintTime(); paintBuf(); }
+          else setTimeout(poll, 4000);
+        });
+    };
+    setTimeout(poll, 2000);
+  }
   /* The button and the `m` key act on the EFFECTIVE state (muted OR volume 0),
      never on v.muted alone: with a persisted volume of 0 the old toggle flipped
      v.muted to TRUE on the first click — the icon stayed muted and the stream stayed
@@ -1746,6 +1773,7 @@
                 toast(j.kind === 'hls' ? 'Streaming via ' + where + ': audio → AAC (' + ((j.probe && j.probe.audio) || 'unsupported') + ')'
                                        : 'Streaming via ' + where, 3200);
                 start(j.kind === 'hls' ? 'hls' : 'url', u);
+                refreshDuration();   /* whole-film length may arrive after this first /play */
               } else {
                 if (window.HPBeacon) HPBeacon.emit('play_resolved', { kind: isHls(u) ? 'hls' : 'url', ms: Date.now() - tRoute, engine: viaRunner ? 'runner' : 'local' });
                 toast('Streaming via ' + where, 2600);
@@ -1877,6 +1905,7 @@
       S.durTotal = (j.probe && j.probe.dur) || S.durTotal || 0;
       var url = j.url, kind = j.kind === 'hls' ? 'hls' : 'url';
       S.engineKind = kind;
+      refreshDuration();   /* still-unknown whole-film length may land after this re-resolve */
       /* an hls transcode is 0-based FROM the offset (?t); a direct Range stream is 0-based
          from the file start, so it seeks back to `at` after loading */
       S.streamOffset = (kind === 'hls') ? ((j.offset != null) ? j.offset : Math.floor(at)) : 0;

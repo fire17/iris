@@ -72,6 +72,17 @@
 <li><strong>Privacy.</strong> Nothing derives or stores an IP or precise location; <code>where</code> is the coarse client-declared set and nothing more.</li>
 </ul>
 
+<h2>DEFECT-3 (filed by the verify lane) — not this lane's fix, but there is a free mitigation</h2>
+<p>The root cause is in <code>js/hp-beacon.js</code> and <code>vendor/hp-floor.mjs</code>, neither of which this
+lane owns, so it was not patched here. <code>beta/cmd.mjs</code> is only where the symptom surfaces: a client with no
+<code>cpk</code> cannot be commanded. The collector accepts <code>cpk</code> from <strong>any</strong> event, not only
+<code>join</code> (<code>collector.mjs:178</code>) — so attaching <code>cpk</code> to the heartbeat makes a client
+commandable even when its first join is destroyed.</p>
+<p>Verified live: a stand-in client that never sent <code>join</code> at all, only a heartbeat carrying <code>cpk</code>,
+appeared in the roster with <code>c2: yes</code> and answered a ping —
+<code>&lt;- nojoincl pong {"rtt_ms":253}</code> and <code>&lt;- nojoincl ack {"cmd":"ping","ok":true}</code>.
+<code>cmd.mjs</code>'s refusal message now names DEFECT-3 and both remedies.</p>
+
 <h2>Handoffs</h2>
 <ul>
 <li><strong>Beacon lane:</strong> the two pins are in the lane journal and were relayed live. Re-read any time with <code>node beta/keygen.mjs --print-pub</code> and <code>--print-ctrl-pub</code>. The client's <code>cpk</code> must be an ECDH P-256 public JWK and should arrive in <code>join</code>; command responses come back as ordinary sealed telemetry carrying the <code>nonce</code>.</li>

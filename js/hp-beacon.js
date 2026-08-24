@@ -258,6 +258,11 @@
     }
     out.dropped = dropped;
     if (!keep) dropped = 0;               /* the heartbeat consumes the counter; C2 only peeks */
+    /* DEFECT-3 (collector lane, observed live 2026-08-24): `join` is emitted once, and if it is
+       flushed before any relay is up the frame is lost — QoS0 has no history — leaving the client
+       in the roster with no `cpk`, so it can never be commanded. Repeating cpk on every heartbeat
+       makes that self-healing within 30s instead of requiring the human to reload the page. */
+    if (EPH && EPH.pub) out.cpk = EPH.pub;
     return out;
   }
   function startHb() {
