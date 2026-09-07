@@ -16,6 +16,7 @@
 import net from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
+import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -94,11 +95,31 @@ async function pollJson(url, budgetMs) {
   return false;
 }
 
+/** wait until a binary is runnable (PATH or absolute) — boot steps run CONCURRENTLY with
+    the workflow's background installs, so the tunnel spawn waits for cloudflared here
+    instead of the workflow serializing on its download. */
+async function waitForBin(bin, budgetMs) {
+  const t0 = Date.now();
+  const present = () => {
+    try {
+      if (bin.includes('/')) return fs.existsSync(bin);
+      return (process.env.PATH || '').split(':').some((d) => { try { return d && fs.existsSync(path.join(d, bin)); } catch { return false; } });
+    } catch { return false; }
+  };
+  while (!present() && Date.now() - t0 < budgetMs) await new Promise((r) => setTimeout(r, 300));
+  return present();
+}
+
 async function main() {
   const PORT = process.env.PORT || String(await freePort());
 
-  // 1) engine, INMEM (pure RAM). Child spawn: engine.mjs auto-listens on import.
-  engine = spawn(process.execPath, [path.join(HERE, 'engine.mjs')], {
+  // 1) engine, INMEM (pure RAM). Child spawn: the engine auto-listens on import.
+  //    Prefer the committed single-file BUNDLE (zero npm install — fast even on a fresh
+  //    fork's first run ever); fall back to the raw source + node_modules.
+  const enginePath = ['engine.bundle.mjs', 'engine.mjs']
+    .map((f) => path.join(HERE, f)).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
+  log('engine entry: ' + path.basename(enginePath));
+  engine = spawn(process.execPath, [enginePath], {
     env: { ...process.env, PORT, HP_INMEM: '1', HOST: '127.0.0.1' },
     stdio: ['ignore', 'inherit', 'inherit'],
   });
@@ -108,6 +129,7 @@ async function main() {
   log('engine ready on 127.0.0.1:' + PORT);
 
   // 2) cloudflared quick-tunnel -> public https URL (outbound only).
+  if (!(await waitForBin(CF_BIN, 45000))) { log('cloudflared never appeared'); return shutdown(1); }
   cf = spawn(CF_BIN, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
     { stdio: ['ignore', 'pipe', 'pipe'] });
   let url = null;

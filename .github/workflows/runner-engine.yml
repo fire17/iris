@@ -66,28 +66,19 @@ jobs:
             fi
           fi
 
-  # Primes the two warm-up caches in PARALLEL with the runner: the long-lived runner job
-  # only saves caches when it completes (5h20m later, and a cancelled run never does), so
-  # this ~2min job makes the SECOND run warm even on a brand-new fork. No-op (~15s) once
-  # the caches exist.
+  # Primes the ffmpeg cache in PARALLEL with the runner (JS deps need no cache — they
+  # ship bundled in the repo): the long-lived runner job only saves its cache when it
+  # completes 5h20m later, and a cancelled run never does, so this ~30s job makes even a
+  # brand-new fork's SECOND run instant. No-op once the cache exists.
   warmcache:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        id: nm
-        with:
-          path: server/node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
       - uses: actions/cache@v4
         id: ff
         with:
           path: /tmp/ffbin
           key: ffmpeg-static-amd64-v1
-      - if: steps.nm.outputs.cache-hit != 'true'
-        working-directory: server
-        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
       - if: steps.ff.outputs.cache-hit != 'true'
         run: |
           mkdir -p /tmp/ffbin
@@ -103,35 +94,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # WARM-UP SPEED (fire17: "it needs to be warm in the least amount of time"):
-      #   - no setup-node: the runner image already ships node >= 20 (engine needs >= 18)
-      #   - node_modules cached on the lockfile hash: a warm run restores the whole
-      #     webtorrent tree in seconds instead of a 60-90s npm install
-      #   - ffmpeg static build cached the same way, and fetched in the BACKGROUND of the
-      #     hold step on a cold miss — the engine announces FIRST (ffmpeg is only needed
-      #     at the first transcode; /status reports ffmpeg:false so the site shows warming)
-      # Both caches are per-repo and tokenless, so a fork inherits the fast path after
-      # its first run with nothing to configure.
-      - uses: actions/cache@v4
-        with:
-          path: server/node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
+      # FIRST-RUN-EVER SPEED (fire17: "pre-prepared even before cache; after first
+      # contact run EVERYTHING CONCURRENTLY"):
+      #   - the committed server/*.bundle.mjs carry ALL JS deps — zero npm install, even
+      #     on a brand-new fork's very first run (proven by booting with no node_modules)
+      #   - no setup-node: the runner image ships node >= 20 (engine needs >= 18)
+      #   - the hold step below starts cloudflared + ffmpeg installs in the BACKGROUND
+      #     while the bundled engine is already booting; runner.mjs waits for cloudflared
+      #     only at the moment it opens the tunnel, and ffmpeg only at the first
+      #     transcode (/status reports ffmpeg:false so the site shows "warming")
+      #   - the ffmpeg static build is cached per-repo (tokenless) for later runs
       - uses: actions/cache@v4
         with:
           path: /tmp/ffbin
           key: ffmpeg-static-amd64-v1
-
-      - name: install cloudflared
-        run: |
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
-          sudo install -m 0755 /tmp/cloudflared /usr/local/bin/cloudflared
-
-      - name: install engine deps (no-op on a warm cache)
-        working-directory: server
-        run: |
-          node --version
-          [ -d node_modules/webtorrent ] && echo "node_modules restored from cache" \
-            || npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: hold the runner (in memory only)
         env:
@@ -142,8 +118,12 @@ jobs:
           HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-latest ~16 GiB RAM)
           HP_MAX_TORRENTS: '2'
         run: |
-          # ffmpeg in the background: cache hit installs instantly; a cold miss downloads
-          # the static build (apt fallback) while the engine is already announcing.
+          # EVERYTHING CONCURRENT after first contact: both installs background while the
+          # bundled engine boots and announces (runner.mjs gates the tunnel on cloudflared
+          # appearing, the first transcode on ffmpeg appearing — nothing serializes).
+          ( curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared \
+              && sudo install -m 0755 /tmp/cloudflared /usr/local/bin/cloudflared \
+              && echo "[warm] cloudflared ready" ) &
           (
             if [ -x /tmp/ffbin/ffmpeg ] && [ -x /tmp/ffbin/ffprobe ]; then
               sudo cp /tmp/ffbin/ffmpeg /tmp/ffbin/ffprobe /usr/local/bin/
@@ -158,4 +138,6 @@ jobs:
                 || ( sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg && echo "[warm] ffmpeg via apt" )
             fi
           ) &
-          node server/runner.mjs
+          # insurance only — the committed bundle is the normal path, npm never runs
+          [ -f server/runner.bundle.mjs ] || ( cd server && (npm ci --no-audit --no-fund || npm install --no-audit --no-fund) )
+          node server/runner.bundle.mjs || node server/runner.mjs
