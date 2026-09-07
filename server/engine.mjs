@@ -350,9 +350,13 @@ async function ensureHls(torrent, file, ih, idx, startT = 0) {
     const copyAudio = probe.audio && BROWSER_AUDIO.has(probe.audio);
     const hevcTag = probe.video === 'hevc' ? ['-tag:v', 'hvc1'] : [];
     /* pad explicit silence so audio starts at pts 0 like the video (MKVs often start audio
-       ~1s late as a timestamp hole) and resample async so it can never drift from the video */
+       ~1s late as a timestamp hole) and resample async so it can never drift from the video.
+       ONLY at t=0: an offset (-ss) job's copied video keeps its post-seek timeline, and
+       force-shifting audio to pts 0 there skews A/V by up to a GOP — async alone keeps
+       the resampler locked to the source timestamps after a seek. */
     const audioArgs = copyAudio ? ['-c:a', 'copy']
-      : ['-af', 'aresample=async=1:first_pts=0', '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
+      : ['-af', startT > 0 ? 'aresample=async=1' : 'aresample=async=1:first_pts=0',
+         '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
     let args, useStdin;
     /* shared HLS output: fmp4 segments; the window flags bound RAM (INMEM) / disk to the
        last HLS_WINDOW segments regardless of film length. */
@@ -484,6 +488,21 @@ function streamFile(req, res, torrent, file) {
 
   const size = file.length;
   const range = parseRange(req.headers.range, size);
+
+  /* SEEK SPEED: a deep Range read IS a seek — ffmpeg resolved `-ss T` through the moov
+     index and is now asking for the exact bytes at T (or for the moov itself at the file
+     tail). Without a priority bump the swarm keeps trickling the whole file and the seek
+     crawls. Mark the next ~16 MB from the requested offset high-priority and the first
+     ~4 MB CRITICAL (fetched in order, NOW) so the transcoder gets its first GOP at the
+     new position as fast as the swarm allows. Exact — no duration/bitrate estimate. */
+  if (range && range.start > 0) try {
+    const pieceLen = torrent.pieceLength || (1 << 18);
+    const off = file.offset + range.start;
+    const lastP = Math.floor((file.offset + file.length - 1) / pieceLen);
+    const p0 = Math.floor(off / pieceLen);
+    torrent.select(p0, Math.min(lastP, p0 + Math.ceil((16 * 1024 * 1024) / pieceLen)), 1);
+    torrent.critical(p0, Math.min(lastP, p0 + Math.ceil((4 * 1024 * 1024) / pieceLen)));
+  } catch { /* prioritisation is an optimisation, never fatal */ }
 
   if (range === -1) {
     return send(res, 416, 'Range Not Satisfiable', { 'Content-Range': `bytes */${size}` });
