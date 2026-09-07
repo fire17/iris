@@ -578,6 +578,7 @@ const summarise = (t) => ({
   progress: Number((t.progress || 0).toFixed(4)),
   peers: t.numPeers || 0,
   length: t.length || 0,
+  downloaded: t.downloaded || 0,   /* bytes — feeds the loader's readiness score */
   downloadSpeed: Math.round(t.downloadSpeed || 0),
   files: (t.files || []).map((f, i) => ({
     idx: i, name: f.name, length: f.length, video: isVideo(f)

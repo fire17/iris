@@ -850,23 +850,43 @@
     var m = (S && S.meta) || {};
     return m.logo || m.background || m.poster || '';
   }
-  /* progress: stremio drives it from stream statistics; standalone we synthesize the
-     same feel — a slow creep to 30% while nothing is buffered yet (resolve/metadata
-     phase), then buffered-ahead vs a 6s goal maps 30..95, and 'playing' dismisses. */
+  /* progress: stremio-web's EXACT readiness score (useStatistics.ts getLoadingProgress):
+     torrent streams -> min(99, peers/8*20 + downloaded/min(8MB,max(2MB,len*0.008))*70 +
+     speed/1MBps*10); stats polled every 5s from the engine; null stats -> 0. Non-torrent
+     streams -> 100 (Stremio's de-facto indeterminate: fully revealed, pulsing). */
+  function loadProgress() {
+    if (!(S.viaEngine && S.engineIh)) return 100;
+    var st = S.loadStats;
+    if (!st) return 0;
+    var MB = 1024 * 1024;
+    var peerScore = Math.min(1, (st.peers || 0) / 8) * 20;
+    var minDownload = Math.min(8 * MB, Math.max(2 * MB, (st.streamLen || 0) * 0.008));
+    var downloadedScore = Math.min(1, (st.downloaded || 0) / minDownload) * 70;
+    var speedScore = Math.min(1, (st.downloadSpeed || 0) / MB) * 10;
+    return Math.min(99, peerScore + downloadedScore + speedScore);
+  }
+  function loadPollStats() {
+    if (!S || S.destroyed || !(S.viaEngine && S.engineIh)) return;
+    var base = S.engineBaseUsed || engineBase();
+    if (!base) return;
+    fetch(base + '/torrents', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+      .then(function (list) {
+        if (!S || S.destroyed || !Array.isArray(list)) return;
+        var ih = String(S.engineIh).toLowerCase();
+        for (var i = 0; i < list.length; i++) {
+          if (String(list[i].infoHash || '').toLowerCase() !== ih) continue;
+          var f = (list[i].files || [])[S.engineIdx];
+          S.loadStats = { peers: list[i].peers, downloaded: list[i].downloaded,
+                          downloadSpeed: list[i].downloadSpeed,
+                          streamLen: (f && f.length) || list[i].length || 0 };
+          return;
+        }
+      });
+  }
   function loadTick() {
     if (!S || S.destroyed) return;
-    var v = S.el.video, p = S.loadP || 0, ahead = 0;
-    try {
-      for (var i = 0; i < v.buffered.length; i++) {
-        if (v.buffered.start(i) <= v.currentTime + 0.5 && v.buffered.end(i) > v.currentTime) {
-          ahead = v.buffered.end(i) - v.currentTime; break;
-        }
-      }
-    } catch (e) {}
-    if (ahead > 0) p = Math.max(p, 30 + Math.min(65, (ahead / 6) * 65));
-    else p = Math.min(30, p + 1.2);
-    S.loadP = p;
-    S.el.loadFill.style.clipPath = 'inset(0 ' + Math.max(0, 100 - p).toFixed(1) + '% 0 0)';
+    S.el.loadFill.style.clipPath = 'inset(0 ' + Math.max(0, 100 - loadProgress()).toFixed(1) + '% 0 0)';
   }
   function loadShow() {
     if (!S || S.el.load.classList.contains('plr-on')) return;
@@ -887,15 +907,18 @@
       S.el.loadTrack.src = logo; S.el.loadFill.src = logo;
     }
     if (S.loadDead) { S.el.spin.classList.add('plr-show'); return; }
-    S.loadP = S.loadP || 0;
+    /* faithful layering: background art shows only BEFORE first playback (Stremio's
+       !video.state.loaded); a mid-play buffer is just the pulsing logo over live video */
+    S.el.loadBg.classList[(S.loadedOnce || !(S.meta && (S.meta.background || S.meta.poster))) ? 'add' : 'remove']('plr-none');
     S.el.load.classList.add('plr-on');
-    loadTick();
-    clearInterval(S.loadT);
+    loadPollStats(); loadTick();
+    clearInterval(S.loadT); clearInterval(S.loadStT);
     S.loadT = setInterval(loadTick, 180);
+    S.loadStT = setInterval(loadPollStats, 5000);   /* stremio's stats cadence */
   }
   function loadHide() {
     if (!S) return;
-    clearInterval(S.loadT);
+    clearInterval(S.loadT); clearInterval(S.loadStT);
     S.el.load.classList.remove('plr-on');
   }
 
@@ -915,6 +938,7 @@
     on(v, 'pause', function () { el.pp.innerHTML = ICON.play; el.pp.title = 'Play (space)'; show(); save(); });
     on(v, 'waiting', function () { spin(true); });
     on(v, 'playing', function () {
+      S.loadedOnce = true;
       spin(false);
       engineProgressDone();   /* real frames rolling — drop the engine-wait overlay */
       if (S && !S.ttffSent) { S.ttffSent = true; if (window.HPBeacon) HPBeacon.emit('playing', { ttff_ms: Date.now() - (S.tOpen || Date.now()) }); }
@@ -1111,7 +1135,7 @@
       })['catch'](function () { if (S && !S.destroyed) healStream('stall-unreachable'); });
     }, 5000);
     S.timers.push(function () { clearInterval(S.healT); });
-    S.timers.push(function () { clearInterval(S.loadT); });
+    S.timers.push(function () { clearInterval(S.loadT); clearInterval(S.loadStT); });
     on(window, 'pagehide', function () { save(); });
     on(window, 'beforeunload', function () { save(); });
 

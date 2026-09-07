@@ -46167,6 +46167,8 @@ var summarise = (t2) => ({
   progress: Number((t2.progress || 0).toFixed(4)),
   peers: t2.numPeers || 0,
   length: t2.length || 0,
+  downloaded: t2.downloaded || 0,
+  /* bytes — feeds the loader's readiness score */
   downloadSpeed: Math.round(t2.downloadSpeed || 0),
   files: (t2.files || []).map((f3, i2) => ({
     idx: i2,
