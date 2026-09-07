@@ -90,7 +90,7 @@ async function pollJson(url, budgetMs) {
       const r = await get(url);
       if (r.status === 200 && JSON.parse(r.body).ok) return true;
     } catch { /* not ready */ }
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 250));
   }
   return false;
 }
@@ -125,36 +125,46 @@ async function main() {
   });
   engine.on('exit', (c) => { log('engine exited', c); shutdown(1); });
 
-  if (!(await pollJson(`http://127.0.0.1:${PORT}/status`, 15000))) { log('engine not ready'); return shutdown(1); }
-  log('engine ready on 127.0.0.1:' + PORT);
-
-  // 2) cloudflared quick-tunnel -> public https URL (outbound only).
-  if (!(await waitForBin(CF_BIN, 45000))) { log('cloudflared never appeared'); return shutdown(1); }
-  cf = spawn(CF_BIN, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
+  // 2) cloudflared quick-tunnel, CONCURRENT with the engine boot (the tunnel proxies to
+  //    the port on demand, so it need not wait for a listener). FIRST-HELLO SPEED: the
+  //    client shows "Engine ready" only after it hears an announce, so every second here
+  //    is user-visible.
   let url = null;
-  const onData = (d) => {
-    const m = /(https:\/\/[a-z0-9-]+\.trycloudflare\.com)/i.exec(String(d));
-    if (m && !url) { url = m[1]; log('tunnel url ' + url); }
-  };
-  cf.stdout.on('data', onData);
-  cf.stderr.on('data', onData);
-  cf.on('exit', (c) => { log('cloudflared exited', c); shutdown(1); });
+  const tunnelP = (async () => {
+    if (!(await waitForBin(CF_BIN, 45000))) { log('cloudflared never appeared'); return shutdown(1); }
+    cf = spawn(CF_BIN, ['tunnel', '--url', `http://127.0.0.1:${PORT}`, '--no-autoupdate'],
+      { stdio: ['ignore', 'pipe', 'pipe'] });
+    const onData = (d) => {
+      const m = /(https:\/\/[a-z0-9-]+\.trycloudflare\.com)/i.exec(String(d));
+      if (m && !url) { url = m[1]; log('tunnel url ' + url); }
+    };
+    cf.stdout.on('data', onData);
+    cf.stderr.on('data', onData);
+    cf.on('exit', (c) => { log('cloudflared exited', c); shutdown(1); });
+    const t0 = Date.now();
+    while (!url && Date.now() - t0 < READY_BUDGET_MS) await new Promise((r) => setTimeout(r, 150));
+  })();
+  const engineP = pollJson(`http://127.0.0.1:${PORT}/status`, 15000)
+    .then((ok) => { if (ok) log('engine ready on 127.0.0.1:' + PORT); return ok; });
 
-  const t0 = Date.now();
-  while (!url && Date.now() - t0 < READY_BUDGET_MS) await new Promise((r) => setTimeout(r, 300));
+  const [engOk] = await Promise.all([engineP, tunnelP]);
+  if (!engOk) { log('engine not ready'); return shutdown(1); }
   if (!url) { log('no tunnel url in time'); return shutdown(1); }
 
-  // 3) health-check the PUBLIC url end-to-end (tunnel + engine + CORS reachable).
-  if (!(await pollJson(url + '/status', PUBLIC_BUDGET_MS))) {
-    if (!SKIP_PUB) { log('public url did not health-check'); return shutdown(1); }
-    log('WARNING: public health-check failed but SKIP_PUBLIC_HEALTHCHECK=1 — announcing anyway (local-sim / broken resolver)');
-  }
+  // 3) ANNOUNCE IMMEDIATELY — the client verifies every announced URL itself (/status
+  //    probe + repo echo) before trusting it, so gating the announce on our own public
+  //    health-check only delayed the first hello. The check still runs, demoted to a
+  //    background WATCHDOG: a tunnel that never comes up kills this runner so the pool
+  //    replaces it, but a healthy one costs the user zero wait.
   console.log('RUNNER_URL=' + url);
-
-  // 4) announce on the discovery floor.
   stopAnnounce = await announce({ room: ROOM, url, caps: { hls: true, range: true } });
   console.log('RUNNER_READY');
+  pollJson(url + '/status', PUBLIC_BUDGET_MS).then((ok) => {
+    if (ok) { log('public health-check passed'); return; }
+    if (SKIP_PUB) { log('WARNING: public health-check failed but SKIP_PUBLIC_HEALTHCHECK=1 (local-sim / broken resolver)'); return; }
+    log('public url never health-checked — retiring so the pool replaces this runner');
+    shutdown(1);
+  });
 
   // 5) lifetime: baton-pool compatible.
   if (HANDOFF_AT > 0) setTimeout(() => { log('handoff: stop announcing'); try { stopAnnounce(); } catch {} }, HANDOFF_AT * 1000).unref();

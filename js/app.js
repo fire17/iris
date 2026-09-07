@@ -293,6 +293,11 @@ function initEngineStat() {
     refresh();
   });
   refresh();
+  /* FIRST-HELLO SPEED: while the engine is not yet ready (warming / discovering / no
+     runner), re-check every 4s so the "Engine ready" hello lands seconds after the
+     runner announces — not up to 30s later. Once ready, the slow staleness tick is
+     plenty. busy-guard in refresh() keeps overlapping checks from stacking. */
+  setInterval(function () { if (S.engineState !== "ready") refresh(); }, 4000);
   setInterval(refresh, 30000);
   window.addEventListener("focus", refresh);
   window.addEventListener("online", refresh);

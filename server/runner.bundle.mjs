@@ -275,7 +275,7 @@ async function pollJson(url, budgetMs) {
       if (r.status === 200 && JSON.parse(r.body).ok) return true;
     } catch {
     }
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 250));
   }
   return false;
 }
@@ -316,50 +316,61 @@ async function main() {
     log("engine exited", c);
     shutdown(1);
   });
-  if (!await pollJson(`http://127.0.0.1:${PORT}/status`, 15e3)) {
+  let url = null;
+  const tunnelP = (async () => {
+    if (!await waitForBin(CF_BIN, 45e3)) {
+      log("cloudflared never appeared");
+      return shutdown(1);
+    }
+    cf = spawn(
+      CF_BIN,
+      ["tunnel", "--url", `http://127.0.0.1:${PORT}`, "--no-autoupdate"],
+      { stdio: ["ignore", "pipe", "pipe"] }
+    );
+    const onData = (d) => {
+      const m = /(https:\/\/[a-z0-9-]+\.trycloudflare\.com)/i.exec(String(d));
+      if (m && !url) {
+        url = m[1];
+        log("tunnel url " + url);
+      }
+    };
+    cf.stdout.on("data", onData);
+    cf.stderr.on("data", onData);
+    cf.on("exit", (c) => {
+      log("cloudflared exited", c);
+      shutdown(1);
+    });
+    const t0 = Date.now();
+    while (!url && Date.now() - t0 < READY_BUDGET_MS) await new Promise((r) => setTimeout(r, 150));
+  })();
+  const engineP = pollJson(`http://127.0.0.1:${PORT}/status`, 15e3).then((ok) => {
+    if (ok) log("engine ready on 127.0.0.1:" + PORT);
+    return ok;
+  });
+  const [engOk] = await Promise.all([engineP, tunnelP]);
+  if (!engOk) {
     log("engine not ready");
     return shutdown(1);
   }
-  log("engine ready on 127.0.0.1:" + PORT);
-  if (!await waitForBin(CF_BIN, 45e3)) {
-    log("cloudflared never appeared");
-    return shutdown(1);
-  }
-  cf = spawn(
-    CF_BIN,
-    ["tunnel", "--url", `http://127.0.0.1:${PORT}`, "--no-autoupdate"],
-    { stdio: ["ignore", "pipe", "pipe"] }
-  );
-  let url = null;
-  const onData = (d) => {
-    const m = /(https:\/\/[a-z0-9-]+\.trycloudflare\.com)/i.exec(String(d));
-    if (m && !url) {
-      url = m[1];
-      log("tunnel url " + url);
-    }
-  };
-  cf.stdout.on("data", onData);
-  cf.stderr.on("data", onData);
-  cf.on("exit", (c) => {
-    log("cloudflared exited", c);
-    shutdown(1);
-  });
-  const t0 = Date.now();
-  while (!url && Date.now() - t0 < READY_BUDGET_MS) await new Promise((r) => setTimeout(r, 300));
   if (!url) {
     log("no tunnel url in time");
     return shutdown(1);
   }
-  if (!await pollJson(url + "/status", PUBLIC_BUDGET_MS)) {
-    if (!SKIP_PUB) {
-      log("public url did not health-check");
-      return shutdown(1);
-    }
-    log("WARNING: public health-check failed but SKIP_PUBLIC_HEALTHCHECK=1 \u2014 announcing anyway (local-sim / broken resolver)");
-  }
   console.log("RUNNER_URL=" + url);
   stopAnnounce = await announce({ room: ROOM, url, caps: { hls: true, range: true } });
   console.log("RUNNER_READY");
+  pollJson(url + "/status", PUBLIC_BUDGET_MS).then((ok) => {
+    if (ok) {
+      log("public health-check passed");
+      return;
+    }
+    if (SKIP_PUB) {
+      log("WARNING: public health-check failed but SKIP_PUBLIC_HEALTHCHECK=1 (local-sim / broken resolver)");
+      return;
+    }
+    log("public url never health-checked \u2014 retiring so the pool replaces this runner");
+    shutdown(1);
+  });
   if (HANDOFF_AT > 0) setTimeout(() => {
     log("handoff: stop announcing");
     try {
