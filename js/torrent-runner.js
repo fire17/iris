@@ -13,10 +13,42 @@
   var BASE_KEY = 'hp.torrent.runnerBase';   // {url,ts}
   var FLOOR = '../vendor/hp-floor.mjs';      // relative to js/ (importmap-free dynamic import)
   var FRESH_MS = 30000;                       // a runner frame older than this is ignored
+
+  /* ---- fork identity: which GitHub repo this deployment belongs to ----------------
+     A fork works with ZERO configuration: served from <owner>.github.io the repo is
+     derived from the hostname + first path segment, and both sides (this file and
+     server/runner.mjs) derive the same per-repo floor room from it — so a fork's
+     client finds the fork's OWN GitHub-Actions runners automatically. A fork behind a
+     custom domain sets window.HP_REPO = "owner/repo" (one line) before this script.
+     The official repo keeps the legacy v1 room. */
+  var OFFICIAL_REPO = 'fire17/iris';
+  function repoId() {
+    try {
+      if (window.HP_REPO) return String(window.HP_REPO).toLowerCase();
+      var m = /^([^.]+)\.github\.io$/i.exec(location.hostname);
+      if (m) {
+        var seg = (location.pathname.split('/')[1] || '').toLowerCase();
+        return (m[1] + '/' + (seg || (m[1] + '.github.io'))).toLowerCase();
+      }
+    } catch (e) {}
+    return OFFICIAL_REPO;
+  }
+  /* FNV-1a via Math.imul — bit-identical to server/runner.mjs's derivation */
+  function fnv(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+  function defaultRoom() {
+    var r = repoId();
+    return r === OFFICIAL_REPO ? 'iris-hp-runner-v1' : 'iris-hp-' + fnv(r);
+  }
+
   var enc = new TextEncoder();
   var dec = new TextDecoder();
-  /* pinned runner public key — only frames signed by our runner's private key are trusted */
-  var PUB_JWK = {"kty":"EC","crv":"P-256","x":"acDpUAXLRpmTjgC0kyi43XpduNSOpEFRs67-cdBhdiU","y":"Ni5958Yp6FF69Ju0G69GMf54bf7KJDHD4vkYCjJMnAg"};
+  /* pinned runner public key — only frames signed by our runner's private key are trusted.
+     SIGNATURES ARE REQUIRED ONLY FOR THE OFFICIAL REPO (this key's owner): a fork has no
+     way to inherit the private half, so its runners announce unsigned into the fork's own
+     derived room and are accepted there. A fork can harden by generating its own P-256
+     pair (HP_ENGINE_PRIV repo secret + replace PUB_JWK here) — see server/RUNNER.md. */
+  var PUB_JWK = {"kty":"EC","crv":"P-256","x":"JGDe6xpyQOUD7Z8mSIfeqAqVmy-UNKPkWKW9AbhQqfw","y":"GzsjrjaUDaACqzuQ8TqmNwG73c2I6GDvL_RnPyCaxhI"};
+  function sigRequired() { return repoId() === OFFICIAL_REPO; }
   var _vk = null;
   function verifyKey() {
     if (_vk) return _vk;
@@ -37,7 +69,7 @@
 
   function discover(opts) {
     opts = opts || {};
-    var room = opts.room || 'iris-hp-runner-v1';
+    var room = opts.room || defaultRoom();
     var timeoutMs = opts.timeoutMs || 8000;
     return import(FLOOR).then(function (mod) {
       return new Promise(function (resolve) {
@@ -54,7 +86,10 @@
           onFrame: function (from, bytes) {
             var msg; try { msg = JSON.parse(dec.decode(bytes)); } catch (e) { return; }
             if (!(msg && msg.t === 'runner' && msg.url && (Date.now() - (msg.ts || 0) < FRESH_MS))) return;
-            verify(msg).then(function (ok) { if (ok) finish(msg.url); });   /* reject unsigned/forged/stale */
+            /* official repo: reject unsigned/forged/stale; a fork's own room accepts its
+               (necessarily unsigned) runners — see the PUB_JWK note above */
+            (sigRequired() ? verify(msg) : Promise.resolve(true))
+              .then(function (ok) { if (ok) finish(msg.url); });
           },
         }).then(function (f) {
           floor = f;
@@ -85,7 +120,7 @@
      flakiness, then the socket closes. */
   function wake(opts) {
     opts = opts || {};
-    var room = opts.room || 'iris-hp-runner-v1';
+    var room = opts.room || defaultRoom();
     return import(FLOOR).then(function (mod) {
       return mod.joinFloor({ room: room }).then(function (f) {
         var n = 0;
@@ -115,5 +150,6 @@
     } catch (e) { delete _primed[key]; }
   }
 
-  window.HPRunner = { discover: discover, cachedBase: cachedBase, wake: wake, prime: prime, BASE_KEY: BASE_KEY };
+  window.HPRunner = { discover: discover, cachedBase: cachedBase, wake: wake, prime: prime,
+                      room: defaultRoom, repo: repoId, BASE_KEY: BASE_KEY };
 })(window);

@@ -10,7 +10,7 @@
   var ENGINE = 'http://127.0.0.1:11470';        // local opt-in engine (unchanged)
   var RUNNER_OPTIN = 'hp.torrent.runnerEngine';  // hosted-runner opt-in (mirrors hp.torrent.localEngine)
   var LOCAL_OPTIN = 'hp.torrent.localEngine';
-  var RUNNER_ROOM = 'iris-hp-runner-v1';
+  /* floor room comes from HPRunner.room() — fork-aware, derived per repo */
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function optIn(k) { return lsGet(k) === '1'; }
   /* The ACTIVE engine base: a fresh discovered runner (https-safe) when the runner opt-in
@@ -1300,11 +1300,11 @@
     if (!S || S.destroyed) return;
     S.engCancel = false;
     engineProgress('Waking a hosted runner… (~30–40s the first time)', 5);
-    if (window.HPRunner && window.HPRunner.wake) { try { window.HPRunner.wake({ room: RUNNER_ROOM }); } catch (e) {} }
+    if (window.HPRunner && window.HPRunner.wake) { try { window.HPRunner.wake({}); } catch (e) {} }
     var t0 = Date.now(), DEADLINE = 110000, EST = 45000;
     var tick = function () {
       if (!S || S.destroyed || S.engCancel) return;
-      window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 6000 })['catch'](function () { return ''; }).then(function (url) {
+      window.HPRunner.discover({ timeoutMs: 6000 })['catch'](function () { return ''; }).then(function (url) {
         if (!S || S.destroyed || S.engCancel) return;
         if (url) { engineProgress('Runner ready — loading…', 96); routeTorrentEngine(mg, ih, idx); return; }
         var el = Date.now() - t0;
@@ -1727,7 +1727,7 @@
        cached fresh. Discovery carries only the URL (handshake-only); the runner then
        streams bytes over https (cloudflared) — the floor never sees media. */
     var ready = (runnerOptIn && window.HPRunner && !window.HPRunner.cachedBase())
-      ? window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 8000 })['catch'](function () { return ''; })
+      ? window.HPRunner.discover({ timeoutMs: 8000 })['catch'](function () { return ''; })
       : Promise.resolve('');
     ready.then(function () {
       if (!S || S.destroyed) return;
@@ -1889,7 +1889,7 @@
     if (window.HPBeacon) HPBeacon.emit('heal', { reason: String(reason || ''), n: S.healN });
     var runnerOptIn = optIn(RUNNER_OPTIN);
     var refresh = (runnerOptIn && window.HPRunner)
-      ? window.HPRunner.discover({ room: RUNNER_ROOM, timeoutMs: 8000 })['catch'](function () { return ''; })
+      ? window.HPRunner.discover({ timeoutMs: 8000 })['catch'](function () { return ''; })
       : Promise.resolve('');
     refresh.then(function () {
       if (!S || S.destroyed) return Promise.reject();

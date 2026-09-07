@@ -64,19 +64,24 @@
 
   var cache = new Map();      // url -> parsed JSON (insertion order == recency)
   var inflight = new Map();   // url -> Promise, de-dupes concurrent identical GETs
-  var unhealthy = new Map();  // base -> timestamp of last failure
+  var unhealthy = new Map();  // base -> { t: last-failure ts, n: consecutive failures }
 
-  function cacheGet(url) {
+  function cacheGet(url, maxAge) {
     if (!cache.has(url)) return undefined;
-    var v = cache.get(url);
+    var rec = cache.get(url);
+    /* age-gated reads: live-cam stream URLs die in seconds-to-minutes (session-bound,
+       origin rotates), so a stale hit replays a DEAD url — the "previewed rooms stop
+       working" bug. Callers that resolve ephemeral things pass maxAge; everything else
+       (manifests, catalogs, meta) keeps page-lifetime caching. */
+    if (maxAge && now() - rec.at > maxAge) { cache.delete(url); return undefined; }
     cache.delete(url);
-    cache.set(url, v); // bump to most-recent
-    return v;
+    cache.set(url, rec); // bump to most-recent
+    return rec.v;
   }
 
   function cacheSet(url, value) {
     if (cache.has(url)) cache.delete(url);
-    cache.set(url, value);
+    cache.set(url, { v: value, at: now() });
     while (cache.size > CACHE_LIMIT) {
       cache.delete(cache.keys().next().value); // evict least-recent
     }
@@ -90,14 +95,22 @@
     doomed.forEach(function (k) { cache.delete(k); });
   }
 
-  function markUnhealthy(base) { if (base) unhealthy.set(base, now()); }
+  /* TWO STRIKES before an addon is benched. One slow room's 8s timeout used to bench the
+     whole addon for 60s — every resolve after a single error "stopped working" (observed
+     live on the chaturbate edge, which hangs intermittently per-room while staying up).
+     A single failure is noise; a pattern is a bench. Any success clears the count. */
+  function markUnhealthy(base) {
+    if (!base) return;
+    var rec = unhealthy.get(base);
+    unhealthy.set(base, { t: now(), n: rec ? rec.n + 1 : 1 });
+  }
   function markHealthy(base) { if (base) unhealthy.delete(base); }
 
   function isUnhealthy(base) {
-    var t = unhealthy.get(base);
-    if (t === undefined) return false;
-    if (now() - t > UNHEALTHY_COOLDOWN) { unhealthy.delete(base); return false; }
-    return true;
+    var rec = unhealthy.get(base);
+    if (rec === undefined) return false;
+    if (now() - rec.t > UNHEALTHY_COOLDOWN) { unhealthy.delete(base); return false; }
+    return rec.n >= 2;
   }
 
   function now() { return Date.now(); }
@@ -115,7 +128,7 @@
     var useCache = opts.cache !== false;
 
     if (useCache) {
-      var hit = cacheGet(url);
+      var hit = cacheGet(url, opts.maxAge);
       if (hit !== undefined) return Promise.resolve(hit);
     }
 
@@ -123,48 +136,66 @@
     if (pending) return pending;
 
     var p = (function () {
-      var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
-      var timer = setTimeout(function () {
-        if (ctrl) ctrl.abort();
-      }, opts.timeout || REQUEST_TIMEOUT);
+      function attempt(tryN) {
+        var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = setTimeout(function () {
+          if (ctrl) ctrl.abort();
+        }, opts.timeout || REQUEST_TIMEOUT);
 
-      var init = { credentials: 'omit', redirect: 'follow' };
-      if (ctrl) init.signal = ctrl.signal;
+        var init = { credentials: 'omit', redirect: 'follow' };
+        if (ctrl) init.signal = ctrl.signal;
 
-      return Promise.resolve()
-        .then(function () { return fetch(url, init); })
-        .then(function (res) {
-          if (!res || !res.ok) {
-            throw new Error('HTTP ' + ((res && res.status) || '?') + ' for ' + url);
-          }
-          return res.text();
-        })
-        .then(function (text) {
-          var json;
-          try {
-            json = JSON.parse(text);
-          } catch (e) {
-            // Addons missing a resource answer with an HTML error page.
-            throw new Error('non-JSON response from ' + url);
-          }
-          if (!json || typeof json !== 'object') {
-            throw new Error('unexpected payload from ' + url);
-          }
+        return Promise.resolve()
+          .then(function () { return fetch(url, init); })
+          .then(function (res) {
+            if (!res || !res.ok) {
+              var he = new Error('HTTP ' + ((res && res.status) || '?') + ' for ' + url);
+              he.transient = !!(res && res.status >= 500);   // 5xx is the edge stumbling, not an answer
+              throw he;
+            }
+            return res.text();
+          })
+          .then(function (text) {
+            var json;
+            try {
+              json = JSON.parse(text);
+            } catch (e) {
+              // Addons missing a resource answer with an HTML error page.
+              throw new Error('non-JSON response from ' + url);
+            }
+            if (!json || typeof json !== 'object') {
+              throw new Error('unexpected payload from ' + url);
+            }
+            clearTimeout(timer);
+            return json;
+          })
+          .catch(function (e) {
+            clearTimeout(timer);
+            /* A hung edge, dropped socket or 5xx is usually TRANSIENT — one immediate
+               fresh attempt heals it before any error ever reaches the UI or the
+               health ledger. HTTP 4xx / non-JSON are real answers: no retry. */
+            var transient = !!(e && (e.name === 'AbortError' || e.name === 'TypeError' || e.transient));
+            if (transient && tryN === 0) return attempt(1);
+            var err = e || new Error('fetch failed: ' + url);
+            if (e && e.name === 'AbortError') {
+              err = new Error('timeout after ' + (opts.timeout || REQUEST_TIMEOUT) + 'ms (2 tries): ' + url);
+            }
+            throw err;
+          });
+      }
+
+      return attempt(0)
+        .then(function (json) {
           if (useCache) cacheSet(url, json);
           markHealthy(base);
           return json;
         })
-        .catch(function (e) {
-          var err = e;
-          if (e && e.name === 'AbortError') {
-            err = new Error('timeout after ' + (opts.timeout || REQUEST_TIMEOUT) + 'ms: ' + url);
-          }
+        .catch(function (err) {
           markUnhealthy(base);
           emit(scope, url, err);
           return null;
         })
         .then(function (value) {
-          clearTimeout(timer);
           inflight.delete(url);
           return value;
         });
@@ -623,10 +654,12 @@
     var query = String(q || '').trim();
     if (!query) return Promise.resolve([]);
 
-    var targets = searchableCatalogs(opts.type).filter(function (c) {
-      var a = byId(c.addonId);
-      return a && !isUnhealthy(a.url);
+    var allTargets = searchableCatalogs(opts.type).filter(function (c) {
+      return !!byId(c.addonId);
     });
+    /* same non-detrimental rule as streams(): bench filter, but never to zero */
+    var targets = allTargets.filter(function (c) { return !isUnhealthy(byId(c.addonId).url); });
+    if (!targets.length) targets = allTargets;
     if (!targets.length) return Promise.resolve([]);
 
     return Promise.all(targets.map(function (c) {
@@ -662,11 +695,15 @@
     });
     if (!providers.length) return Promise.resolve(null);
 
+    /* healthy providers first, cooling ones as last resort — never skipped outright
+       (a meta answer from a benched addon still beats no answer) */
+    providers = providers.filter(function (a) { return !isUnhealthy(a.url); })
+      .concat(providers.filter(function (a) { return isUnhealthy(a.url); }));
+
     var i = 0;
     function next() {
       if (i >= providers.length) return Promise.resolve(null);
       var a = providers[i++];
-      if (isUnhealthy(a.url)) return next();
       return fetchJSON(resourceUrl(a.url, 'meta', type, id), { scope: 'meta', base: a.url })
         .then(function (payload) {
           if (payload && payload.meta && payload.meta.id) {
@@ -686,13 +723,21 @@
    */
   function streams(type, id) {
     if (!type || !id) return Promise.resolve([]);
-    var providers = installed.filter(function (a) {
-      return supports(a.manifest, 'stream', type, id) && !isUnhealthy(a.url);
+    var capable = installed.filter(function (a) {
+      return supports(a.manifest, 'stream', type, id);
     });
+    /* The health bench must never make streams IMPOSSIBLE: when every capable addon is
+       cooling down, ask them all anyway — a wrongly-skipped provider is a dead feature,
+       a slow answer is just slow. Errors stay non-detrimental by construction. */
+    var providers = capable.filter(function (a) { return !isUnhealthy(a.url); });
+    if (!providers.length) providers = capable;
     if (!providers.length) return Promise.resolve([]);
 
     return Promise.all(providers.map(function (a) {
-      return fetchJSON(resourceUrl(a.url, 'stream', type, id), { scope: 'streams', base: a.url })
+      /* maxAge 15s: stream answers may carry session-bound live URLs that the edge kills
+         within minutes (and the origin id rotates) — a rapid re-hover stays instant, but
+         a room revisited later gets a FRESH resolve instead of a dead cached session. */
+      return fetchJSON(resourceUrl(a.url, 'stream', type, id), { scope: 'streams', base: a.url, maxAge: 15000 })
         .then(function (payload) {
           var raw = (payload && Array.isArray(payload.streams)) ? payload.streams : [];
           return raw.filter(isPlayableStream).map(function (s) {

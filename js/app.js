@@ -230,16 +230,16 @@ function boot() {
 function warmRunner() {
   try { if (localStorage.getItem("hp.torrent.runnerEngine") !== "1") return; } catch (e) { return; }
   if (!window.HPRunner || window.HPRunner.cachedBase()) return;
-  window.HPRunner.discover({ room: "iris-hp-runner-v1", timeoutMs: 8000 })["catch"](function () { return ""; })
+  window.HPRunner.discover({ timeoutMs: 8000 })["catch"](function () { return ""; })
     .then(function (url) {
-      if (!url && window.HPRunner.wake) { try { window.HPRunner.wake({ room: "iris-hp-runner-v1" }); } catch (e) {} }
+      if (!url && window.HPRunner.wake) { try { window.HPRunner.wake({}); } catch (e) {} }
     });
 }
 
 /* Engine status pill (topbar): shows, at a glance, whether a hosted GitHub-Actions runner
    is LIVE (a signed announce on the floor), CONNECTED (its /status answers over https), and
    READY to stream. OFF when the opt-in is disabled — clicking it turns the engine on. */
-var ENGINE_ROOM = "iris-hp-runner-v1";
+/* floor room comes from HPRunner.room() — fork-aware, derived per repo */
 function engineOptedIn() { try { return localStorage.getItem("hp.torrent.runnerEngine") === "1"; } catch (e) { return false; } }
 function initEngineStat() {
   var el = document.getElementById("enginestat");
@@ -261,11 +261,11 @@ function initEngineStat() {
     var base = window.HPRunner.cachedBase();
     if (!base) set("warm", "Warming…", "Looking for a live runner…");
     var find = base ? Promise.resolve(base)
-      : window.HPRunner.discover({ room: ENGINE_ROOM, timeoutMs: 8000 })["catch"](function () { return ""; });
+      : window.HPRunner.discover({ timeoutMs: 8000 })["catch"](function () { return ""; });
     find.then(function (url) {
       if (!url) {
         set("warm", "Warming…", "No runner live yet — waking one (~30–40s)");
-        if (window.HPRunner.wake) { try { window.HPRunner.wake({ room: ENGINE_ROOM }); } catch (e) {} }
+        if (window.HPRunner.wake) { try { window.HPRunner.wake({}); } catch (e) {} }
         busy = false; return;
       }
       /* a signed URL means a runner is LIVE on GitHub Actions; confirm we can reach it */

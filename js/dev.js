@@ -8,8 +8,20 @@
   if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
 
   var WATCH = ['index.html', 'style.css', 'js/app.js', 'js/registry.js',
-               'js/player.js', 'js/wallview.js', 'js/addons.js'];
+               'js/player.js', 'js/wallview.js', 'js/addons.js',
+               'js/errlog.js', 'js/dev.js'];
   var seen = {};
+
+  /* Forward every ErrLog-captured error to the local dev server (POST /dev-err) so the
+     maintainer's monitor sees failures the moment they happen — fixes then hot-reload
+     back into this page. sendBeacon: fire-and-forget, never blocks, never throws far. */
+  window.HPDevErr = function (e) {
+    try {
+      var body = JSON.stringify({ t: e.t, tag: e.tag, msg: e.msg, detail: e.detail, page: location.hash });
+      if (navigator.sendBeacon) navigator.sendBeacon('/dev-err', body);
+      else fetch('/dev-err', { method: 'POST', body: body, keepalive: true })['catch'](function () {});
+    } catch (x) {}
+  };
 
   var badge = document.createElement('div');
   badge.textContent = '🔥 dev';

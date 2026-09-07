@@ -1,0 +1,109 @@
+# runner-engine — a self-regulating pool of hosted in-memory torrent-engine runners.
+#
+# EXPERIMENTAL / AT-OWN-RISK. Serving media from GitHub Actions runners VIOLATES GitHub's
+# Acceptable Use Policy (Actions is CI/CD, not a media/streaming service). Repeated pool
+# runs can get the repo or account flagged and Actions disabled. This workflow is kept
+# OPT-IN (the browser only uses it behind hp.torrent.runnerEngine=1), low-footprint
+# (POOL=2), rate-limited (the engine token-buckets new torrent adds), in-memory (no data
+# at rest), and short-lived. It is a knowing tradeoff, not a solved problem. See
+# server/RUNNER.md. Do NOT enable this on a repo/account you are not willing to risk.
+#
+# Liveness by REDUNDANCY (relay-baton pattern): each run lives ~55 min; an admission gate
+# keeps ~POOL runs alive at once, staggered ~STAGGER apart, so a fresh runner overlaps the
+# old one and the discovery floor always has a live URL to announce. cron fires often;
+# the gate turns noisy cron into a smooth bounded pool. Tokenless: the gate uses only the
+# read-only GITHUB_TOKEN (actions:read) to count live runs — no PAT, nothing at rest.
+on:
+  workflow_dispatch:
+    inputs:
+      # Empty room = derived per-repo by runner.mjs from GITHUB_REPOSITORY (a plain env
+      # var, no token): forks get their own floor room with ZERO configuration, and the
+      # official repo keeps the legacy iris-hp-runner-v1 name.
+      room:  { description: 'floor room (empty = derived from this repo)', default: '' }
+      force: { description: bypass the pool gate (always run), default: 'false' }
+  # 24/7 always-warm pool: cron admits through the gate below, which keeps ~POOL runners
+  # overlapping so the discovery floor always has a live URL (no "no runner" gaps).
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  POOL: '2'         # target overlapping live runs (lower than baton's 3 — ToS-conservative)
+  STAGGER: '9600'   # seconds; admit a replacement once the youngest run is this old (≈ RUN_SECONDS / POOL = 19200/2)
+
+jobs:
+  admit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      go: ${{ steps.gate.outputs.go }}
+    steps:
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SELF: ${{ github.run_id }}
+          FORCE: ${{ inputs.force || 'false' }}
+        run: |
+          if [ "$FORCE" = "true" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; echo "forced"; exit 0; fi
+          now=$(date -u +%s)
+          others=$(gh run list --repo "$REPO" --workflow runner-engine.yml --status in_progress \
+                     --json databaseId,createdAt \
+                     --jq "[.[] | select(.databaseId != ($SELF|tonumber))]")
+          count=$(echo "$others" | jq 'length')
+          youngest=$(echo "$others" | jq -r 'sort_by(.createdAt) | last | .createdAt // empty')
+          if [ "$count" -lt "$POOL" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"; echo "admit: pool has $count/$POOL live — fill it"
+          else
+            age=$(( now - $(date -u -d "$youngest" +%s) ))
+            if [ "$age" -ge "$STAGGER" ]; then
+              echo "go=true" >> "$GITHUB_OUTPUT"; echo "admit: pool full ($count) but youngest is ${age}s (>= $STAGGER) — stagger a replacement"
+            else
+              echo "go=false" >> "$GITHUB_OUTPUT"; echo "skip: pool full ($count), youngest only ${age}s (< $STAGGER)"
+            fi
+          fi
+
+  runner:
+    needs: admit
+    if: ${{ needs.admit.outputs.go == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # must exceed RUN_SECONDS (5h20m); GitHub hard-caps a job at 6h
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: install cloudflared
+        run: |
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
+          sudo install -m 0755 /tmp/cloudflared /usr/local/bin/cloudflared
+          cloudflared --version
+
+      - name: install ffmpeg
+        # ubuntu-latest no longer ships ffmpeg → spawn ENOENT crashed the engine on any
+        # transcode (MKV/exotic-audio) request. Static build first (~5s, no apt), apt fallback.
+        run: |
+          if command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; then ffmpeg -version | head -1; exit 0; fi
+          ( curl -fsSL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz \
+              && tar -xJf /tmp/ff.tar.xz -C /tmp \
+              && sudo cp /tmp/ffmpeg-*-static/ffmpeg /tmp/ffmpeg-*-static/ffprobe /usr/local/bin/ ) \
+            || ( sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg )
+          ffmpeg -version | head -1; ffprobe -version | head -1
+
+      - name: install engine deps
+        working-directory: server
+        run: npm ci || npm install
+
+      - name: hold the runner (in memory only)
+        env:
+          HP_ROOM:      '${{ inputs.room || '''' }}'
+          HP_INMEM:     '1'
+          RUN_SECONDS:  '19200'   # 5h20m per run (long-lived pool members → fewer handoffs)
+          HANDOFF_AT:   '19080'   # stop announcing ~2 min before close
+          HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-latest ~16 GiB RAM)
+          HP_MAX_TORRENTS: '2'
+          HP_ENGINE_PRIV: ${{ secrets.HP_ENGINE_PRIV }}
+        run: node server/runner.mjs

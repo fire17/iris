@@ -309,6 +309,25 @@ What enforces the claims instead:
 
 ---
 
+## 🍴 Fork it — your own client + baton servers, zero config
+
+The client AND the hosted baton server ([`server/`](server/) + the
+[`runner-engine` workflow](.github/workflows/runner-engine.yml)) live in this one repo,
+so a fork is a complete, self-hosting deployment:
+
+1. **Fork** the repo.
+2. **Enable Actions** on your fork — the workflow's cron keeps a small runner pool warm
+   (or hit *Run workflow* to start one now).
+3. **Enable Pages** (deploy from branch, `main` root) and delete `CNAME` — your site
+   serves at `https://<you>.github.io/<repo>/`.
+
+No tokens, no secrets, nothing to edit: both sides derive a **per-repo discovery room**
+from the repo's own identity (the runner from `GITHUB_REPOSITORY`, the client from the
+`github.io` hostname), so your deployed client finds your fork's own runners
+automatically — never the official pool, never another fork's. Custom domain? Set
+`window.HP_REPO = "you/repo"` before `js/torrent-runner.js` loads. Details, trust model
+and hardening: [`server/RUNNER.md`](server/RUNNER.md).
+
 ## 🛟 Safety and undo
 
 Short version: it stores a little in your browser, sends nothing to us because there is no us to send it to, ships no adult content, and you stop it by killing one process and deleting one folder.

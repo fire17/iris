@@ -32,6 +32,9 @@
       if (window.HPBeacon && e0 && e0.tag !== 'beacon') {
         try { window.HPBeacon.emit('error', { tag: e0.tag, msg: e0.msg, ctx: e0.detail }); } catch (be) {}
       }
+      /* DEV: dev.js (localhost-only) installs HPDevErr to forward errors to the local dev
+         server in realtime; undefined everywhere else, so this line is inert in prod. */
+      if (window.HPDevErr && e0) { try { window.HPDevErr(e0); } catch (de) {} }
     } catch (e) { /* the error logger must never throw */ }
   }
 
