@@ -1811,7 +1811,7 @@ var require_streamx = __commonJS({
         }
       }
     };
-    var Readable4 = class _Readable extends Stream3 {
+    var Readable3 = class _Readable extends Stream3 {
       constructor(opts) {
         super(opts);
         this._duplexState |= OPENING | WRITE_DONE | READ_READ_AHEAD;
@@ -2022,7 +2022,7 @@ var require_streamx = __commonJS({
         return this;
       }
     };
-    var Duplex4 = class extends Readable4 {
+    var Duplex4 = class extends Readable3 {
       // and Writable
       constructor(opts) {
         super(opts);
@@ -2231,7 +2231,7 @@ var require_streamx = __commonJS({
       getStreamError,
       Stream: Stream3,
       Writable,
-      Readable: Readable4,
+      Readable: Readable3,
       Duplex: Duplex4,
       Transform: Transform2,
       // Export PassThrough for compatibility with Node.js core's stream module
@@ -6600,7 +6600,7 @@ var require_ponyfill_es2018 = __commonJS({
         return isDOMExceptionConstructor(ctor) ? ctor : void 0;
       }
       function createPolyfill() {
-        const ctor = function DOMException4(message, name) {
+        const ctor = function DOMException3(message, name) {
           this.message = message || "";
           this.name = name || "Error";
           if (Error.captureStackTrace) {
@@ -6612,7 +6612,7 @@ var require_ponyfill_es2018 = __commonJS({
         Object.defineProperty(ctor.prototype, "constructor", { value: ctor, writable: true, configurable: true });
         return ctor;
       }
-      const DOMException3 = getFromGlobal() || createPolyfill();
+      const DOMException2 = getFromGlobal() || createPolyfill();
       function ReadableStreamPipeTo(source, dest, preventClose, preventAbort, preventCancel, signal) {
         const reader = AcquireReadableStreamDefaultReader(source);
         const writer = AcquireWritableStreamDefaultWriter(dest);
@@ -6623,7 +6623,7 @@ var require_ponyfill_es2018 = __commonJS({
           let abortAlgorithm;
           if (signal !== void 0) {
             abortAlgorithm = () => {
-              const error = signal.reason !== void 0 ? signal.reason : new DOMException3("Aborted", "AbortError");
+              const error = signal.reason !== void 0 ? signal.reason : new DOMException2("Aborted", "AbortError");
               const actions = [];
               if (!preventAbort) {
                 actions.push(() => {
@@ -24299,7 +24299,7 @@ var require_event_target = __commonJS({
     var kTarget = Symbol("kTarget");
     var kType = Symbol("kType");
     var kWasClean = Symbol("kWasClean");
-    var Event2 = class {
+    var Event = class {
       /**
        * Create a new `Event`.
        *
@@ -24323,9 +24323,9 @@ var require_event_target = __commonJS({
         return this[kType];
       }
     };
-    Object.defineProperty(Event2.prototype, "target", { enumerable: true });
-    Object.defineProperty(Event2.prototype, "type", { enumerable: true });
-    var CloseEvent = class extends Event2 {
+    Object.defineProperty(Event.prototype, "target", { enumerable: true });
+    Object.defineProperty(Event.prototype, "type", { enumerable: true });
+    var CloseEvent = class extends Event {
       /**
        * Create a new `CloseEvent`.
        *
@@ -24367,7 +24367,7 @@ var require_event_target = __commonJS({
     Object.defineProperty(CloseEvent.prototype, "code", { enumerable: true });
     Object.defineProperty(CloseEvent.prototype, "reason", { enumerable: true });
     Object.defineProperty(CloseEvent.prototype, "wasClean", { enumerable: true });
-    var ErrorEvent = class extends Event2 {
+    var ErrorEvent = class extends Event {
       /**
        * Create a new `ErrorEvent`.
        *
@@ -24397,7 +24397,7 @@ var require_event_target = __commonJS({
     };
     Object.defineProperty(ErrorEvent.prototype, "error", { enumerable: true });
     Object.defineProperty(ErrorEvent.prototype, "message", { enumerable: true });
-    var MessageEvent2 = class extends Event2 {
+    var MessageEvent = class extends Event {
       /**
        * Create a new `MessageEvent`.
        *
@@ -24417,8 +24417,8 @@ var require_event_target = __commonJS({
         return this[kData];
       }
     };
-    Object.defineProperty(MessageEvent2.prototype, "data", { enumerable: true });
-    var EventTarget2 = {
+    Object.defineProperty(MessageEvent.prototype, "data", { enumerable: true });
+    var EventTarget = {
       /**
        * Register an event listener.
        *
@@ -24440,7 +24440,7 @@ var require_event_target = __commonJS({
         let wrapper;
         if (type2 === "message") {
           wrapper = function onMessage(data, isBinary) {
-            const event = new MessageEvent2("message", {
+            const event = new MessageEvent("message", {
               data: isBinary ? data : data.toString()
             });
             event[kTarget] = this;
@@ -24467,7 +24467,7 @@ var require_event_target = __commonJS({
           };
         } else if (type2 === "open") {
           wrapper = function onOpen() {
-            const event = new Event2("open");
+            const event = new Event("open");
             event[kTarget] = this;
             callListener(handler, this, event);
           };
@@ -24501,9 +24501,9 @@ var require_event_target = __commonJS({
     module.exports = {
       CloseEvent,
       ErrorEvent,
-      Event: Event2,
-      EventTarget: EventTarget2,
-      MessageEvent: MessageEvent2
+      Event,
+      EventTarget,
+      MessageEvent
     };
     function callListener(listener, thisArg, event) {
       if (typeof listener === "object" && listener.handleEvent) {
@@ -24678,7 +24678,7 @@ var require_websocket = __commonJS({
     var net3 = __require("net");
     var tls = __require("tls");
     var { randomBytes: randomBytes2, createHash: createHash2 } = __require("crypto");
-    var { Duplex: Duplex4, Readable: Readable4 } = __require("stream");
+    var { Duplex: Duplex4, Readable: Readable3 } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
     var Receiver2 = require_receiver();
@@ -30832,10 +30832,10 @@ var import_throughput = __toESM(require_throughput(), 1);
 var import_unordered_array_remove = __toESM(require_unordered_array_remove(), 1);
 
 // server/node_modules/bittorrent-protocol/mse.js
-import crypto2 from "crypto";
+import crypto from "crypto";
 var nativeRC4 = (() => {
   try {
-    crypto2.createCipheriv("rc4", Buffer.alloc(16), "");
+    crypto.createCipheriv("rc4", Buffer.alloc(16), "");
     return true;
   } catch {
     return false;
@@ -30843,7 +30843,7 @@ var nativeRC4 = (() => {
 })();
 function createRC4Cipher(key) {
   if (nativeRC4) {
-    const c = crypto2.createCipheriv("rc4", key, "");
+    const c = crypto.createCipheriv("rc4", key, "");
     c.update(Buffer.alloc(1024));
     return (buf) => c.update(buf);
   }
@@ -30892,7 +30892,7 @@ function xor(a, b) {
   return a;
 }
 function sha1(...buffers) {
-  const h2 = crypto2.createHash("sha1");
+  const h2 = crypto.createHash("sha1");
   for (const buf of buffers) h2.update(buf);
   return h2.digest();
 }
@@ -30947,7 +30947,7 @@ var MessageStreamEncryptor = class {
   }
   get dh() {
     if (!this._dh) {
-      this._dh = crypto2.createDiffieHellman(DH_PRIME, "hex", DH_GENERATOR);
+      this._dh = crypto.createDiffieHellman(DH_PRIME, "hex", DH_GENERATOR);
     }
     return this._dh;
   }
@@ -32538,7 +32538,7 @@ var import_last_one_wins = __toESM(require_last_one_wins(), 1);
 var import_lru = __toESM(require_lru(), 1);
 var import_randombytes = __toESM(require_randombytes(), 1);
 var import_record_cache = __toESM(require_record_cache(), 1);
-import crypto3 from "crypto";
+import crypto2 from "crypto";
 var debug2 = (0, import_debug2.default)("bittorrent-dht");
 var ROTATE_INTERVAL = 5 * 60 * 1e3;
 var BUCKET_OUTDATED_TIMESPAN = 15 * 60 * 1e3;
@@ -33127,7 +33127,7 @@ var DHT = class extends EventEmitter {
 function noop() {
 }
 function sha12(buf) {
-  return crypto3.createHash("sha1").update(buf).digest();
+  return crypto2.createHash("sha1").update(buf).digest();
 }
 function createGetResponse(id, token, value) {
   const r2 = { id, token, v: value.v };
@@ -34986,1321 +34986,10 @@ var toMagnetURI = magnetURIEncode;
 // server/node_modules/@thaunknown/simple-peer/lite.js
 var import_debug3 = __toESM(require_src(), 1);
 
-// server/node_modules/webrtc-polyfill/lib/RTCPeerConnection.js
-import { PeerConnection, RtcpReceivingSession, Video, Audio, cleanup } from "node-datachannel";
-
-// server/node_modules/webrtc-polyfill/lib/RTCSessionDescription.js
-var RTCSessionDescription = class {
-  #type;
-  sdp;
-  /**
-   * @param {RTCSessionDescriptionInit | null | undefined | object}  init
-   */
-  constructor(init) {
-    this.#type = init?.type;
-    this.sdp = init?.sdp ?? "";
-  }
-  get type() {
-    return this.#type;
-  }
-  set type(type2) {
-    if (type2 !== "offer" && type2 !== "answer" && type2 !== "pranswer" && type2 !== "rollback") {
-      throw new TypeError(`Failed to set the 'type' property on 'RTCSessionDescription': The provided value '${type2}' is not a valid enum value of type RTCSdpType.`);
-    }
-    this.#type = type2;
-  }
-  toJSON() {
-    return {
-      sdp: this.sdp,
-      type: this.#type
-    };
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/DOMException.js
-var DOMException2 = class extends Error {
-  /**
-   * @param {string} message
-   * @param {string} [name]
-   **/
-  constructor(message, name) {
-    super(message);
-    this.name = name;
-  }
-  toString() {
-    return `${this.name}: ${this.message}`;
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCError.js
-var RTCErrorDetailType = [
-  "data-channel-failure",
-  "dtls-failure",
-  "fingerprint-failure",
-  "sctp-failure",
-  "sdp-syntax-error",
-  "hardware-encoder-not-available",
-  "hardware-encoder-error"
-];
-var RTCError = class extends DOMException2 {
-  #errorDetail;
-  #sdpLineNumber;
-  #sctpCauseCode;
-  #receivedAlert;
-  #sentAlert;
-  #httpRequestStatusCode;
-  /**
-   * @param {RTCErrorInit} init
-   * @param {string=} message
-   */
-  constructor(init, message) {
-    if (arguments.length === 0) throw new TypeError("Failed to construct 'RTCError': 1 argument required, but only 0 present.");
-    if (!init.errorDetail) throw new TypeError("Failed to construct 'RTCError': Failed to read the 'errorDetail' property from 'RTCErrorInit': Required member is undefined.");
-    if (!RTCErrorDetailType.includes(init.errorDetail)) throw new TypeError(`Failed to construct 'RTCError': Failed to read the 'errorDetail' property from 'RTCErrorInit': The provided value '${init.errorDetail}' is not a valid enum value of type RTCErrorDetailType.`);
-    super(message, "OperationError");
-    this.#errorDetail = init.errorDetail;
-    this.#receivedAlert = init.receivedAlert ?? null;
-    this.#sentAlert = init.sentAlert ?? null;
-    this.#sctpCauseCode = init.sctpCauseCode ?? null;
-    this.#sdpLineNumber = init.sdpLineNumber ?? null;
-    this.#httpRequestStatusCode = init.httpRequestStatusCode ?? null;
-  }
-  get errorDetail() {
-    return this.#errorDetail;
-  }
-  get sdpLineNumber() {
-    return this.#sdpLineNumber ?? null;
-  }
-  get sctpCauseCode() {
-    return this.#sctpCauseCode ?? null;
-  }
-  get receivedAlert() {
-    return this.#receivedAlert ?? null;
-  }
-  get sentAlert() {
-    return this.#sentAlert ?? null;
-  }
-  get httpRequestStatusCode() {
-    return this.#httpRequestStatusCode ?? null;
-  }
-  set errorDetail(_) {
-    throw new TypeError("RTCError.errorDetail is readonly.");
-  }
-  set sdpLineNumber(_) {
-    throw new TypeError("RTCError.sdpLineNumber is readonly.");
-  }
-  set sctpCauseCode(_) {
-    throw new TypeError("RTCError.sctpCauseCode is readonly.");
-  }
-  set receivedAlert(_) {
-    throw new TypeError("RTCError.receivedAlert is readonly.");
-  }
-  set sentAlert(_) {
-    throw new TypeError("RTCError.sentAlert is readonly.");
-  }
-  set httpRequestStatusCode(_) {
-    throw new TypeError("RTCError.httpRequestStatusCode is readonly.");
-  }
-};
-var RTCErrorEvent = class extends Event {
-  #error;
-  /**
-   * @param {string} type
-   * @param {RTCErrorEventInit} init
-   */
-  constructor(type2, init) {
-    if (arguments.length < 2) throw new TypeError(`Failed to construct 'RTCErrorEvent': 2 arguments required, but only ${arguments.length} present.`);
-    if (typeof init !== "object") throw new TypeError("Failed to construct 'RTCErrorEvent': The provided value is not of type 'RTCErrorEventInit'.");
-    if (!init.error) throw new TypeError("Failed to construct 'RTCErrorEvent': Failed to read the 'error' property from 'RTCErrorEventInit': Required member is undefined.");
-    if (init.error.constructor !== RTCError) throw new TypeError("Failed to construct 'RTCErrorEvent': Failed to read the 'error' property from 'RTCErrorEventInit': Failed to convert value to 'RTCError'.");
-    super(type2 || "error");
-    this.#error = init.error;
-  }
-  get error() {
-    return this.#error;
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/Blob.js
-var _Blob2 = globalThis.Blob || (await import("node:buffer")).Blob;
-var Blob_default = _Blob2;
-
-// server/node_modules/webrtc-polyfill/lib/RTCDataChannel.js
-var RTCDataChannel = class extends EventTarget {
-  /** @type {import("node-datachannel").DataChannel} dataChannel */
-  #dataChannel;
-  /** @type {RTCDataChannelState} */
-  #readyState;
-  #bufferedAmountLowThreshold;
-  /** @type {BinaryType} */
-  #binaryType = "blob";
-  #maxPacketLifeTime;
-  #maxRetransmits;
-  #negotiated;
-  #ordered;
-  /** @type {import('./RTCPeerConnection.js').default} */
-  #pc;
-  onbufferedamountlow;
-  onclose;
-  onclosing;
-  onerror;
-  onmessage;
-  onopen;
-  /**
-   * @param {import("node-datachannel").DataChannel} dataChannel
-   * @param {any} opts
-   * @param {import('./RTCPeerConnection.js').default} pc
-   */
-  constructor(dataChannel, opts = {}, pc) {
-    super();
-    this.#dataChannel = dataChannel;
-    this.#readyState = this.#dataChannel.isOpen() ? "open" : "connecting";
-    this.#bufferedAmountLowThreshold = 0;
-    this.#maxPacketLifeTime = opts.maxPacketLifeTime ?? null;
-    this.#maxRetransmits = opts.maxRetransmits ?? null;
-    this.#negotiated = opts.negotiated ?? false;
-    this.#ordered = opts.ordered ?? true;
-    this.#pc = pc;
-    this.#dataChannel.onOpen(() => {
-      this.#readyState = "open";
-      this.dispatchEvent(new Event("open"));
-    });
-    this.#dataChannel.onClosed(() => setTimeout(() => {
-      if (this.#readyState !== "closed") {
-        if (this.#pc.connectionState === "closed") {
-          this.dispatchEvent(new RTCErrorEvent("error", { error: new RTCError({ errorDetail: "sctp-failure", sctpCauseCode: 12 }, "User-Initiated Abort, reason=Close called") }));
-        }
-        this.#readyState = "closing";
-        this.dispatchEvent(new Event("closing"));
-        this.#readyState = "closed";
-      }
-      this.dispatchEvent(new Event("close"));
-    }).unref?.());
-    this.#dataChannel.onError((msg) => {
-      this.dispatchEvent(
-        new RTCErrorEvent("error", {
-          error: new RTCError(
-            { errorDetail: "data-channel-failure" },
-            msg
-          )
-        })
-      );
-    });
-    this.#dataChannel.onBufferedAmountLow(() => {
-      this.dispatchEvent(new Event("bufferedamountlow"));
-    });
-    this.#dataChannel.onMessage((message) => {
-      let data;
-      if (!ArrayBuffer.isView(message)) {
-        data = message;
-      } else if (this.#binaryType === "blob") {
-        data = new Blob_default([message]);
-      } else {
-        data = message.buffer;
-      }
-      this.dispatchEvent(new MessageEvent("message", { data }));
-    });
-    this.addEventListener("message", (e2) => {
-      this.onmessage?.(e2);
-    });
-    this.addEventListener("bufferedamountlow", (e2) => {
-      this.onbufferedamountlow?.(e2);
-    });
-    this.addEventListener("error", (e2) => {
-      this.onerror?.(e2);
-    });
-    this.addEventListener("close", (e2) => {
-      this.onclose?.(e2);
-    });
-    this.addEventListener("closing", (e2) => {
-      this.onclosing?.(e2);
-    });
-    this.addEventListener("open", (e2) => {
-      this.onopen?.(e2);
-    });
-  }
-  set binaryType(type2) {
-    if (type2 !== "blob" && type2 !== "arraybuffer") {
-      throw new DOMException2(
-        "Failed to set the 'binaryType' property on 'RTCDataChannel': Unknown binary type : " + type2,
-        "TypeMismatchError"
-      );
-    }
-    this.#binaryType = type2;
-  }
-  get binaryType() {
-    return this.#binaryType;
-  }
-  get bufferedAmount() {
-    return this.#dataChannel.bufferedAmount();
-  }
-  get bufferedAmountLowThreshold() {
-    return this.#bufferedAmountLowThreshold;
-  }
-  set bufferedAmountLowThreshold(value) {
-    const number = Number(value) || 0;
-    this.#bufferedAmountLowThreshold = number;
-    this.#dataChannel.setBufferedAmountLowThreshold(number);
-  }
-  get id() {
-    return this.#dataChannel.getId();
-  }
-  get label() {
-    return this.#dataChannel.getLabel();
-  }
-  get maxPacketLifeTime() {
-    return this.#maxPacketLifeTime;
-  }
-  get maxRetransmits() {
-    return this.#maxRetransmits;
-  }
-  get negotiated() {
-    return this.#negotiated;
-  }
-  get ordered() {
-    return this.#ordered;
-  }
-  get protocol() {
-    return this.#dataChannel.getProtocol();
-  }
-  get readyState() {
-    return this.#readyState;
-  }
-  get maxMessageSize() {
-    return this.#dataChannel.maxMessageSize();
-  }
-  /** @param {string | Blob | ArrayBuffer | ArrayBufferView} data */
-  send(data) {
-    if (this.#readyState !== "open") {
-      throw new DOMException2(
-        "Failed to execute 'send' on 'RTCDataChannel': RTCDataChannel.readyState is not 'open'",
-        "InvalidStateError"
-      );
-    }
-    if (typeof data === "string") {
-      if (data.length > this.#dataChannel.maxMessageSize()) throw new TypeError("Max message size exceeded.");
-      this.#dataChannel.sendMessage(data);
-    } else if ("arrayBuffer" in data) {
-      if (data.size > this.#dataChannel.maxMessageSize()) throw new TypeError("Max message size exceeded.");
-      return data.arrayBuffer().then((ab) => {
-        if (this.readyState === "open") this.#dataChannel.sendMessageBinary(new Uint8Array(ab));
-      });
-    } else {
-      if (data.byteLength > this.#dataChannel.maxMessageSize()) throw new TypeError("Max message size exceeded.");
-      this.#dataChannel.sendMessageBinary(new Uint8Array(data));
-    }
-  }
-  close() {
-    this.#readyState = "closed";
-    setTimeout(() => {
-      if (this.#pc.connectionState === "closed") {
-        this.dispatchEvent(new RTCErrorEvent("error", { error: new RTCError({ errorDetail: "sctp-failure", sctpCauseCode: 12 }, "User-Initiated Abort, reason=Close called") }));
-      }
-    }).unref?.();
-    this.#dataChannel.close();
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCIceCandidate.js
-var componentMap = {
-  1: "rtp",
-  2: "rtcp"
-};
-var RTCIceCandidate = class {
-  #address;
-  #candidate;
-  #component;
-  #foundation;
-  #port;
-  #priority;
-  #protocol;
-  #relatedAddress;
-  #relatedPort;
-  #sdpMLineIndex;
-  #sdpMid;
-  #tcpType;
-  #type;
-  #usernameFragment;
-  /**
-     * @param  {RTCIceCandidateInit} init={}
-     */
-  constructor({ candidate, sdpMLineIndex, sdpMid, usernameFragment } = {}) {
-    if (sdpMLineIndex == null && sdpMid == null) {
-      throw new TypeError("Failed to construct 'RTCIceCandidate': sdpMid and sdpMLineIndex are both null.");
-    }
-    this.#candidate = candidate?.startsWith("a=") ? candidate.slice(2) : candidate;
-    this.#sdpMLineIndex = sdpMLineIndex ?? null;
-    this.#sdpMid = sdpMid ?? null;
-    this.#usernameFragment = usernameFragment ?? null;
-    if (candidate && candidate.indexOf("candidate:") !== -1) {
-      const interest = candidate.slice(candidate.indexOf("candidate:") + 10);
-      const [foundation, componentID, protocol, priority, ip, port, _typ, type2, ...rest] = interest.split(" ");
-      this.#foundation = foundation;
-      this.#component = componentMap[componentID];
-      this.#protocol = protocol;
-      this.#priority = Number(priority);
-      this.#address = ip;
-      this.#port = Number(port);
-      this.#type = type2;
-      if (protocol === "tcp") {
-        const tcptypeIndex = rest.indexOf("tcptype");
-        if (tcptypeIndex !== -1) this.#tcpType = rest[tcptypeIndex + 1];
-      }
-      if (type2 !== "host") {
-        const raddrIndex = rest.indexOf("raddr");
-        if (raddrIndex !== -1) this.#relatedAddress = rest[raddrIndex + 1];
-        const rportIndex = rest.indexOf("rport");
-        if (rportIndex !== -1) this.#relatedPort = Number(rest[rportIndex + 1]);
-      }
-    }
-  }
-  get address() {
-    return this.#address ?? null;
-  }
-  get candidate() {
-    return this.#candidate ?? "";
-  }
-  get component() {
-    return this.#component;
-  }
-  get foundation() {
-    return this.#foundation ?? null;
-  }
-  get port() {
-    return this.#port ?? null;
-  }
-  get priority() {
-    return this.#priority ?? null;
-  }
-  get protocol() {
-    return this.#protocol ?? null;
-  }
-  get relatedAddress() {
-    return this.#relatedAddress ?? null;
-  }
-  get relatedPort() {
-    return this.#relatedPort ?? null;
-  }
-  get sdpMLineIndex() {
-    return this.#sdpMLineIndex;
-  }
-  get sdpMid() {
-    return this.#sdpMid;
-  }
-  get tcpType() {
-    return this.#tcpType ?? null;
-  }
-  get type() {
-    return this.#type ?? null;
-  }
-  get usernameFragment() {
-    return this.#usernameFragment;
-  }
-  toJSON() {
-    return {
-      candidate: this.#candidate,
-      sdpMLineIndex: this.#sdpMLineIndex,
-      sdpMid: this.#sdpMid,
-      usernameFragment: this.#usernameFragment
-    };
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/MediaStream.js
-import { Readable } from "node:stream";
-var MediaStreamTrack = class extends EventTarget {
-  media;
-  track;
-  stream = new Readable({ read: () => {
-  } });
-  #kind;
-  #label;
-  #id = crypto.randomUUID();
-  contentHint = "";
-  onmute;
-  onunmute;
-  onended;
-  constructor({ kind, label }) {
-    super();
-    if (!kind) throw new TypeError("Failed to construct 'MediaStreamTrack': Failed to read the 'kind' property from 'MediaStreamTrackInit': Required member is undefined.");
-    this.#kind = kind;
-    this.#label = label;
-    this.addEventListener("ended", (e2) => {
-      this.onended?.(e2);
-      this.track?.close();
-      this.stream.destroy();
-    });
-    this.stream.on("close", () => {
-      this.stop();
-    });
-  }
-  async applyConstraints() {
-    console.warn("Constraints unsupported, ignored");
-  }
-  stop() {
-    this.track?.close();
-    this.stream.destroy();
-    this.dispatchEvent(new Event("ended"));
-  }
-  getSettings() {
-    console.warn("Settings upsupported, ignored");
-    return {};
-  }
-  getConstraints() {
-    console.warn("Constraints unsupported, ignored");
-    return {};
-  }
-  getCapabilities() {
-    console.warn("Capabilities unsupported, ignored");
-    return {};
-  }
-  clone() {
-    console.warn("Track clonning is unsupported, returned this instance");
-    return this;
-  }
-  get kind() {
-    return this.#kind;
-  }
-  get enabled() {
-    return this.track?.isOpen();
-  }
-  set enabled(_) {
-    console.warn("Track enabling and disabling is unsupported, ignored");
-  }
-  get muted() {
-    return false;
-  }
-  get id() {
-    return this.#id;
-  }
-  get label() {
-    return this.#label;
-  }
-  get readyState() {
-    return this.track?.isClosed() ? "ended" : "live";
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCIceTransport.js
-var RTCIceTransport = class extends EventTarget {
-  #component = null;
-  #role = null;
-  /** @type {import('./RTCPeerConnection.js').default} */
-  #pc;
-  ongatheringstatechange;
-  // TODO: not implemented
-  onselectedcandidatepairchange;
-  onstatechange;
-  constructor({ pc }) {
-    super();
-    this.#pc = pc;
-    pc.addEventListener("icegatheringstatechange", () => {
-      const e2 = new Event("gatheringstatechange");
-      this.dispatchEvent(e2);
-      this.ongatheringstatechange?.(e2);
-    });
-    pc.addEventListener("iceconnectionstatechange", () => {
-      const e2 = new Event("statechange");
-      this.dispatchEvent(e2);
-      this.onstatechange?.(e2);
-    });
-  }
-  get component() {
-    const pair = this.getSelectedCandidatePair();
-    if (!pair?.local) return null;
-    return pair.local.component;
-  }
-  get role() {
-    return this.#pc.localDescription.type === "offer" ? "controlling" : "controlled";
-  }
-  get gatheringState() {
-    return this.#pc.iceGatheringState;
-  }
-  get state() {
-    return this.#pc.iceConnectionState;
-  }
-  getLocalCandidates() {
-    return this.#pc.localCandidates;
-  }
-  getRemoteCandidates() {
-    return this.#pc.remoteCandidates;
-  }
-  getLocalParameters() {
-    return new RTCIceParameters(new RTCIceCandidate({ candidate: this.#pc.getSelectedCandidatePair().local.candidate, sdpMLineIndex: 0 }));
-  }
-  getRemoteParameters() {
-    return new RTCIceParameters(new RTCIceCandidate({ candidate: this.#pc.getSelectedCandidatePair().remote.candidate, sdpMLineIndex: 0 }));
-  }
-  getSelectedCandidatePair() {
-    const pair = this.#pc.getSelectedCandidatePair();
-    if (!pair?.local || !pair?.remote) return null;
-    return {
-      local: new RTCIceCandidate({
-        candidate: pair.local.candidate,
-        sdpMid: pair.local.mid
-      }),
-      remote: new RTCIceCandidate({
-        candidate: pair.remote.candidate,
-        sdpMid: pair.remote.mid
-      })
-    };
-  }
-};
-var RTCIceParameters = class {
-  usernameFragment = "";
-  password = "";
-  constructor({ usernameFragment, password = "" }) {
-    this.usernameFragment = usernameFragment;
-    this.password = password;
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCDtlsTransport.js
-var RTCDtlsTransport = class extends EventTarget {
-  #iceTransport;
-  /** @type {import('./RTCPeerConnection.js').default} */
-  #pc;
-  onerror;
-  onstatechange;
-  constructor({ pc }) {
-    super();
-    this.#pc = pc;
-    this.#iceTransport = new RTCIceTransport({ pc });
-  }
-  get iceTransport() {
-    return this.#iceTransport;
-  }
-  get state() {
-    if (this.#pc.connectionState === "disconnected") return "closed";
-    return this.#pc.connectionState;
-  }
-  getRemoteCertificates() {
-    return [new ArrayBuffer(0)];
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCRtp.js
-var ndcDirectionMapFrom = {
-  Inactive: "inactive",
-  RecvOnly: "recvonly",
-  SendOnly: "sendonly",
-  SendRecv: "sendrecv",
-  Unknown: "undefined"
-};
-var ndcDirectionMapTo = {
-  inactive: "Inactive",
-  recvonly: "RecvOnly",
-  sendonly: "SendOnly",
-  sendrecv: "SendRecv",
-  stopped: "Inactive",
-  undefined: "Unknown"
-};
-var RTCRtpTransceiver = class {
-  #transceiver;
-  #track;
-  #desiredDirection;
-  #sender;
-  #receiver;
-  constructor({ transceiver, pc }) {
-    this.#transceiver = transceiver;
-    this.#sender = new RTCRtpSender({ pc });
-    this.#receiver = new RTCRtpReceiver({ pc });
-  }
-  _setNDCTrack(track) {
-    if (this.#track) return;
-    this.#track = track;
-  }
-  get currentDirection() {
-    return ndcDirectionMapFrom[this.#transceiver.direction()];
-  }
-  get direction() {
-    return this.#desiredDirection;
-  }
-  set direction(dir) {
-    this.#desiredDirection = dir;
-    if (!this.#sender) return;
-    this.#transceiver.setDirection(ndcDirectionMapTo[dir]);
-  }
-  get mid() {
-    return this.#transceiver.mid();
-  }
-  get sender() {
-    return this.#sender;
-  }
-  get receiver() {
-    return this.#receiver;
-  }
-  get stopped() {
-    return this.#track?.isClosed();
-  }
-  setDirection(direction) {
-    this.#track?.setDirection(ndcDirectionMapTo[direction]);
-  }
-  setCodecPreferences(codecs) {
-  }
-  stop() {
-    this.#track?.close();
-  }
-};
-var RTCRtpSender = class {
-  track;
-  transform;
-  // TODO, is it worth tho?
-  #transport;
-  #pc;
-  constructor({ pc }) {
-    this.#transport = new RTCDtlsTransport({ pc });
-    this.#pc = pc;
-  }
-  get dtmf() {
-    return null;
-  }
-  get transport() {
-    return this.#transport ?? null;
-  }
-  static getCapabilities(kind) {
-    if (!kind) throw new TypeError("Failed to execute 'getCapabilities' on 'RTCRtpSender': 1 argument required, but only 0 present.");
-    if (kind === "video") {
-      return {
-        codecs: [
-          { mimeType: "video/H264" },
-          { mimeType: "video/VP8" },
-          { mimeType: "video/VP9" }
-        ]
-      };
-    } else {
-      return {
-        codecs: [
-          { mimeType: "video/opus" }
-        ]
-      };
-    }
-  }
-  async getStats() {
-    return /* @__PURE__ */ new Map();
-  }
-  getParameters() {
-    return { encodings: [], codecs: [], transactionId: "", headerExtensions: [], rtcp: { reducedSize: false } };
-  }
-  async setParameters() {
-  }
-  setStreams(streams) {
-    if (this.#pc.connectionState !== "connected") throw new DOMException2("Sender's connection is closed", "InvalidStateError");
-    if (!this.track) return;
-    for (const stream of streams) {
-      stream.addTrack(this.track);
-    }
-  }
-  async replaceTrack() {
-    throw new TypeError("Method unsupported");
-  }
-};
-var RTCRtpReceiver = class {
-  transform;
-  // TODO, is it worth tho?
-  #transport;
-  track;
-  constructor({ pc }) {
-    this.#transport = new RTCDtlsTransport({ pc });
-  }
-  get transport() {
-    return this.#transport ?? null;
-  }
-  static getCapabilities(kind) {
-    if (!kind) throw new TypeError("Failed to execute 'getCapabilities' on 'RTCRtpSender': 1 argument required, but only 0 present.");
-    if (kind === "video") {
-      return {
-        codecs: [
-          { mimeType: "video/H264" },
-          { mimeType: "video/VP8" },
-          { mimeType: "video/VP9" }
-        ]
-      };
-    } else {
-      return {
-        codecs: [
-          { mimeType: "video/opus" }
-        ]
-      };
-    }
-  }
-  async getStats() {
-    return /* @__PURE__ */ new Map();
-  }
-  getParameters() {
-    return { encodings: [], codecs: [], transactionId: "", headerExtensions: [], rtcp: { reducedSize: false } };
-  }
-  getContributingSources() {
-    return [];
-  }
-  getSynchronizationSources() {
-    return [];
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/Events.js
-var RTCPeerConnectionIceEvent = class extends Event {
-  #candidate;
-  constructor(candidate) {
-    super("icecandidate");
-    this.#candidate = candidate;
-  }
-  get candidate() {
-    return this.#candidate;
-  }
-  get url() {
-    return "";
-  }
-};
-var RTCDataChannelEvent = class extends Event {
-  #channel;
-  constructor(type2 = "datachannel", init) {
-    if (arguments.length === 0) throw new TypeError(`Failed to construct 'RTCDataChannelEvent': 2 arguments required, but only ${arguments.length} present.`);
-    if (typeof init !== "object") throw new TypeError("Failed to construct 'RTCDataChannelEvent': The provided value is not of type 'RTCDataChannelEventInit'.");
-    if (!init.channel) throw new TypeError("Failed to construct 'RTCDataChannelEvent': Failed to read the 'channel' property from 'RTCDataChannelEventInit': Required member is undefined.");
-    if (init.channel.constructor !== RTCDataChannel) throw new TypeError("Failed to construct 'RTCDataChannelEvent': Failed to read the 'channel' property from 'RTCDataChannelEventInit': Failed to convert value to 'RTCDataChannel'.");
-    super("datachannel");
-    this.#channel = init.channel;
-  }
-  get channel() {
-    return this.#channel;
-  }
-};
-var RTCTrackEvent = class extends Event {
-  #track;
-  #receiver;
-  #transceiver;
-  #streams;
-  constructor(type2 = "track", init) {
-    if (arguments.length === 0) throw new TypeError(`Failed to construct 'RTCTrackEvent': 2 arguments required, but only ${arguments.length} present.`);
-    if (typeof init !== "object") throw new TypeError("Failed to construct 'RTCTrackEvent': The provided value is not of type 'RTCTrackEventInit'.");
-    if (!init.channel) throw new TypeError("Failed to construct 'RTCTrackEvent': Failed to read the 'channel' property from 'RTCTrackEventInit': Required member is undefined.");
-    if (init.receiver.constructor !== RTCRtpReceiver) throw new TypeError("Failed to construct 'RTCTrackEvent': Failed to read the 'channel' property from 'RTCTrackEventInit': Failed to convert value to 'RTCRtpReceiver'.");
-    if (init.track.constructor !== MediaStreamTrack) throw new TypeError("Failed to construct 'RTCTrackEvent': Failed to read the 'channel' property from 'RTCTrackEventInit': Failed to convert value to 'MediaStreamTrack'.");
-    if (init.transceiver.constructor !== RTCRtpTransceiver) throw new TypeError("Failed to construct 'RTCTrackEvent': Failed to read the 'channel' property from 'RTCTrackEventInit': Failed to convert value to 'RTCRtpTransceiver'.");
-    super("track");
-    const { track, receiver, transceiver, streams } = init;
-    this.#track = track;
-    this.#receiver = receiver;
-    this.#transceiver = transceiver;
-    this.#streams = streams;
-  }
-  get track() {
-    return this.#track;
-  }
-  get receiver() {
-    return this.#receiver;
-  }
-  get transceiver() {
-    return this.#transceiver;
-  }
-  get streams() {
-    return this.#streams ?? [];
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCSctpTransport.js
-var RTCSctpTransport = class extends EventTarget {
-  #maxChannels = null;
-  /** @type {import('./RTCPeerConnection.js').default} */
-  #pc;
-  #transport;
-  onstatechange;
-  onerror;
-  constructor({ pc }) {
-    super();
-    this.#pc = pc;
-    this.#transport = new RTCDtlsTransport({ pc });
-    pc.addEventListener("connectionstatechange", () => {
-      const e2 = new Event("statechange");
-      this.dispatchEvent(e2);
-      this.onstatechange?.(e2);
-    });
-  }
-  get maxChannels() {
-    if (this.state !== "connected") return null;
-    return this.#pc.maxChannels;
-  }
-  get maxMessageSize() {
-    return this.#pc.maxMessageSize ?? 65536;
-  }
-  get state() {
-    const state = this.#pc.connectionState;
-    if (state === "new" || state === "connecting") {
-      return "connecting";
-    } else if (state === "disconnected" || state === "failed" || state === "closed") {
-      return "closed";
-    }
-    return state;
-  }
-  get transport() {
-    return this.#transport;
-  }
-};
-
-// server/node_modules/webrtc-polyfill/lib/RTCPeerConnection.js
-var ndcDirectionMap = {
-  inactive: "Inactive",
-  recvonly: "RecvOnly",
-  sendonly: "SendOnly",
-  sendrecv: "SendRecv",
-  stopped: "Inactive",
-  undefined: "Unknown"
-};
-var RTCPeerConnection = class _RTCPeerConnection extends EventTarget {
-  static #instanceCount = 0;
-  #peerConnection;
-  #localOffer;
-  #localAnswer;
-  /** @type {Set<RTCDataChannel>} */
-  #dataChannels = /* @__PURE__ */ new Set();
-  #config;
-  #canTrickleIceCandidates = null;
-  #sctp;
-  /** @type {RTCIceCandidate[]} */
-  #localCandidates = [];
-  /** @type {RTCIceCandidate[]} */
-  #remoteCandidates = [];
-  #announceNegotiation;
-  #tracks = /* @__PURE__ */ new Set();
-  #transceivers = [];
-  #unusedTransceivers = [];
-  onconnectionstatechange;
-  ondatachannel;
-  onicecandidate;
-  // TODO: not implemented
-  onicecandidateerror;
-  oniceconnectionstatechange;
-  onicegatheringstatechange;
-  onnegotiationneeded;
-  onsignalingstatechange;
-  ontrack;
-  constructor(init = {}) {
-    super();
-    this.setConfiguration(init);
-    this.#localOffer = createDeferredPromise();
-    this.#localAnswer = createDeferredPromise();
-    this.#sctp = new RTCSctpTransport({ pc: this });
-    _RTCPeerConnection.#instanceCount++;
-    this.#peerConnection = new PeerConnection(this.#config.peerIdentity || `peer-${getRandomString(7)}`, {
-      ...init,
-      disableAutoNegotiation: true,
-      iceServers: this.#config.iceServers.map((server2) => {
-        const urls = Array.isArray(server2.urls) ? server2.urls : [server2.urls];
-        return urls.map((url) => {
-          if (server2.username && server2.credential) {
-            const [protocol, rest] = url.split(/:(.*)/);
-            return `${protocol}:${server2.username}:${server2.credential}@${rest}`;
-          }
-          return url;
-        });
-      }).flat(),
-      iceTransportPolicy: this.#config.iceTransportPolicy
-    });
-    this.#peerConnection.onStateChange(() => {
-      this.dispatchEvent(new Event("connectionstatechange"));
-    });
-    this.#peerConnection.onIceStateChange(() => {
-      this.dispatchEvent(new Event("iceconnectionstatechange"));
-    });
-    this.#peerConnection.onSignalingStateChange(() => {
-      this.dispatchEvent(new Event("signalingstatechange"));
-    });
-    this.#peerConnection.onGatheringStateChange(() => {
-      this.dispatchEvent(new Event("icegatheringstatechange"));
-    });
-    this.#peerConnection.onDataChannel((dataChannel) => {
-      this.dispatchEvent(new RTCDataChannelEvent("datachannel", { channel: this.#handleDataChannel(dataChannel) }));
-    });
-    this.#peerConnection.onLocalDescription((sdp, type2) => {
-      if (type2 === "offer") {
-        this.#localOffer.resolve(new RTCSessionDescription({ sdp, type: type2 }));
-      }
-      if (type2 === "answer") {
-        this.#localAnswer.resolve(new RTCSessionDescription({ sdp, type: type2 }));
-      }
-    });
-    this.#peerConnection.onLocalCandidate((candidate, sdpMid) => {
-      if (sdpMid === "unspec") {
-        this.#localAnswer.reject(new Error(`Invalid description type ${sdpMid}`));
-        return;
-      }
-      this.dispatchEvent(new RTCPeerConnectionIceEvent(new RTCIceCandidate({ candidate, sdpMid })));
-    });
-    this.#peerConnection.onTrack((track) => {
-      const transceiver = new RTCRtpTransceiver({ transceiver: track, pc: this });
-      this.#tracks.add(track);
-      transceiver._setNDCTrack(track);
-      this.#transceivers.push(transceiver);
-      const mediastream = new MediaStreamTrack();
-      mediastream.track = track;
-      track.onClosed(() => {
-        this.#tracks.delete(track);
-        mediastream.dispatchEvent(new Event("ended"));
-      });
-      track.onMessage((buf) => mediastream.stream.push(buf));
-      transceiver.receiver.track = mediastream;
-      this.dispatchEvent(new RTCTrackEvent("track", { track: mediastream, receiver: transceiver.receiver, transceiver }));
-    });
-    this.addEventListener("connectionstatechange", (e2) => {
-      this.onconnectionstatechange?.(e2);
-    });
-    this.addEventListener("signalingstatechange", (e2) => {
-      this.onsignalingstatechange?.(e2);
-    });
-    this.addEventListener("iceconnectionstatechange", (e2) => {
-      this.oniceconnectionstatechange?.(e2);
-    });
-    this.addEventListener("icegatheringstatechange", (e2) => {
-      this.onicegatheringstatechange?.(e2);
-    });
-    this.addEventListener("datachannel", (e2) => {
-      this.ondatachannel?.(e2);
-    });
-    this.addEventListener("icecandidate", (e2) => {
-      this.#localCandidates.push(e2.candidate);
-      this.onicecandidate?.(e2);
-    });
-    this.addEventListener("track", (e2) => {
-      this.ontrack?.(e2);
-    });
-    this.addEventListener("negotiationneeded", (e2) => {
-      this.#announceNegotiation = true;
-      this.onnegotiationneeded?.(e2);
-    });
-  }
-  get localCandidates() {
-    return this.#localCandidates;
-  }
-  get remoteCandidates() {
-    return this.#remoteCandidates;
-  }
-  get canTrickleIceCandidates() {
-    return this.#canTrickleIceCandidates;
-  }
-  get connectionState() {
-    return this.#peerConnection.state();
-  }
-  get iceConnectionState() {
-    const state = this.#peerConnection.iceState();
-    if (state === "completed") return "connected";
-    return state;
-  }
-  get iceGatheringState() {
-    return this.#peerConnection.gatheringState();
-  }
-  /** @param {{ type: string; sdp: string; } | null} desc */
-  #nullableDescription(desc) {
-    if (!desc) return null;
-    return new RTCSessionDescription(desc);
-  }
-  get currentLocalDescription() {
-    return this.#nullableDescription(this.#peerConnection.localDescription());
-  }
-  get currentRemoteDescription() {
-    return this.#nullableDescription(this.#peerConnection.remoteDescription());
-  }
-  get localDescription() {
-    return this.#nullableDescription(this.#peerConnection.localDescription());
-  }
-  get pendingLocalDescription() {
-    return this.#nullableDescription(this.#peerConnection.localDescription());
-  }
-  get pendingRemoteDescription() {
-    return this.#nullableDescription(this.#peerConnection.remoteDescription());
-  }
-  get remoteDescription() {
-    return this.#nullableDescription(this.#peerConnection.remoteDescription());
-  }
-  get sctp() {
-    return this.#sctp;
-  }
-  get signalingState() {
-    return this.#peerConnection.signalingState();
-  }
-  /** @type {typeof globalThis.RTCPeerConnection['generateCertificate']} */
-  static async generateCertificate(keygenAlgorithm) {
-    throw new DOMException2("Not implemented");
-  }
-  /** @param {RTCIceCandidateInit} candidate */
-  async addIceCandidate(candidate) {
-    if (candidate?.candidate == null) {
-      throw new DOMException2("Candidate invalid");
-    }
-    try {
-      this.#peerConnection.addRemoteCandidate(candidate.candidate, candidate.sdpMid ?? "0");
-      this.#remoteCandidates.push(new RTCIceCandidate(candidate));
-    } catch (e2) {
-      if (!e2?.message) throw new DOMException2(JSON.stringify(e2), "UnknownError");
-      const { message } = e2;
-      if (message.includes("remote candidate without remote description")) throw new DOMException2(message, "InvalidStateError");
-      if (message.includes("Invalid candidate format")) throw new DOMException2(message, "OperationError");
-      throw new DOMException2(message, "UnknownError");
-    }
-  }
-  #findUnusedTransceiver(kind) {
-    const unused = this.#unusedTransceivers.find((tr) => tr.track.kind === kind && tr.direction === "sendonly");
-    if (!unused) return;
-    this.#unusedTransceivers.splice(this.#unusedTransceivers.indexOf(unused), 1);
-    return unused;
-  }
-  #setUpTrack(media, track, transceiver, direction) {
-    const session = new RtcpReceivingSession();
-    const pctrack = this.#peerConnection.addTrack(media);
-    this.#tracks.add(pctrack);
-    pctrack.onClosed(() => {
-      this.#tracks.delete(pctrack);
-      track.dispatchEvent(new Event("ended"));
-    });
-    pctrack.setMediaHandler(session);
-    track.media = media;
-    track.track = pctrack;
-    transceiver._setNDCTrack(pctrack);
-    track.stream.on("data", (buf) => {
-      pctrack.sendMessageBinary(buf);
-    });
-    if (direction === "recvonly") {
-      transceiver.receiver.track = track;
-    } else if (direction === "sendonly") {
-      transceiver.sender.track = track;
-    }
-    if (this.#announceNegotiation) {
-      this.#announceNegotiation = false;
-      this.dispatchEvent(new Event("negotiationneeded"));
-    }
-  }
-  addTrack(track, ...streams) {
-    for (const stream of streams) stream.addTrack(track);
-    const kind = track.kind;
-    const unused = this.#findUnusedTransceiver(kind);
-    if (unused) {
-      this.#setUpTrack(unused.media, track, unused, "sendonly");
-      return unused.sender;
-    } else {
-      const transceiver = this.addTransceiver(track, { direction: "sendonly" });
-      return transceiver.sender;
-    }
-  }
-  /**
-   * @param {MediaStreamTrack | string} trackOrKind
-   * @param {RTCRtpTransceiverInit=} opts
-   */
-  addTransceiver(trackOrKind, { direction = "inactive", sendEncodings = void 0, streams = void 0 } = {}) {
-    if (direction === "sendrecv") throw new TypeError("unsupported");
-    const track = trackOrKind instanceof MediaStreamTrack && trackOrKind;
-    const kind = track && track.kind || trackOrKind;
-    const ndcMedia = kind === "video" ? new Video("video", ndcDirectionMap[direction]) : new Audio("audio", ndcDirectionMap[direction]);
-    const transceiver = new RTCRtpTransceiver({ transceiver: ndcMedia, pc: this });
-    this.#transceivers.push(transceiver);
-    if (track) {
-      this.#setUpTrack(ndcMedia, track, transceiver, direction);
-    } else {
-      this.#unusedTransceivers.push(transceiver);
-    }
-    return transceiver;
-  }
-  getReceivers() {
-    return this.#transceivers.map((tr) => tr.direction === "recvonly" && tr.receiver).filter((re) => re);
-  }
-  getSenders() {
-    return this.#transceivers.map((tr) => tr.direction === "sendonly" && tr.sender).filter((se) => se);
-  }
-  getTracks() {
-    return [...this.#tracks];
-  }
-  get maxMessageSize() {
-    return this.#peerConnection.maxMessageSize();
-  }
-  get maxChannels() {
-    return this.#peerConnection.maxDataChannelId();
-  }
-  close() {
-    try {
-      for (const channel of this.#dataChannels) {
-        channel.close();
-      }
-      for (const transceiver of this.#transceivers) {
-        transceiver.close();
-      }
-      for (const track of this.#tracks) {
-        track.close();
-      }
-      this.#peerConnection.close();
-    } finally {
-      _RTCPeerConnection.#instanceCount--;
-      if (!_RTCPeerConnection.#instanceCount) cleanup();
-    }
-  }
-  createAnswer() {
-    this.#localAnswer = createDeferredPromise();
-    this.#peerConnection.setLocalDescription("answer");
-    return this.#localAnswer;
-  }
-  #handleDataChannel(channel, opts) {
-    const dataChannel = new RTCDataChannel(channel, opts, this);
-    this.#dataChannels.add(dataChannel);
-    dataChannel.addEventListener("close", () => {
-      this.#dataChannels.delete(dataChannel);
-    });
-    return dataChannel;
-  }
-  createDataChannel(label, opts = {}) {
-    if (opts.ordered === false) opts.unordered = true;
-    const channel = this.#peerConnection.createDataChannel("" + label, opts);
-    const dataChannel = this.#handleDataChannel(channel, opts);
-    if (this.#announceNegotiation == null) {
-      this.#announceNegotiation = false;
-      this.dispatchEvent(new Event("negotiationneeded"));
-    }
-    return dataChannel;
-  }
-  createOffer() {
-    this.#localOffer = createDeferredPromise();
-    this.#peerConnection.setLocalDescription("offer");
-    return this.#localOffer;
-  }
-  getConfiguration() {
-    return this.#config;
-  }
-  getSelectedCandidatePair() {
-    return this.#peerConnection.getSelectedCandidatePair();
-  }
-  // @ts-expect-error dont support callback based stats
-  getStats() {
-    const report = /* @__PURE__ */ new Map();
-    const cp = this.getSelectedCandidatePair();
-    const bytesSent = this.#peerConnection.bytesSent();
-    const bytesReceived = this.#peerConnection.bytesReceived();
-    const rtt = this.#peerConnection.rtt();
-    const localIdRs = getRandomString(8);
-    const localId = "RTCIceCandidate_" + localIdRs;
-    report.set(localId, {
-      id: localId,
-      type: "local-candidate",
-      timestamp: Date.now(),
-      candidateType: cp?.local.type,
-      ip: cp?.local.address,
-      port: cp?.local.port
-    });
-    const remoteIdRs = getRandomString(8);
-    const remoteId = "RTCIceCandidate_" + remoteIdRs;
-    report.set(remoteId, {
-      id: remoteId,
-      type: "remote-candidate",
-      timestamp: Date.now(),
-      candidateType: cp?.remote.type,
-      ip: cp?.remote.address,
-      port: cp?.remote.port
-    });
-    const candidateId = "RTCIceCandidatePair_" + localIdRs + "_" + remoteIdRs;
-    report.set(candidateId, {
-      id: candidateId,
-      type: "candidate-pair",
-      timestamp: Date.now(),
-      localCandidateId: localId,
-      remoteCandidateId: remoteId,
-      state: "succeeded",
-      nominated: true,
-      writable: true,
-      bytesSent,
-      bytesReceived,
-      totalRoundTripTime: rtt,
-      currentRoundTripTime: rtt
-    });
-    const transportId = "RTCTransport_0_1";
-    report.set(transportId, {
-      id: transportId,
-      timestamp: Date.now(),
-      type: "transport",
-      bytesSent,
-      bytesReceived,
-      dtlsState: "connected",
-      selectedCandidatePairId: candidateId,
-      selectedCandidatePairChanges: 1
-    });
-    const dataChannels = [...this.#dataChannels];
-    report.set("P", {
-      id: "P",
-      timestamp: Date.now(),
-      type: "peer-connection",
-      // TODO: this isn't accurate as it shows currently open/closed channels, not the history count
-      dataChannelsClosed: dataChannels.filter((channel) => channel.readyState === "open").length,
-      dataChannelsOpened: dataChannels.filter((channel) => channel.readyState !== "open").length
-    });
-    return Promise.resolve(report);
-  }
-  getTransceivers() {
-    return this.#transceivers;
-  }
-  removeTrack() {
-    console.warn("track detatching not supported");
-  }
-  restartIce() {
-    throw new DOMException2("Not implemented");
-  }
-  setConfiguration(config) {
-    config ??= {};
-    if (config.bundlePolicy === void 0) config.bundlePolicy = "balanced";
-    config.encodedInsertableStreams ??= false;
-    config.iceCandidatePoolSize ??= 0;
-    config.iceServers ??= [];
-    for (let { urls } of config.iceServers) {
-      if (!Array.isArray(urls)) urls = [urls];
-      for (const url of urls) {
-        try {
-          new URL(url);
-        } catch (error) {
-          throw new DOMException2(`Failed to execute 'setConfiguration' on 'RTCPeerConnection': '${url}' is not a valid URL.`, "SyntaxError");
-        }
-      }
-    }
-    config.iceTransportPolicy ??= "all";
-    config.rtcAudioJitterBufferFastAccelerate ??= false;
-    config.rtcAudioJitterBufferMaxPackets ??= 200;
-    config.rtcAudioJitterBufferMinDelayMs ??= 0;
-    config.rtcpMuxPolicy ??= "require";
-    if (config.iceCandidatePoolSize < 0 || config.iceCandidatePoolSize > 255) throw new TypeError("Failed to execute 'setConfiguration' on 'RTCPeerConnection': Failed to read the 'iceCandidatePoolSize' property from 'RTCConfiguration': Value is outside the 'octet' value range.");
-    if (config.bundlePolicy !== "balanced" && config.bundlePolicy !== "max-compat" && config.bundlePolicy !== "max-bundle") throw new TypeError("Failed to execute 'setConfiguration' on 'RTCPeerConnection': Failed to read the 'bundlePolicy' property from 'RTCConfiguration': The provided value '" + config.bundlePolicy + "' is not a valid enum value of type RTCBundlePolicy.");
-    if (this.#config) {
-      if (config.bundlePolicy !== this.#config.bundlePolicy) {
-        throw new DOMException2("Failed to execute 'setConfiguration' on 'RTCPeerConnection': Attempted to modify the PeerConnection's configuration in an unsupported way.", "InvalidModificationError");
-      }
-    }
-    this.#config = config;
-  }
-  async setLocalDescription(description) {
-    if (description == null || description.type == null) {
-      return this.#peerConnection.setLocalDescription();
-    }
-    const state = this.signalingState;
-    const type2 = description.type;
-    if (type2 === "offer" && state === "stable" || type2 === "answer" && state === "have-remote-offer" || type2 === "pranswer" && state === "have-remote-offer") {
-      this.#peerConnection.setLocalDescription(type2);
-    }
-  }
-  async setRemoteDescription(description) {
-    if (description.sdp == null) {
-      throw new DOMException2("Remote SDP must be set");
-    }
-    const state = this.signalingState;
-    if (description.type === "offer" && state === "stable" || description.type === "answer" && state === "have-local-offer" || description.type === "pranswer" && state === "have-local-offer") {
-      this.#peerConnection.setRemoteDescription(description.sdp, description.type);
-    }
-  }
-};
-function createDeferredPromise() {
-  let resolve2, reject;
-  const promise2 = new Promise((_resolve, _reject) => {
-    resolve2 = _resolve;
-    reject = _reject;
-  });
-  promise2.resolve = resolve2;
-  promise2.reject = reject;
-  return promise2;
-}
-function getRandomString(length = 0) {
-  return Math.random().toString(36).substring(2, 2 + length);
-}
+// server/webrtc-stub.mjs
+var RTCPeerConnection = void 0;
+var RTCSessionDescription = void 0;
+var RTCIceCandidate = void 0;
 
 // server/node_modules/@thaunknown/simple-peer/lite.js
 var import_streamx2 = __toESM(require_streamx(), 1);
@@ -37681,8 +36370,8 @@ var validateTimeout = ({ timeout }) => {
     throw new TypeError(`Expected the \`timeout\` option to be a non-negative integer, got \`${timeout}\` (${typeof timeout})`);
   }
 };
-var setExitHandler = async (spawned, { cleanup: cleanup2, detached }, timedPromise) => {
-  if (!cleanup2 || detached) {
+var setExitHandler = async (spawned, { cleanup, detached }, timedPromise) => {
+  if (!cleanup || detached) {
     return timedPromise;
   }
   const removeExitHandler = (0, import_signal_exit.default)(() => {
@@ -39710,16 +38399,16 @@ Peer2.createWebRTCPeer = (conn, swarm, throttleGroups, source = null) => {
   if (peer.conn.connected) {
     peer.onConnect();
   } else {
-    const cleanup2 = () => {
+    const cleanup = () => {
       peer.conn.removeListener("connect", onConnect);
       peer.conn.removeListener("error", onError);
     };
     const onConnect = () => {
-      cleanup2();
+      cleanup();
       peer.onConnect();
     };
     const onError = (err) => {
-      cleanup2();
+      cleanup();
       peer.destroy(err);
     };
     peer.conn.once("connect", onConnect);
@@ -40174,8 +38863,8 @@ var HTTPTracker = class extends tracker_default {
         timeout = null;
       }
       self2.maybeDestroyCleanup = null;
-      self2.cleanupFns.slice(0).forEach((cleanup2) => {
-        cleanup2();
+      self2.cleanupFns.slice(0).forEach((cleanup) => {
+        cleanup();
       });
       self2.cleanupFns = [];
       cb(null);
@@ -40190,15 +38879,15 @@ var HTTPTracker = class extends tracker_default {
         agent = this.client._proxyOpts.socksProxy;
       }
     }
-    const cleanup2 = () => {
+    const cleanup = () => {
       if (!controller.signal.aborted) {
-        (0, import_unordered_array_remove4.default)(this.cleanupFns, this.cleanupFns.indexOf(cleanup2));
+        (0, import_unordered_array_remove4.default)(this.cleanupFns, this.cleanupFns.indexOf(cleanup));
         controller.abort();
         controller = null;
       }
       if (this.maybeDestroyCleanup) this.maybeDestroyCleanup();
     };
-    this.cleanupFns.push(cleanup2);
+    this.cleanupFns.push(cleanup);
     let res;
     let controller = abortTimeout(common_default.REQUEST_TIMEOUT);
     try {
@@ -40215,7 +38904,7 @@ var HTTPTracker = class extends tracker_default {
       if (err) return cb(err);
     }
     let data = new Uint8Array(await res.arrayBuffer());
-    cleanup2();
+    cleanup();
     if (this.destroyed) return;
     if (res.status !== 200) {
       return cb(new Error(`Non-200 response code ${res.status} from ${this.announceUrl}`));
@@ -40345,8 +39034,8 @@ var UDPTracker = class extends tracker_default {
         timeout = null;
       }
       self2.maybeDestroyCleanup = null;
-      self2.cleanupFns.slice(0).forEach((cleanup2) => {
-        cleanup2();
+      self2.cleanupFns.slice(0).forEach((cleanup) => {
+        cleanup();
       });
       self2.cleanupFns = [];
       cb(null);
@@ -40381,14 +39070,14 @@ var UDPTracker = class extends tracker_default {
     } else {
       onGotConnection(null);
     }
-    this.cleanupFns.push(cleanup2);
+    this.cleanupFns.push(cleanup);
     function onGotConnection(err, s2, info) {
       if (err) return onError(err);
       proxySocket = s2;
       socket = dgram3.createSocket("udp4");
       relay = info;
       timeout = setTimeout(() => {
-        if (opts.event === "stopped") cleanup2();
+        if (opts.event === "stopped") cleanup();
         else onError(new Error(`tracker request timed out (${opts.event})`));
         timeout = null;
       }, common_default.REQUEST_TIMEOUT);
@@ -40401,13 +39090,13 @@ var UDPTracker = class extends tracker_default {
       socket.once("error", onError);
       socket.on("message", onSocketMessage);
     }
-    function cleanup2() {
+    function cleanup() {
       if (timeout) {
         clearTimeout(timeout);
         timeout = null;
       }
       if (socket) {
-        (0, import_unordered_array_remove5.default)(self2.cleanupFns, self2.cleanupFns.indexOf(cleanup2));
+        (0, import_unordered_array_remove5.default)(self2.cleanupFns, self2.cleanupFns.indexOf(cleanup));
         socket.removeListener("error", onError);
         socket.removeListener("message", onSocketMessage);
         socket.on("error", noop4);
@@ -40427,7 +39116,7 @@ var UDPTracker = class extends tracker_default {
       if (self2.maybeDestroyCleanup) self2.maybeDestroyCleanup();
     }
     function onError(err) {
-      cleanup2();
+      cleanup();
       if (self2.destroyed) return;
       try {
         if (err.message) err.message += ` (${self2.announceUrl})`;
@@ -40451,7 +39140,7 @@ var UDPTracker = class extends tracker_default {
           break;
         }
         case 1: {
-          cleanup2();
+          cleanup();
           if (self2.destroyed) return;
           if (msg.length < 20) return onError(new Error("invalid announce message"));
           const interval = msg.readUInt32BE(8);
@@ -40473,7 +39162,7 @@ var UDPTracker = class extends tracker_default {
           break;
         }
         case 2: {
-          cleanup2();
+          cleanup();
           if (self2.destroyed) return;
           if (msg.length < 20 || (msg.length - 8) % 12 !== 0) {
             return onError(new Error("invalid scrape message"));
@@ -40491,7 +39180,7 @@ var UDPTracker = class extends tracker_default {
           break;
         }
         case 3: {
-          cleanup2();
+          cleanup();
           if (self2.destroyed) return;
           if (msg.length < 8) return onError(new Error("invalid error message"));
           self2.client.emit("warning", new Error(msg.slice(8).toString()));
@@ -46402,7 +45091,7 @@ var BrowserServer = class extends ServerBase {
     const [port] = event.ports;
     this.onRequest(req, ({ status, headers, body }) => {
       const asyncIterator = body[Symbol.asyncIterator]?.();
-      const cleanup2 = () => {
+      const cleanup = () => {
         port.onmessage = null;
         if (body?.destroy) body.destroy();
         this.workerPortCount--;
@@ -46419,12 +45108,12 @@ var BrowserServer = class extends ServerBase {
           } catch (e2) {
           }
           port.postMessage(chunk);
-          if (!chunk) cleanup2();
+          if (!chunk) cleanup();
           if (!this.workerKeepAliveInterval) {
             this.workerKeepAliveInterval = setInterval(() => fetch(`${this.pathname}/keepalive/`), keepAliveTime);
           }
         } else {
-          cleanup2();
+          cleanup();
         }
       };
       this.workerPortCount++;
@@ -47071,7 +45760,7 @@ function waitForMetadata(torrent, infoHash) {
   return new Promise((resolve2, reject) => {
     if (torrent.files.length) return resolve2(torrent);
     let settled = false;
-    const cleanup2 = () => {
+    const cleanup = () => {
       clearTimeout(timer);
       torrent.removeListener("metadata", onMeta);
       torrent.removeListener("error", onErr);
@@ -47079,7 +45768,7 @@ function waitForMetadata(torrent, infoHash) {
     const done = (fn, arg) => {
       if (!settled) {
         settled = true;
-        cleanup2();
+        cleanup();
         fn(arg);
       }
     };
