@@ -45846,7 +45846,7 @@ function pickHlsDir() {
   }
 }
 var HLS_DIR = pickHlsDir();
-var jobKey = (ih, idx, startT = 0) => ih + ":" + idx + ":" + startT;
+var jobKey = (ih, idx, startT = 0, ad = 0) => ih + ":" + idx + ":" + startT + (ad ? ":" + ad : "");
 function probeHead(file) {
   return new Promise((resolve2) => {
     const rs = file.createReadStream({ start: 0, end: Math.min(file.length - 1, 6 * 1024 * 1024) });
@@ -45899,12 +45899,13 @@ function probeDurationURL(streamUrl) {
     );
   });
 }
-async function ensureHls(torrent, file, ih, idx, startT = 0) {
+async function ensureHls(torrent, file, ih, idx, startT = 0, ad = 0) {
   startT = Math.max(0, Math.floor(Number(startT) || 0));
-  const key = jobKey(ih, idx, startT);
+  ad = Math.max(-2e3, Math.min(2e3, Math.round(Number(ad) || 0)));
+  const key = jobKey(ih, idx, startT, ad);
   let job = jobs.get(key);
   if (job) return job.ready;
-  const dir = path6.join(HLS_DIR, ih + "-" + idx + "-" + startT);
+  const dir = path6.join(HLS_DIR, ih + "-" + idx + "-" + startT + (ad ? "-ad" + ad : ""));
   fs6.rmSync(dir, { recursive: true, force: true });
   fs6.mkdirSync(dir, { recursive: true });
   job = { dir, proc: null, probe: null, ready: null, startT };
@@ -45930,16 +45931,10 @@ async function ensureHls(torrent, file, ih, idx, startT = 0) {
     const copyAudio = probe.audio && BROWSER_AUDIO.has(probe.audio);
     const hevcTag = probe.video === "hevc" ? ["-tag:v", "hvc1"] : [];
     const padHole = startT === 0 && (probe.aDelay || 0) > 0.5;
-    const audioArgs = copyAudio ? ["-c:a", "copy"] : [
-      "-af",
-      padHole ? "aresample=async=1:first_pts=0" : "aresample=async=1",
-      "-c:a",
-      "aac",
-      "-ac",
-      "2",
-      "-b:a",
-      "192k"
-    ];
+    let af = padHole ? "aresample=async=1:first_pts=0" : "aresample=async=1";
+    if (ad > 0) af += ",adelay=" + ad + "|" + ad;
+    else if (ad < 0) af = "atrim=start=" + -ad / 1e3 + ",asetpts=PTS-STARTPTS," + af;
+    const audioArgs = copyAudio && !ad ? ["-c:a", "copy"] : ["-af", af, "-c:a", "aac", "-ac", "2", "-b:a", "192k"];
     let args, useStdin;
     const hlsOut = [
       "-map",
@@ -46204,6 +46199,10 @@ var server = http5.createServer((req, res) => {
       repo: (process.env.GITHUB_REPOSITORY || "").toLowerCase() || void 0,
       engine: "coolstremio",
       torrents: client.torrents.length,
+      /* live swarm throughput (bytes/sec) — the player polls this while streaming so the
+         site can show download speed next to the engine pill */
+      dl: Math.round(client.downloadSpeed) || 0,
+      ul: Math.round(client.uploadSpeed) || 0,
       uptime: Math.round(process.uptime())
     });
   }
@@ -46265,13 +46264,16 @@ var server = http5.createServer((req, res) => {
       }
       try {
         const startT = Math.max(0, Math.floor(Number(url.searchParams.get("t")) || 0));
-        const job = await ensureHls(torrent, file, infoHash, fi, startT);
+        const ad = Math.max(-2e3, Math.min(2e3, Math.round(Number(url.searchParams.get("ad")) || 0)));
+        const job = await ensureHls(torrent, file, infoHash, fi, startT, ad);
+        const hlsPath = ad ? `${startT}/${ad}` : `${startT}`;
         return send(res, 200, {
           ok: true,
           kind: "hls",
-          url: `${base}/hls/${infoHash}/${fi}/${startT}/index.m3u8`,
+          url: `${base}/hls/${infoHash}/${fi}/${hlsPath}/index.m3u8`,
           file: file.name,
           offset: startT,
+          ad,
           probe: job.probe,
           reason: "transcoded: audio\u2192AAC, video copied (browser cannot decode " + (job.probe?.audio || extOf(file.name)) + ")"
         });
@@ -46281,18 +46283,19 @@ var server = http5.createServer((req, res) => {
       }
     }, (err) => send(res, 504, { ok: false, error: "metadata: " + (err?.message || "unknown") }));
   }
-  if (parts[0] === "hls" && parts.length === 5) {
+  if (parts[0] === "hls" && (parts.length === 5 || parts.length === 6)) {
     const infoHash = normaliseHash(parts[1]);
     const fi = Number.parseInt(parts[2], 10);
     const startT = Math.max(0, Math.floor(Number(parts[3]) || 0));
-    const name = path6.basename(parts[4]);
+    const ad = parts.length === 6 ? Math.max(-2e3, Math.min(2e3, Math.round(Number(parts[4]) || 0))) : 0;
+    const name = path6.basename(parts[parts.length - 1]);
     if (!/^(index\.m3u8|init\.mp4|seg\d+\.m4s)$/.test(name)) return send(res, 404, "no such stream");
-    let job = infoHash && jobs.get(jobKey(infoHash, fi, startT));
+    let job = infoHash && jobs.get(jobKey(infoHash, fi, startT, ad));
     if (!job) {
       const tor = infoHash && findTorrent(infoHash);
       const file = tor && !Number.isNaN(fi) && tor.files[fi];
       if (tor && file) {
-        ensureHls(tor, file, infoHash, fi, startT).catch(() => {
+        ensureHls(tor, file, infoHash, fi, startT, ad).catch(() => {
         });
         return send(res, 503, "stream restarting");
       }

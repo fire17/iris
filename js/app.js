@@ -100,7 +100,7 @@ function cacheDom() {
     "d-genres","d-desc","d-cast","d-play","d-lib","d-ext","d-series","d-seasons","d-episodes",
     "d-epcount","d-streams","d-streams-body","d-streams-for","d-streams-reload",
     "settings","s-close","s-url","s-preview","s-preview-card","s-list","s-count",
-    "s-libcount","s-cwcount","s-reset",
+    "s-libcount","s-cwcount","s-reset","s-playback",
     "toasts"
   ].forEach(function (id) { D[id.replace(/-/g, "_")] = $(id); });
 }
@@ -300,6 +300,21 @@ function initEngineStat() {
   setInterval(function () { if (S.engineState !== "ready") refresh(); }, 4000);
   setInterval(refresh, 30000);
   window.addEventListener("focus", refresh);
+  /* live download speed beside the pill while an engine stream plays (fed by player.js) */
+  window.addEventListener("hp-engine-stats", function (e) {
+    var d = (e && e.detail) || {};
+    var elSpd = document.getElementById("enginespeed");
+    if (!elSpd) {
+      elSpd = document.createElement("span");
+      elSpd.id = "enginespeed";
+      elSpd.style.cssText = "margin-left:6px;font-variant-numeric:tabular-nums;opacity:.85";
+      el.appendChild(elSpd);
+    }
+    if (!d.playing) { elSpd.textContent = ""; return; }
+    var mb = (d.dl || 0) / (1024 * 1024);
+    elSpd.textContent = "\u21e3 " + (mb >= 10 ? Math.round(mb) : mb.toFixed(1)) + " MB/s";
+    elSpd.title = "Swarm download " + elSpd.textContent + (d.ul ? " \u00b7 upload " + ((d.ul || 0) / (1024 * 1024)).toFixed(1) + " MB/s" : "");
+  });
   window.addEventListener("online", refresh);
 }
 
@@ -2571,6 +2586,99 @@ function viewSettings() {
   D.settings.setAttribute("aria-hidden", "false");
   renderSettingsList();
   renderSettingsData();
+  renderPlaybackSettings();
+}
+
+/* ---- Playback & shortcuts: steps + rebindable keys ---------------------------
+   Storage shapes are OWNED by player.js (hp.playback / hp.keys, parsed fresh on every
+   keypress there) — these defaults must stay in sync with player.js's PB_DEF/KEYS_DEF. */
+var PB_SETTINGS = [
+  ["seekStep",    "Seek step (s)",          5],
+  ["seekStepBig", "Big seek step (s)",     30],
+  ["audioStepMs", "Audio sync step (ms)",   5],
+  ["subStepMs",   "Subtitle sync step (ms)",100],
+  ["speedStep",   "Speed step (x)",         0.25]
+];
+var KEY_SETTINGS = [
+  ["playPause", "Play / pause", " "], ["playPause2", "Play / pause (alt)", "k"],
+  ["seekBack", "Seek back", "ArrowLeft"], ["seekFwd", "Seek forward", "ArrowRight"],
+  ["seekBackBig", "Big seek back", "shift+ArrowLeft"], ["seekFwdBig", "Big seek forward", "shift+ArrowRight"],
+  ["volUp", "Volume up", "ArrowUp"], ["volDown", "Volume down", "ArrowDown"],
+  ["fullscreen", "Fullscreen", "f"], ["mute", "Mute", "m"],
+  ["audioMinus", "Audio sync −", "z"], ["audioPlus", "Audio sync +", "x"],
+  ["subMinus", "Subtitles sync −", "c"], ["subPlus", "Subtitles sync +", "v"],
+  ["speedDown", "Speed down", "<"], ["speedUp", "Speed up", ">"], ["speedReset", "Speed reset", "r"]
+];
+function pbRead(key, defs) {
+  var out = {}, i;
+  for (i = 0; i < defs.length; i++) out[defs[i][0]] = defs[i][2];
+  try { var j = JSON.parse(localStorage.getItem(key) || "null");
+    if (j) for (var k in j) if (k in out) out[k] = j[k]; } catch (e) {}
+  return out;
+}
+function pbWrite(key, obj) { try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {} }
+function keyLabel(k) { return k === " " ? "Space" : k; }
+function renderPlaybackSettings() {
+  var host = D.s_playback;
+  if (!host) return;
+  clear(host);
+  var pb = pbRead("hp.playback", PB_SETTINGS);
+  var keys = pbRead("hp.keys", KEY_SETTINGS);
+
+  var steps = el("div", "addon");
+  var main = el("div", "addon-main");
+  PB_SETTINGS.forEach(function (spec) {
+    var row = el("div", "datarow");
+    row.appendChild(el("span", "muted", spec[1]));
+    var inp = document.createElement("input");
+    inp.type = "number"; inp.step = "any"; inp.value = pb[spec[0]];
+    inp.style.cssText = "width:76px;margin-left:auto";
+    inp.addEventListener("change", function () {
+      var v = Number(inp.value);
+      if (isFinite(v) && v > 0) { pb[spec[0]] = v; pbWrite("hp.playback", pb); toast("Saved"); }
+      else inp.value = pb[spec[0]];
+    });
+    row.appendChild(inp);
+    main.appendChild(row);
+  });
+  steps.appendChild(main);
+  host.appendChild(steps);
+
+  var kcard = el("div", "addon");
+  var kmain = el("div", "addon-main");
+  kmain.appendChild(el("div", "addon-desc",
+    "Click a key to rebind, then press the new key (Esc cancels). Shortcuts work while a video plays."));
+  KEY_SETTINGS.forEach(function (spec) {
+    var row = el("div", "datarow");
+    row.appendChild(el("span", "muted", spec[1]));
+    var btn = el("button", "btn btn-sm", keyLabel(keys[spec[0]]));
+    btn.type = "button"; btn.style.marginLeft = "auto";
+    btn.addEventListener("click", function () {
+      btn.textContent = "press a key\u2026";
+      var h = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        document.removeEventListener("keydown", h, true);
+        if (e.key === "Escape") { btn.textContent = keyLabel(keys[spec[0]]); return; }
+        var combo = (e.shiftKey && e.key.length > 1 ? "shift+" + e.key : e.key);
+        keys[spec[0]] = combo; pbWrite("hp.keys", keys);
+        btn.textContent = keyLabel(combo); toast("Bound " + spec[1] + " \u2192 " + keyLabel(combo));
+      };
+      document.addEventListener("keydown", h, true);
+    });
+    row.appendChild(btn);
+    kmain.appendChild(row);
+  });
+  var rrow = el("div", "datarow");
+  var rbtn = el("button", "btn btn-danger btn-sm", "Reset steps & keys to defaults");
+  rbtn.type = "button";
+  rbtn.addEventListener("click", function () {
+    try { localStorage.removeItem("hp.playback"); localStorage.removeItem("hp.keys"); } catch (e) {}
+    renderPlaybackSettings(); toast("Playback settings reset");
+  });
+  rrow.appendChild(rbtn);
+  kmain.appendChild(rrow);
+  kcard.appendChild(kmain);
+  host.appendChild(kcard);
 }
 
 function renderSettingsList() {

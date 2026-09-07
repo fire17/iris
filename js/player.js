@@ -10,6 +10,32 @@
   var ENGINE = 'http://127.0.0.1:11470';        // local opt-in engine (unchanged)
   var RUNNER_OPTIN = 'hp.torrent.runnerEngine';  // hosted-runner opt-in (mirrors hp.torrent.localEngine)
   var LOCAL_OPTIN = 'hp.torrent.localEngine';
+  /* ---- playback tuning + rebindable keys (both editable in #settings) ----
+     Steps live in hp.playback, bindings in hp.keys; parsed fresh per keypress so the
+     settings page needs no reload handshake. A binding is an e.key value, optionally
+     'shift+'-prefixed for non-character keys (letters carry case on their own). */
+  var PB_KEY = 'hp.playback';
+  var KEYS_KEY = 'hp.keys';
+  var PB_DEF = { seekStep: 5, seekStepBig: 30, audioStepMs: 5, subStepMs: 100, speedStep: 0.25 };
+  var KEYS_DEF = {
+    playPause: ' ', playPause2: 'k',
+    seekBack: 'ArrowLeft', seekFwd: 'ArrowRight',
+    seekBackBig: 'shift+ArrowLeft', seekFwdBig: 'shift+ArrowRight',
+    volUp: 'ArrowUp', volDown: 'ArrowDown',
+    fullscreen: 'f', mute: 'm',
+    audioMinus: 'z', audioPlus: 'x',
+    subMinus: 'c', subPlus: 'v',
+    speedDown: '<', speedUp: '>', speedReset: 'r'
+  };
+  function cfgOf(key, defs) {
+    var out = {}, k;
+    for (k in defs) out[k] = defs[k];
+    try { var j = JSON.parse(localStorage.getItem(key) || 'null');
+      if (j && typeof j === 'object') for (k in j) if (k in defs) out[k] = j[k]; } catch (e) {}
+    return out;
+  }
+  function pbCfg() { return cfgOf(PB_KEY, PB_DEF); }
+  function keyCfg() { return cfgOf(KEYS_KEY, KEYS_DEF); }
   /* floor room comes from HPRunner.room() — fork-aware, derived per repo */
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function optIn(k) { return lsGet(k) === '1'; }
@@ -177,6 +203,11 @@
     'background:#11161c;border:1px solid #262e38;border-radius:11px;padding:6px;',
     'box-shadow:0 18px 44px rgba(0,0,0,.6);display:none;z-index:6}',
     '.plr-menu.plr-open{display:block;animation:plr-rise .18s var(--e5)}',
+    /* sync-trim menu rows (audio / subtitle offset steppers) */
+    '.plr-mrow{display:flex;align-items:center;gap:6px;padding:4px 8px}',
+    '.plr-mrow span{flex:1;font-size:12px;color:#aab7c4}',
+    '.plr-mrow b{min-width:56px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}',
+    '.plr-mrow .plr-btn{width:26px;height:26px;font-size:14px;line-height:1}',
     '@keyframes plr-rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}',
     '.plr-menu h5{margin:4px 8px 6px;font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:#7b8a99;font-weight:600}',
     '.plr-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 9px;border-radius:7px;',
@@ -657,9 +688,15 @@
     subWrap.appendChild(subBtn); subWrap.appendChild(subMenu);
     var pip = h('button', 'plr-btn', ICON.pip); pip.title = 'Picture in picture';
     var fs = h('button', 'plr-btn', ICON.fs); fs.title = 'Fullscreen (f)';
+    /* A/V + subtitle sync trims — one compact menu (same wrap/menu pattern as subtitles) */
+    var syncWrap = h('div', 'plr-wrap');
+    var syncBtn = h('button', 'plr-btn', '<span style="font-size:.72em;font-weight:800;letter-spacing:.5px">SYNC</span>');
+    syncBtn.title = 'Audio / subtitle sync (z x c v)';
+    var syncMenu = h('div', 'plr-menu');
+    syncWrap.appendChild(syncBtn); syncWrap.appendChild(syncMenu);
 
     row.appendChild(pp); row.appendChild(time); row.appendChild(h('div', 'plr-sp'));
-    row.appendChild(vol); row.appendChild(subWrap); row.appendChild(pip); row.appendChild(fs);
+    row.appendChild(vol); row.appendChild(subWrap); row.appendChild(syncWrap); row.appendChild(pip); row.appendChild(fs);
     bot.appendChild(row);
     root.appendChild(bot);
 
@@ -669,6 +706,7 @@
     return { root: root, video: video, spin: spin, burst: burst, top: top, bot: bot,
       ttl: ttl, chips: chips, x: xbtn, seek: seek, track: track, buf: buf, fill: fill, knob: knob, tip: tip,
       pp: pp, time: time, mute: mute, vin: vin, subBtn: subBtn, subMenu: subMenu,
+      syncBtn: syncBtn, syncMenu: syncMenu,
       subCue: subCue, pip: pip, fs: fs, toast: toast };
   }
 
@@ -858,6 +896,7 @@
     });
     on(el.root, 'click', function (e) {
       if (!el.subMenu.contains(e.target) && e.target !== el.subBtn) el.subMenu.classList.remove('plr-open');
+      if (!el.syncMenu.contains(e.target) && e.target !== el.syncBtn && !el.syncBtn.contains(e.target)) el.syncMenu.classList.remove('plr-open');
     });
 
     // --- seek bar
@@ -909,6 +948,58 @@
 
     // --- keyboard
     on(document, 'keydown', onKey, true);
+
+    // --- sync menu (audio/sub trims) + wheel shortcuts
+    on(el.syncBtn, 'click', function (e) {
+      e.stopPropagation();
+      el.syncMenu.classList.toggle('plr-open');
+      paintSyncMenu();
+    });
+    on(el.syncMenu, 'click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-sync]') : null;
+      if (!b) return;
+      e.stopPropagation();
+      var pb = pbCfg(), a = b.getAttribute('data-sync');
+      if (a === 'a-') adjAudio(-pb.audioStepMs);
+      else if (a === 'a+') adjAudio(pb.audioStepMs);
+      else if (a === 's-') adjSubs(-pb.subStepMs);
+      else if (a === 's+') adjSubs(pb.subStepMs);
+      else if (a === 'reset') { if (S.audioOffsetMs) adjAudio(-(S.audioOffsetMs || 0)); if (S.subOffsetMs) adjSubs(-(S.subOffsetMs || 0)); }
+      paintSyncMenu();
+    });
+    /* shift+wheel = audio trim · alt+wheel = subtitle trim (mouse shortcut mirror) */
+    on(el.root, 'wheel', function (e) {
+      if (!(e.shiftKey || e.altKey)) return;
+      e.preventDefault();
+      var pb = pbCfg(), up = (e.deltaY || 0) < 0;
+      if (e.shiftKey) adjAudio(up ? pb.audioStepMs : -pb.audioStepMs);
+      else adjSubs(up ? pb.subStepMs : -pb.subStepMs);
+    });
+
+    /* --- download-speed feed: while an engine stream plays, poll /status and hand the
+       numbers to the shell (app.js shows them beside the engine pill). */
+    S.spdT = setInterval(function () {
+      if (!S || S.destroyed || !S.viaEngine || S.el.video.paused) {
+        if (S && S.spdOn) { S.spdOn = false; try { window.dispatchEvent(new CustomEvent('hp-engine-stats', { detail: { playing: false } })); } catch (e) {} }
+        return;
+      }
+      var base = S.engineBaseUsed || engineBase();
+      if (!base) return;
+      var ac = ('AbortController' in window) ? new AbortController() : null;
+      var opt = { cache: 'no-store' }; if (ac) opt.signal = ac.signal;
+      var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } }, 1800);
+      fetch(base + '/status', opt).then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
+        .then(function (j) {
+          clearTimeout(tm);
+          if (!S || S.destroyed || !j || !j.ok) return;
+          S.spdOn = true;
+          try { window.dispatchEvent(new CustomEvent('hp-engine-stats', { detail: { playing: true, dl: j.dl || 0, ul: j.ul || 0 } })); } catch (e) {}
+        });
+    }, 2500);
+    S.timers.push(function () {
+      clearInterval(S.spdT);
+      try { window.dispatchEvent(new CustomEvent('hp-engine-stats', { detail: { playing: false } })); } catch (e) {}
+    });
 
     // --- periodic save
     S.saveT = setInterval(function () { save(); }, SAVE_MS);
@@ -1052,7 +1143,8 @@
     spin(true); toast('Seeking to ' + fmt(T) + '…', 1500);
     var base = engineBase();
     if (!base || S.engineIh == null) { S.seeking = false; spin(false); return; }
-    fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx) + '?t=' + Math.floor(T), { cache: 'no-store' })
+    fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx) + '?t=' + Math.floor(T)
+        + (S.audioOffsetMs ? '&ad=' + S.audioOffsetMs : ''), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })['catch'](function () { return null; })
       .then(function (j) {
         if (!S || S.destroyed) return;
@@ -1177,13 +1269,34 @@
       hpRequestBack(); e.preventDefault(); return;
     }
     if (S.card) return; // modal card owns the rest
-    if (k === ' ' || k === 'Spacebar' || k === 'k') { toggle(true); e.preventDefault(); }
-    else if (k === 'ArrowLeft') { nudge(-10); e.preventDefault(); }
-    else if (k === 'ArrowRight') { nudge(10); e.preventDefault(); }
-    else if (k === 'ArrowUp') { setVol(v.volume + 0.1); e.preventDefault(); }
-    else if (k === 'ArrowDown') { setVol(v.volume - 0.1); e.preventDefault(); }
-    else if (k === 'f' || k === 'F') { toggleFs(); e.preventDefault(); }
-    else if (k === 'm' || k === 'M') { toggleMute(); e.preventDefault(); }
+    /* rebindable: match the pressed combo against the user's key map (#settings) */
+    var combo = (e.shiftKey && k.length > 1 ? 'shift+' + k : k);
+    var keys = keyCfg(), pb = pbCfg(), act = null, name;
+    for (name in keys) {
+      var b = String(keys[name] || '');
+      if (b === combo || (b.length === 1 && k.length === 1 && b.toLowerCase() === k.toLowerCase() && !e.shiftKey === (b === b.toLowerCase()))) { act = name; break; }
+    }
+    if (!act && k === 'Spacebar') act = 'playPause';
+    if (!act) { kick(); return; }
+    e.preventDefault();
+    switch (act) {
+      case 'playPause': case 'playPause2': toggle(true); break;
+      case 'seekBack': nudge(-pb.seekStep); break;
+      case 'seekFwd': nudge(pb.seekStep); break;
+      case 'seekBackBig': nudge(-pb.seekStepBig); break;
+      case 'seekFwdBig': nudge(pb.seekStepBig); break;
+      case 'volUp': setVol(v.volume + 0.1); break;
+      case 'volDown': setVol(v.volume - 0.1); break;
+      case 'fullscreen': toggleFs(); break;
+      case 'mute': toggleMute(); break;
+      case 'audioMinus': adjAudio(-pb.audioStepMs); break;
+      case 'audioPlus': adjAudio(pb.audioStepMs); break;
+      case 'subMinus': adjSubs(-pb.subStepMs); break;
+      case 'subPlus': adjSubs(pb.subStepMs); break;
+      case 'speedDown': adjSpeed(-pb.speedStep); break;
+      case 'speedUp': adjSpeed(pb.speedStep); break;
+      case 'speedReset': adjSpeed(0); break;
+    }
     kick();
   }
   function setVol(x) {
@@ -1196,6 +1309,51 @@
     if (!isFinite(tot) || tot <= 0) return;
     seekTo(effT() + d, true);   /* movie-time relative; re-transcodes if it leaves the window */
     toast((d > 0 ? '+' : '') + d + 's', 900);
+  }
+
+  /* ---- live sync trims (keyboard z/x c/v, shift/alt+wheel, SYNC menu) --------
+     AUDIO: engine transcodes only — the offset re-renders audio server-side (adelay /
+     head-trim), applied by re-resolving the stream at the current position with ?ad=.
+     Debounced so rapid ±taps cost ONE reload (~1-2s, seek-priority makes it quick).
+     SUBS: pure client — the cue renderer already reads S.subOffsetMs. Session-scoped. */
+  function adjAudio(deltaMs) {
+    if (!S) return;
+    if (!(S.viaEngine && S.engineKind === 'hls')) { toast('Audio sync trim works on engine streams only', 1800); return; }
+    S.audioOffsetMs = Math.max(-2000, Math.min(2000, (S.audioOffsetMs || 0) + deltaMs));
+    toast('Audio ' + (S.audioOffsetMs > 0 ? '+' : '') + S.audioOffsetMs + 'ms' + (S.audioOffsetMs > 0 ? ' (later)' : S.audioOffsetMs < 0 ? ' (earlier)' : ''), 1400);
+    paintSyncMenu();
+    clearTimeout(S.adT);
+    S.adT = setTimeout(function () {
+      if (!S || S.destroyed) return;
+      if ((S.audioOffsetMs || 0) === (S.adApplied || 0)) return;
+      S.adApplied = S.audioOffsetMs || 0;
+      seekTranscode(effT());   /* re-resolve here; carries ?ad= */
+    }, 700);
+  }
+  function adjSubs(deltaMs) {
+    if (!S) return;
+    S.subOffsetMs = Math.max(-30000, Math.min(30000, (S.subOffsetMs || 0) + deltaMs));
+    S._subForce = true;
+    toast('Subtitles ' + (S.subOffsetMs > 0 ? '+' : '') + S.subOffsetMs + 'ms', 1400);
+    paintSyncMenu();
+  }
+  function adjSpeed(delta) {
+    if (!S) return;
+    var v = S.el.video;
+    v.playbackRate = delta === 0 ? 1 : Math.max(0.25, Math.min(3, Math.round((v.playbackRate + delta) * 100) / 100));
+    toast(v.playbackRate + 'x', 1200);
+  }
+  function paintSyncMenu() {
+    if (!S || !S.el.syncMenu || !S.el.syncMenu.classList.contains('plr-open')) return;
+    var a = S.audioOffsetMs || 0, sb = S.subOffsetMs || 0;
+    S.el.syncMenu.innerHTML =
+      '<div class="plr-mrow"><span>Audio</span>' +
+      '<button class="plr-btn" data-sync="a-">−</button><b>' + (a > 0 ? '+' : '') + a + 'ms</b>' +
+      '<button class="plr-btn" data-sync="a+">+</button></div>' +
+      '<div class="plr-mrow"><span>Subs</span>' +
+      '<button class="plr-btn" data-sync="s-">−</button><b>' + (sb > 0 ? '+' : '') + sb + 'ms</b>' +
+      '<button class="plr-btn" data-sync="s+">+</button></div>' +
+      '<div class="plr-mrow"><button class="plr-btn" data-sync="reset" style="width:100%">Reset</button></div>';
   }
 
   // ------------------------------------------------------------------- saving
@@ -1897,7 +2055,8 @@
       if (!base) return Promise.reject(new Error('no engine'));
       /* resume at the movie-time we left off: a transcode re-seeks with ?t so it comes back
          exactly where the viewer was, not at t=0 */
-      return fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx) + (at > 2 ? '?t=' + Math.floor(at) : ''), { cache: 'no-store' })
+      return fetch(base + '/play/' + encodeURIComponent(S.engineIh) + '/' + encodeURIComponent(S.engineIdx)
+          + '?t=' + (at > 2 ? Math.floor(at) : 0) + (S.audioOffsetMs ? '&ad=' + S.audioOffsetMs : ''), { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; });
     }).then(function (j) {
       if (!S || S.destroyed) return;

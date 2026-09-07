@@ -277,7 +277,7 @@ function pickHlsDir() {
   catch { return path.join(CACHE, 'hls'); }
 }
 const HLS_DIR = pickHlsDir();
-const jobKey = (ih, idx, startT = 0) => ih + ':' + idx + ':' + startT;
+const jobKey = (ih, idx, startT = 0, ad = 0) => ih + ':' + idx + ':' + startT + (ad ? ':' + ad : '');
 
 /** ffprobe the head of a torrent file (first ~6 MB via the torrent's own read stream, so
     undownloaded regions are waited for, never read as zeros). */
@@ -333,12 +333,14 @@ function probeDurationURL(streamUrl) {
     any offset — a pipe cannot seek. localhost pipes the file into one full VOD playlist
     (already seekable), so it never needs an offset job. Resolves when index.m3u8 has its
     first segment, so the player never fetches an empty playlist. */
-async function ensureHls(torrent, file, ih, idx, startT = 0) {
+async function ensureHls(torrent, file, ih, idx, startT = 0, ad = 0) {
   startT = Math.max(0, Math.floor(Number(startT) || 0));
-  const key = jobKey(ih, idx, startT);
+  /* ad: user audio-sync trim in ms (player keybinds), clamped; >0 delays audio, <0 advances */
+  ad = Math.max(-2000, Math.min(2000, Math.round(Number(ad) || 0)));
+  const key = jobKey(ih, idx, startT, ad);
   let job = jobs.get(key);
   if (job) return job.ready;
-  const dir = path.join(HLS_DIR, ih + '-' + idx + '-' + startT);
+  const dir = path.join(HLS_DIR, ih + '-' + idx + '-' + startT + (ad ? '-ad' + ad : ''));
   fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
   job = { dir, proc: null, probe: null, ready: null, startT };
   jobs.set(key, job);
@@ -379,9 +381,14 @@ async function ensureHls(torrent, file, ih, idx, startT = 0) {
        at t=0; everywhere else async resampling keeps the source's own alignment, which
        IS the perfect sync. */
     const padHole = startT === 0 && (probe.aDelay || 0) > 0.5;
-    const audioArgs = copyAudio ? ['-c:a', 'copy']
-      : ['-af', padHole ? 'aresample=async=1:first_pts=0' : 'aresample=async=1',
-         '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
+    /* user audio-sync trim: adelay (audio later) / atrim head-cut (audio earlier). Both
+       need a decode, so a nonzero ad forces the transcode path even for browser-safe
+       audio — the whole point is resampling the timeline. */
+    let af = padHole ? 'aresample=async=1:first_pts=0' : 'aresample=async=1';
+    if (ad > 0) af += ',adelay=' + ad + '|' + ad;
+    else if (ad < 0) af = 'atrim=start=' + (-ad / 1000) + ',asetpts=PTS-STARTPTS,' + af;
+    const audioArgs = (copyAudio && !ad) ? ['-c:a', 'copy']
+      : ['-af', af, '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
     let args, useStdin;
     /* shared HLS output: fmp4 segments; the window flags bound RAM (INMEM) / disk to the
        last HLS_WINDOW segments regardless of film length. */
@@ -604,6 +611,10 @@ const server = http.createServer((req, res) => {
       repo: (process.env.GITHUB_REPOSITORY || '').toLowerCase() || undefined,
       engine: 'coolstremio',
       torrents: client.torrents.length,
+      /* live swarm throughput (bytes/sec) — the player polls this while streaming so the
+         site can show download speed next to the engine pill */
+      dl: Math.round(client.downloadSpeed) || 0,
+      ul: Math.round(client.uploadSpeed) || 0,
       uptime: Math.round(process.uptime())
     });
   }
@@ -672,9 +683,12 @@ const server = http.createServer((req, res) => {
         /* ?t=<seconds> seeks the transcode to that offset (INMEM) so the player can jump
            anywhere; the offset is embedded in the HLS path so its segments stay separate. */
         const startT = Math.max(0, Math.floor(Number(url.searchParams.get('t')) || 0));
-        const job = await ensureHls(torrent, file, infoHash, fi, startT);
-        return send(res, 200, { ok: true, kind: 'hls', url: `${base}/hls/${infoHash}/${fi}/${startT}/index.m3u8`, file: file.name,
-          offset: startT, probe: job.probe, reason: 'transcoded: audio→AAC, video copied (browser cannot decode ' + (job.probe?.audio || extOf(file.name)) + ')' });
+        /* ?ad=<ms>: user audio-sync trim — part of the job identity and the HLS path */
+        const ad = Math.max(-2000, Math.min(2000, Math.round(Number(url.searchParams.get('ad')) || 0)));
+        const job = await ensureHls(torrent, file, infoHash, fi, startT, ad);
+        const hlsPath = ad ? `${startT}/${ad}` : `${startT}`;
+        return send(res, 200, { ok: true, kind: 'hls', url: `${base}/hls/${infoHash}/${fi}/${hlsPath}/index.m3u8`, file: file.name,
+          offset: startT, ad, probe: job.probe, reason: 'transcoded: audio→AAC, video copied (browser cannot decode ' + (job.probe?.audio || extOf(file.name)) + ')' });
       } catch (e) {
         console.error('[play]', infoHash, e.message);
         return send(res, 200, { ok: true, kind: 'url', url: `${base}/stream/${infoHash}/${fi}`, file: file.name, reason: 'transcode unavailable: ' + e.message });
@@ -682,21 +696,22 @@ const server = http.createServer((req, res) => {
     }, (err) => send(res, 504, { ok: false, error: 'metadata: ' + (err?.message || 'unknown') }));
   }
 
-  // GET /hls/<infoHash>/<fileIdx>/<startT>/<segment>
-  if (parts[0] === 'hls' && parts.length === 5) {
+  // GET /hls/<infoHash>/<fileIdx>/<startT>[/<adMs>]/<segment>  (ad = user audio-sync trim)
+  if (parts[0] === 'hls' && (parts.length === 5 || parts.length === 6)) {
     const infoHash = normaliseHash(parts[1]);
     const fi = Number.parseInt(parts[2], 10);
     const startT = Math.max(0, Math.floor(Number(parts[3]) || 0));
-    const name = path.basename(parts[4]);
+    const ad = parts.length === 6 ? Math.max(-2000, Math.min(2000, Math.round(Number(parts[4]) || 0))) : 0;
+    const name = path.basename(parts[parts.length - 1]);
     if (!/^(index\.m3u8|init\.mp4|seg\d+\.m4s)$/.test(name)) return send(res, 404, 'no such stream');
-    let job = infoHash && jobs.get(jobKey(infoHash, fi, startT));
+    let job = infoHash && jobs.get(jobKey(infoHash, fi, startT, ad));
     if (!job) {
       /* SELF-HEAL: the transcode job died (ffmpeg exit) or was evicted, but the torrent is
          still resident. Restart it at the same offset so the client's next poll gets a live
          playlist instead of a permanent 404 — the browser retries the manifest on a 503. */
       const tor = infoHash && findTorrent(infoHash);
       const file = tor && !Number.isNaN(fi) && tor.files[fi];
-      if (tor && file) { ensureHls(tor, file, infoHash, fi, startT).catch(() => {}); return send(res, 503, 'stream restarting'); }
+      if (tor && file) { ensureHls(tor, file, infoHash, fi, startT, ad).catch(() => {}); return send(res, 503, 'stream restarting'); }
       return send(res, 404, 'no such stream');
     }
     const fp = path.join(job.dir, name);
