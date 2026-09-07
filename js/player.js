@@ -205,6 +205,20 @@
     '.plr-menu.plr-open{display:block;animation:plr-rise .18s var(--e5)}',
     /* sync-trim menu rows (audio / subtitle offset steppers) */
     '.plr-mrow{display:flex;align-items:center;gap:6px;padding:4px 8px}',
+    /* Stremio-style loading layer — ported from stremio-web Buffering.tsx/.less:
+       full-bleed background art at .6 over black; two stacked centered logos, the
+       bottom pinned at .2 opacity (the track), the top clipped from the right by
+       (100-progress)% (the fill), both pulsing 2s (track opacity pinned by !important
+       so only the fill's opacity breathes; both scale together, staying aligned). */
+    '.plr-load{position:absolute;inset:0;z-index:2;display:none;background:#000}',
+    '.plr-load.plr-on{display:block}',
+    '.plr-load-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6}',
+    '.plr-load-bg.plr-none{display:none}',
+    '.plr-load-c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}',
+    '.plr-load-logo{position:absolute;display:block;max-width:15rem;max-height:15rem;width:auto;height:auto;',
+    'animation:plr-pulse 2s infinite;transition:clip-path .1s ease-in-out}',
+    '.plr-load-track{opacity:.2 !important}',
+    '@keyframes plr-pulse{0%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}100%{opacity:.4;transform:scale(1)}}',
     '.plr-mrow span{flex:1;font-size:12px;color:#aab7c4}',
     '.plr-mrow b{min-width:56px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums}',
     '.plr-mrow .plr-btn{width:26px;height:26px;font-size:14px;line-height:1}',
@@ -632,6 +646,17 @@
        (all alive, all 206 on curl) died with MEDIA_ERR_SRC_NOT_SUPPORTED. */
     root.appendChild(video);
 
+    /* Stremio-style loading layer (title art as the progress bar) — sits above the video,
+       below the controls; the classic spinner remains the fallback when a title has no art */
+    var load = h('div', 'plr-load');
+    var loadBg = document.createElement('img'); loadBg.className = 'plr-load-bg'; loadBg.alt = '';
+    var loadC = h('div', 'plr-load-c');
+    var loadTrack = document.createElement('img'); loadTrack.className = 'plr-load-logo plr-load-track'; loadTrack.alt = '';
+    var loadFill = document.createElement('img'); loadFill.className = 'plr-load-logo plr-load-fill'; loadFill.alt = '';
+    loadC.appendChild(loadTrack); loadC.appendChild(loadFill);
+    load.appendChild(loadBg); load.appendChild(loadC);
+    root.appendChild(load);
+
     var mid = h('div', 'plr-mid');
     var spin = h('div', 'plr-spin');
     var burst = h('div', 'plr-burst', ICON.play);
@@ -707,6 +732,7 @@
       ttl: ttl, chips: chips, x: xbtn, seek: seek, track: track, buf: buf, fill: fill, knob: knob, tip: tip,
       pp: pp, time: time, mute: mute, vin: vin, subBtn: subBtn, subMenu: subMenu,
       syncBtn: syncBtn, syncMenu: syncMenu,
+      load: load, loadBg: loadBg, loadTrack: loadTrack, loadFill: loadFill,
       subCue: subCue, pip: pip, fs: fs, toast: toast };
   }
 
@@ -811,7 +837,67 @@
     t._t = setTimeout(function () { t.classList.remove('plr-show'); }, ms || 3200);
   }
 
-  function spin(on_) { if (S) S.el.spin.classList[on_ ? 'add' : 'remove']('plr-show'); }
+  function spin(on_) {
+    if (!S) return;
+    /* the loading layer takes over the spinner's job whenever the title has artwork
+       (stremio-web shows Buffering while `buffering || !loaded`; spin() is exactly that
+       signal here). No art -> classic spinner, unchanged. */
+    if (on_ && loadArt()) { S.el.spin.classList.remove('plr-show'); loadShow(); return; }
+    S.el.spin.classList[on_ ? 'add' : 'remove']('plr-show');
+    if (!on_) loadHide();
+  }
+  function loadArt() {
+    var m = (S && S.meta) || {};
+    return m.logo || m.background || m.poster || '';
+  }
+  /* progress: stremio drives it from stream statistics; standalone we synthesize the
+     same feel — a slow creep to 30% while nothing is buffered yet (resolve/metadata
+     phase), then buffered-ahead vs a 6s goal maps 30..95, and 'playing' dismisses. */
+  function loadTick() {
+    if (!S || S.destroyed) return;
+    var v = S.el.video, p = S.loadP || 0, ahead = 0;
+    try {
+      for (var i = 0; i < v.buffered.length; i++) {
+        if (v.buffered.start(i) <= v.currentTime + 0.5 && v.buffered.end(i) > v.currentTime) {
+          ahead = v.buffered.end(i) - v.currentTime; break;
+        }
+      }
+    } catch (e) {}
+    if (ahead > 0) p = Math.max(p, 30 + Math.min(65, (ahead / 6) * 65));
+    else p = Math.min(30, p + 1.2);
+    S.loadP = p;
+    S.el.loadFill.style.clipPath = 'inset(0 ' + Math.max(0, 100 - p).toFixed(1) + '% 0 0)';
+  }
+  function loadShow() {
+    if (!S || S.el.load.classList.contains('plr-on')) return;
+    if (!S.loadSet) {
+      S.loadSet = true;
+      var m = S.meta || {};
+      var logo = m.logo || m.poster || m.background || '';
+      var bg = m.background || m.poster || '';
+      S.el.loadTrack.onerror = S.el.loadFill.onerror = function () {
+        /* logo 404 -> poster art; that too -> drop the layer, classic spinner returns */
+        var fb = (S.meta && (S.meta.poster || S.meta.background)) || '';
+        if (fb && this.src !== fb) { S.el.loadTrack.src = fb; S.el.loadFill.src = fb; }
+        else { S.loadDead = true; loadHide(); S.el.spin.classList.add('plr-show'); }
+      };
+      S.el.loadBg.onerror = function () { S.el.loadBg.classList.add('plr-none'); };
+      if (bg) { S.el.loadBg.src = bg; S.el.loadBg.classList.remove('plr-none'); }
+      else S.el.loadBg.classList.add('plr-none');
+      S.el.loadTrack.src = logo; S.el.loadFill.src = logo;
+    }
+    if (S.loadDead) { S.el.spin.classList.add('plr-show'); return; }
+    S.loadP = S.loadP || 0;
+    S.el.load.classList.add('plr-on');
+    loadTick();
+    clearInterval(S.loadT);
+    S.loadT = setInterval(loadTick, 180);
+  }
+  function loadHide() {
+    if (!S) return;
+    clearInterval(S.loadT);
+    S.el.load.classList.remove('plr-on');
+  }
 
   // ------------------------------------------------------------------- wiring
   function wire() {
@@ -1025,6 +1111,7 @@
       })['catch'](function () { if (S && !S.destroyed) healStream('stall-unreachable'); });
     }, 5000);
     S.timers.push(function () { clearInterval(S.healT); });
+    S.timers.push(function () { clearInterval(S.loadT); });
     on(window, 'pagehide', function () { save(); });
     on(window, 'beforeunload', function () { save(); });
 

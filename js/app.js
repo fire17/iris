@@ -1056,6 +1056,7 @@ function addonMeta(item, m) {
   return { id: txt(item && (item.mid || m.id || item.id)),
            type: txt(item && (item.type || m.type || "movie")),
            name: m.name || m.title || "", poster: m.poster || m.logo || "",
+           logo: m.logo || "", background: m.background || "",   /* loading-layer art */
            external: m.external, externalName: m.externalName };
 }
 
