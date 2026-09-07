@@ -550,6 +550,10 @@ const server = http.createServer((req, res) => {
   if (parts[0] === 'status' && parts.length === 1) {
     return send(res, 200, {
       ok: true,
+      /* repo echo (GITHUB_REPOSITORY is a plain Actions env var, no token): lets a
+         discovering client confirm this runner belongs to ITS repo — the keyless trust
+         check now that nothing is signed. Absent on localhost (client skips the check). */
+      repo: (process.env.GITHUB_REPOSITORY || '').toLowerCase() || undefined,
       engine: 'coolstremio',
       torrents: client.torrents.length,
       uptime: Math.round(process.uptime())

@@ -8,24 +8,11 @@
  */
 import { joinFloor } from '../vendor/hp-floor.mjs';
 
-/* Sign every announce so a browser trusts ONLY our runner (the room name ships in
-   public JS, so confidentiality alone can't stop a hostile announcer). ECDSA P-256
-   over `runner|<url>|<ts>`; the browser verifies against a pinned public key. */
-let SIGN_KEY = null;
-async function signKey() {
-  if (SIGN_KEY) return SIGN_KEY;
-  const jwk = process.env.HP_ENGINE_PRIV && JSON.parse(process.env.HP_ENGINE_PRIV);
-  if (!jwk) return null;
-  SIGN_KEY = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
-  return SIGN_KEY;
-}
-const b64 = (u8) => Buffer.from(u8).toString('base64');
-async function signed(url, ts) {
-  const k = await signKey();
-  if (!k) return '';
-  const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, k, enc.encode('runner|' + url + '|' + ts)));
-  return b64(sig);
-}
+/* KEYLESS BY DESIGN (fire17: "no secrets stored in the repos - both the client and the
+   server should derive it correctly"). Nothing is signed: trust comes from the per-repo
+   derived room + the client probing the announced URL's /status and requiring the
+   engine's repo echo to match its own repo. Honest limit: a determined attacker who
+   derives a room name can announce a hostile URL — the no-secrets tradeoff, see RUNNER.md. */
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -34,8 +21,7 @@ const ANNOUNCE_MS = Number(process.env.ANNOUNCE_MS) || 5000;
 /** Start announcing {url,caps} on room's floor. Returns stop(). */
 export async function announce({ room, url, caps = { hls: true, range: true } }) {
   let floor = null, timer = null, stopped = false;
-  const frame = async () => { const ts = Date.now(); const sig = await signed(url, ts);
-    return enc.encode(JSON.stringify({ t: 'runner', url, ts, caps, sig })); };
+  const frame = async () => enc.encode(JSON.stringify({ t: 'runner', url, ts: Date.now(), caps }));
 
   floor = await joinFloor({
     room,

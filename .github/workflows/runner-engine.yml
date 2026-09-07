@@ -105,5 +105,4 @@ jobs:
           HANDOFF_AT:   '19080'   # stop announcing ~2 min before close
           HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-latest ~16 GiB RAM)
           HP_MAX_TORRENTS: '2'
-          HP_ENGINE_PRIV: ${{ secrets.HP_ENGINE_PRIV }}
         run: node server/runner.mjs

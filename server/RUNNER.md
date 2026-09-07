@@ -118,10 +118,13 @@ so your deployed client automatically discovers your fork's own runners — neve
 official pool, never another fork's. A fork behind a custom domain sets
 `window.HP_REPO = "you/repo"` before `js/torrent-runner.js` loads (one line).
 
-**Trust note:** official announces are ECDSA-signed and the client pins the public key.
-A fork can't inherit the private key, so fork rooms accept unsigned announces — fine for
-personal use since the room is fork-specific, but spoofable by anyone who derives your
-room name. To harden: generate a P-256 keypair, set the private JWK as the
-`HP_ENGINE_PRIV` repo secret, and replace `PUB_JWK` in `js/torrent-runner.js`.
+**Trust model (keyless by design — no secrets stored in any repo):** nothing is signed
+and nothing is pinned. The client accepts an announced URL only if it is a
+`https://*.trycloudflare.com` origin, the announce is fresh, and the URL's `/status`
+answers `ok` while echoing a `repo` equal to the client's own derived repo (the engine
+reads `GITHUB_REPOSITORY`, a plain env var). Honest limit: with no secret anywhere, a
+determined attacker who derives your room name can stand up a hostile tunnel that fakes
+the echo — this design confines accidents and cross-fork mixups, not a targeted spoof.
+That is the tradeoff "no tokens, no secrets" buys; streams are TLS-end-to-end either way.
 
 Same AUP warning as above applies to YOUR fork and YOUR account.

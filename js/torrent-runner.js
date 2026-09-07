@@ -42,25 +42,35 @@
 
   var enc = new TextEncoder();
   var dec = new TextDecoder();
-  /* pinned runner public key — only frames signed by our runner's private key are trusted.
-     SIGNATURES ARE REQUIRED ONLY FOR THE OFFICIAL REPO (this key's owner): a fork has no
-     way to inherit the private half, so its runners announce unsigned into the fork's own
-     derived room and are accepted there. A fork can harden by generating its own P-256
-     pair (HP_ENGINE_PRIV repo secret + replace PUB_JWK here) — see server/RUNNER.md. */
-  var PUB_JWK = {"kty":"EC","crv":"P-256","x":"JGDe6xpyQOUD7Z8mSIfeqAqVmy-UNKPkWKW9AbhQqfw","y":"GzsjrjaUDaACqzuQ8TqmNwG73c2I6GDvL_RnPyCaxhI"};
-  function sigRequired() { return repoId() === OFFICIAL_REPO; }
-  var _vk = null;
-  function verifyKey() {
-    if (_vk) return _vk;
-    _vk = crypto.subtle.importKey('jwk', PUB_JWK, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
-    return _vk;
-  }
-  function b64ToU8(b) { var bin = atob(b); var u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+  /* KEYLESS TRUST (fire17: "no secrets stored in the repos — both sides derive it").
+     Nothing is signed and nothing is pinned; an announced URL is accepted only when:
+       1. it is a https *.trycloudflare.com origin (the only tunnel the runner opens),
+       2. the frame is fresh (FRESH_MS),
+       3. its /status answers ok AND echoes a repo matching OUR derived repo (the engine
+          reads GITHUB_REPOSITORY — a plain env var; localhost engines echo none and the
+          announced-URL path never carries localhost).
+     Honest limit: with no secret anywhere, a determined attacker who derives a room name
+     can stand up a hostile tunnel that fakes the echo. This confines accidents and
+     cross-fork mixups, not a targeted spoof — the documented no-secrets tradeoff. */
+  var URL_OK = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/i;
+  var _verifying = {};   /* url -> in-flight verdict; announce beats re-arrive every ~1.5s */
   function verify(msg) {
-    if (!msg || !msg.sig) return Promise.resolve(false);
-    return verifyKey().then(function (k) {
-      return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, k, b64ToU8(msg.sig), enc.encode('runner|' + msg.url + '|' + msg.ts));
-    }).catch(function () { return false; });
+    if (!(msg && typeof msg.url === 'string' && URL_OK.test(msg.url))) return Promise.resolve(false);
+    if (_verifying[msg.url]) return _verifying[msg.url];
+    return (_verifying[msg.url] = doVerify(msg).then(function (ok) { if (!ok) delete _verifying[msg.url]; return ok; }));
+  }
+  function doVerify(msg) {
+    var ac = ('AbortController' in window) ? new AbortController() : null;
+    var opt = { cache: 'no-store', mode: 'cors' }; if (ac) opt.signal = ac.signal;
+    var tm = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } }, 3500);
+    return fetch(msg.url + '/status', opt).then(function (r) {
+      clearTimeout(tm);
+      if (!r.ok) return false;
+      return r.json().then(function (j) {
+        if (!(j && j.ok && j.engine === 'coolstremio')) return false;
+        return !j.repo || j.repo === repoId();   /* echo present -> must be OUR repo */
+      });
+    })['catch'](function () { clearTimeout(tm); return false; });
   }
 
   function cache(url) {
@@ -86,10 +96,7 @@
           onFrame: function (from, bytes) {
             var msg; try { msg = JSON.parse(dec.decode(bytes)); } catch (e) { return; }
             if (!(msg && msg.t === 'runner' && msg.url && (Date.now() - (msg.ts || 0) < FRESH_MS))) return;
-            /* official repo: reject unsigned/forged/stale; a fork's own room accepts its
-               (necessarily unsigned) runners — see the PUB_JWK note above */
-            (sigRequired() ? verify(msg) : Promise.resolve(true))
-              .then(function (ok) { if (ok) finish(msg.url); });
+            verify(msg).then(function (ok) { if (ok) finish(msg.url); });   /* keyless: shape + fresh + live repo-echo */
           },
         }).then(function (f) {
           floor = f;
