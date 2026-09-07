@@ -66,6 +66,35 @@ jobs:
             fi
           fi
 
+  # Primes the two warm-up caches in PARALLEL with the runner: the long-lived runner job
+  # only saves caches when it completes (5h20m later, and a cancelled run never does), so
+  # this ~2min job makes the SECOND run warm even on a brand-new fork. No-op (~15s) once
+  # the caches exist.
+  warmcache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: nm
+        with:
+          path: server/node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
+      - uses: actions/cache@v4
+        id: ff
+        with:
+          path: /tmp/ffbin
+          key: ffmpeg-static-amd64-v1
+      - if: steps.nm.outputs.cache-hit != 'true'
+        working-directory: server
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - if: steps.ff.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/ffbin
+          curl -fsSL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz
+          tar -xJf /tmp/ff.tar.xz -C /tmp
+          cp /tmp/ffmpeg-*-static/ffmpeg /tmp/ffmpeg-*-static/ffprobe /tmp/ffbin/
+
   runner:
     needs: admit
     if: ${{ needs.admit.outputs.go == 'true' }}
@@ -73,29 +102,36 @@ jobs:
     timeout-minutes: 350   # must exceed RUN_SECONDS (5h20m); GitHub hard-caps a job at 6h
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+
+      # WARM-UP SPEED (fire17: "it needs to be warm in the least amount of time"):
+      #   - no setup-node: the runner image already ships node >= 20 (engine needs >= 18)
+      #   - node_modules cached on the lockfile hash: a warm run restores the whole
+      #     webtorrent tree in seconds instead of a 60-90s npm install
+      #   - ffmpeg static build cached the same way, and fetched in the BACKGROUND of the
+      #     hold step on a cold miss — the engine announces FIRST (ffmpeg is only needed
+      #     at the first transcode; /status reports ffmpeg:false so the site shows warming)
+      # Both caches are per-repo and tokenless, so a fork inherits the fast path after
+      # its first run with nothing to configure.
+      - uses: actions/cache@v4
+        with:
+          path: server/node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/ffbin
+          key: ffmpeg-static-amd64-v1
 
       - name: install cloudflared
         run: |
           curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
           sudo install -m 0755 /tmp/cloudflared /usr/local/bin/cloudflared
-          cloudflared --version
 
-      - name: install ffmpeg
-        # ubuntu-latest no longer ships ffmpeg → spawn ENOENT crashed the engine on any
-        # transcode (MKV/exotic-audio) request. Static build first (~5s, no apt), apt fallback.
-        run: |
-          if command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; then ffmpeg -version | head -1; exit 0; fi
-          ( curl -fsSL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz \
-              && tar -xJf /tmp/ff.tar.xz -C /tmp \
-              && sudo cp /tmp/ffmpeg-*-static/ffmpeg /tmp/ffmpeg-*-static/ffprobe /usr/local/bin/ ) \
-            || ( sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg )
-          ffmpeg -version | head -1; ffprobe -version | head -1
-
-      - name: install engine deps
+      - name: install engine deps (no-op on a warm cache)
         working-directory: server
-        run: npm ci || npm install
+        run: |
+          node --version
+          [ -d node_modules/webtorrent ] && echo "node_modules restored from cache" \
+            || npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: hold the runner (in memory only)
         env:
@@ -105,4 +141,21 @@ jobs:
           HANDOFF_AT:   '19080'   # stop announcing ~2 min before close
           HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-latest ~16 GiB RAM)
           HP_MAX_TORRENTS: '2'
-        run: node server/runner.mjs
+        run: |
+          # ffmpeg in the background: cache hit installs instantly; a cold miss downloads
+          # the static build (apt fallback) while the engine is already announcing.
+          (
+            if [ -x /tmp/ffbin/ffmpeg ] && [ -x /tmp/ffbin/ffprobe ]; then
+              sudo cp /tmp/ffbin/ffmpeg /tmp/ffbin/ffprobe /usr/local/bin/
+              echo "[warm] ffmpeg from cache"
+            else
+              mkdir -p /tmp/ffbin
+              ( curl -fsSL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz \
+                  && tar -xJf /tmp/ff.tar.xz -C /tmp \
+                  && cp /tmp/ffmpeg-*-static/ffmpeg /tmp/ffmpeg-*-static/ffprobe /tmp/ffbin/ \
+                  && sudo cp /tmp/ffbin/ffmpeg /tmp/ffbin/ffprobe /usr/local/bin/ \
+                  && echo "[warm] ffmpeg static installed (and cached for next run)" ) \
+                || ( sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg && echo "[warm] ffmpeg via apt" )
+            fi
+          ) &
+          node server/runner.mjs

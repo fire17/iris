@@ -40,6 +40,20 @@ const MAX_TORRENTS = Number(process.env.HP_MAX_TORRENTS) || 4;       // LRU: evi
 const METADATA_TIMEOUT = 30000;
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
+/* Is the transcoder installed yet? (The hosted runner fetches ffmpeg in the BACKGROUND
+   while it announces — see the workflow.) Latched true once seen; while false, re-check
+   at most every 2s so /status polls stay cheap. */
+let _ffOk = false, _ffAt = 0;
+function ffmpegReady() {
+  if (_ffOk) return true;
+  if (Date.now() - _ffAt < 2000) return false;
+  _ffAt = Date.now();
+  try {
+    if (FFMPEG.includes('/')) { _ffOk = fs.existsSync(FFMPEG); }
+    else { _ffOk = (process.env.PATH || '').split(':').some((d) => { try { return d && fs.existsSync(path.join(d, FFMPEG)); } catch { return false; } }); }
+  } catch { _ffOk = false; }
+  return _ffOk;
+}
 /* Browsers decode H.264/HEVC video fine but have NO decoder for Dolby (AC-3/E-AC-3), DTS or
    TrueHD audio — a DDP5.1 MKV plays as a silent movie. Those files are transcoded on the
    fly (audio → AAC stereo, video copied) into fMP4 HLS segments under .cache/hls/. */
@@ -270,7 +284,7 @@ const jobKey = (ih, idx, startT = 0) => ih + ':' + idx + ':' + startT;
 function probeHead(file) {
   return new Promise((resolve) => {
     const rs = file.createReadStream({ start: 0, end: Math.min(file.length - 1, 6 * 1024 * 1024) });
-    const pr = execFile(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name', '-of', 'json', 'pipe:0'],
+    const pr = execFile(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,codec_name,start_time', '-of', 'json', 'pipe:0'],
       { maxBuffer: 1 << 20 }, (err, out) => {
         rs.destroy();
         if (err) return resolve(null);
@@ -282,8 +296,12 @@ function probeHead(file) {
              is inside the 6 MB head we probe). null when the head lacks it → player falls
              back to <video>.duration. */
           const dur = j.format && Number.parseFloat(j.format.duration);
-          resolve({ video: (streams.find((x) => x.codec_type === 'video') || {}).codec_name || null,
-                    audio: (streams.find((x) => x.codec_type === 'audio') || {}).codec_name || null,
+          const v = streams.find((x) => x.codec_type === 'video') || {};
+          const a = streams.find((x) => x.codec_type === 'audio') || {};
+          const st = (x) => { const t = Number.parseFloat(x.start_time); return Number.isFinite(t) ? t : 0; };
+          resolve({ video: v.codec_name || null, audio: a.codec_name || null,
+                    /* audio start relative to video: >0 = audio begins later (a hole) */
+                    aDelay: st(a) - st(v),
                     dur: (Number.isFinite(dur) && dur > 0) ? dur : null });
         } catch { resolve(null); }
       });
@@ -338,6 +356,10 @@ async function ensureHls(torrent, file, ih, idx, startT = 0) {
     torrent.critical(p0, Math.min(pN, p0 + Math.ceil((4 * 1024 * 1024) / pieceLen)));
   } catch { /* prioritisation is an optimisation, never fatal */ }
   job.ready = (async () => {
+    /* announce-first boot: ffmpeg/ffprobe may still be installing in the background —
+       wait for them briefly (they land in ~10-30s) instead of failing the first
+       transcode with ENOENT while the torrent warms in parallel anyway. */
+    for (let w = 0; w < 60 && !ffmpegReady(); w++) await new Promise((r) => setTimeout(r, 1000));
     const probe = (job.probe = (await probeHead(file)) || { video: null, audio: null });
     /* If the head lacked the duration (trailing-moov mp4/mov), fetch the WHOLE-film length in
        the background over the seekable /stream URL and patch it in. Never awaited — first-frame
@@ -349,13 +371,16 @@ async function ensureHls(torrent, file, ih, idx, startT = 0) {
     }
     const copyAudio = probe.audio && BROWSER_AUDIO.has(probe.audio);
     const hevcTag = probe.video === 'hevc' ? ['-tag:v', 'hvc1'] : [];
-    /* pad explicit silence so audio starts at pts 0 like the video (MKVs often start audio
-       ~1s late as a timestamp hole) and resample async so it can never drift from the video.
-       ONLY at t=0: an offset (-ss) job's copied video keeps its post-seek timeline, and
-       force-shifting audio to pts 0 there skews A/V by up to a GOP — async alone keeps
-       the resampler locked to the source timestamps after a seek. */
+    /* PERFECT-SYNC RULE (fire17 heard audio "just a bit too early"): forcing audio to
+       pts 0 (first_pts=0) erases the source's REAL audio/video start offset — a film
+       whose audio legitimately begins +80ms after video then plays audio 80ms early,
+       forever. So force-pad ONLY when the probe saw an actual pathological hole (audio
+       starting >0.5s after video — the silent-MKV case first_pts existed for), and only
+       at t=0; everywhere else async resampling keeps the source's own alignment, which
+       IS the perfect sync. */
+    const padHole = startT === 0 && (probe.aDelay || 0) > 0.5;
     const audioArgs = copyAudio ? ['-c:a', 'copy']
-      : ['-af', startT > 0 ? 'aresample=async=1' : 'aresample=async=1:first_pts=0',
+      : ['-af', padHole ? 'aresample=async=1:first_pts=0' : 'aresample=async=1',
          '-c:a', 'aac', '-ac', '2', '-b:a', '192k'];
     let args, useStdin;
     /* shared HLS output: fmp4 segments; the window flags bound RAM (INMEM) / disk to the
@@ -569,6 +594,10 @@ const server = http.createServer((req, res) => {
   if (parts[0] === 'status' && parts.length === 1) {
     return send(res, 200, {
       ok: true,
+      /* warm-up visibility: the runner announces BEFORE ffmpeg finishes installing (it is
+         only needed at the first transcode), so the site can connect instantly and show
+         "warming" until this flips true. Latched once found; PATH-scan is a few stats. */
+      ffmpeg: ffmpegReady(),
       /* repo echo (GITHUB_REPOSITORY is a plain Actions env var, no token): lets a
          discovering client confirm this runner belongs to ITS repo — the keyless trust
          check now that nothing is signed. Absent on localhost (client skips the check). */

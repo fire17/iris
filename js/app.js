@@ -276,7 +276,14 @@ function initEngineStat() {
         .then(function (j) {
           if (to) clearTimeout(to);
           busy = false;
-          if (j && j.ok) set("ready", "Engine ready", "Connected to a live GitHub-Actions runner — ready to stream any torrent");
+          /* the runner announces BEFORE its transcoder finishes installing (announce-first
+             boot): connected-but-warming gets its own honest state, and the pill re-polls
+             sooner so "ready" lands the moment ffmpeg does (~10-30s). */
+          if (j && j.ok && j.ffmpeg === false) {
+            set("warm", "Engine warming…", "Connected to a live runner — media transcoder still installing (~20s)");
+            setTimeout(refresh, 5000);
+          }
+          else if (j && j.ok) set("ready", "Engine ready", "Connected to a live GitHub-Actions runner — ready to stream any torrent");
           else set("warm", "Connecting…", "Runner found — checking the link…");
         });
     });
