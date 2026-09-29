@@ -29,6 +29,7 @@
   var REQUEST_TIMEOUT = 8000;   // ms, per contract
   var CACHE_LIMIT = 200;        // URL-keyed LRU entries
   var UNHEALTHY_COOLDOWN = 60000; // ms an addon is skipped in fan-outs after failing
+  var STREAM_OUTAGE = 90000;      // ms an addon's DEAD stream route is benched (see streams())
 
   // ------------------------------------------------------------ error bus --
 
@@ -180,6 +181,7 @@
             if (e && e.name === 'AbortError') {
               err = new Error('timeout after ' + (opts.timeout || REQUEST_TIMEOUT) + 'ms (2 tries): ' + url);
             }
+            if (transient) err.transient = true;   // callers tell "service down" from "no answer"
             throw err;
           });
       }
@@ -192,7 +194,10 @@
         })
         .catch(function (err) {
           markUnhealthy(base);
-          emit(scope, url, err);
+          if (typeof opts.onfail === 'function') { try { opts.onfail(err); } catch (e) {} }
+          /* quiet: the caller explains the failure in its own UI (or it was speculative,
+             like a hover preview) — no toast. ErrLog still records the raw fetch. */
+          if (!opts.quiet) emit(scope, url, err);
           return null;
         })
         .then(function (value) {
@@ -575,7 +580,12 @@
 
   function metasOf(payload) {
     if (!payload || !Array.isArray(payload.metas)) return [];
-    return payload.metas.filter(function (m) { return m && m.id; });
+    /* placeholder ids are an upstream scrape glitch, not titles: seen live 2026-09-30 —
+       the Chaturbate addon answered a whole page of 101 x "chaturbate:undefined" (no
+       name, no poster). Rendering them makes 101 blank tiles that all resolve one room. */
+    return payload.metas.filter(function (m) {
+      return m && m.id && !/:(undefined|null)$/.test(String(m.id));
+    });
   }
 
   /**
@@ -721,14 +731,42 @@
    * Every stream every stream-capable addon offers for type/id.
    * Streams are labelled with addonId/addonName and merged in install order.
    */
-  function streams(type, id) {
+  /* STREAM OUTAGE breaker. Seen live 2026-09-30: chaturbate.stremio.homes kept its
+     manifest/catalog/meta up while its /stream route hung ~60s then answered
+     `502 Incomplete response received from application` for EVERY room. Each hover
+     preview and each click then cost 2x8s of aborted fetches plus an error toast —
+     the "Chaturbate errors" wall. A TRANSIENT failure (timeout / 5xx / network) on an
+     addon's stream route benches only that route for STREAM_OUTAGE: while benched the
+     addon answers [] instantly — no request, no toast. Any stream success clears it,
+     a `force` call (the detail view's Refresh) bypasses it. 4xx/non-JSON are real
+     answers and never trip it. */
+  var streamOut = new Map();   // addon base -> benched-at ts
+  function streamBenched(a) {
+    var t = streamOut.get(a.url);
+    if (t === undefined) return false;
+    if (now() - t > STREAM_OUTAGE) { streamOut.delete(a.url); return false; }
+    return true;
+  }
+  /** Names of the addons that COULD answer type/id but whose stream route is benched. */
+  function streamsDown(type, id) {
+    return installed.filter(function (a) {
+      return supports(a.manifest, 'stream', type, id) && streamBenched(a);
+    }).map(function (a) { return a.manifest.name || a.id; });
+  }
+
+  /* opts: {quiet} = no toast on failure (caller explains inline / call was speculative);
+           {force} = ask benched addons too. */
+  function streams(type, id, opts) {
+    opts = opts || {};
     if (!type || !id) return Promise.resolve([]);
     var capable = installed.filter(function (a) {
-      return supports(a.manifest, 'stream', type, id);
+      return supports(a.manifest, 'stream', type, id) && (opts.force || !streamBenched(a));
     });
     /* The health bench must never make streams IMPOSSIBLE: when every capable addon is
        cooling down, ask them all anyway — a wrongly-skipped provider is a dead feature,
-       a slow answer is just slow. Errors stay non-detrimental by construction. */
+       a slow answer is just slow. Errors stay non-detrimental by construction.
+       (The stream-OUTAGE breaker above is different: it only benches a route that was
+       just proven dead, for 90s, and Refresh always gets through.) */
     var providers = capable.filter(function (a) { return !isUnhealthy(a.url); });
     if (!providers.length) providers = capable;
     if (!providers.length) return Promise.resolve([]);
@@ -737,8 +775,12 @@
       /* maxAge 15s: stream answers may carry session-bound live URLs that the edge kills
          within minutes (and the origin id rotates) — a rapid re-hover stays instant, but
          a room revisited later gets a FRESH resolve instead of a dead cached session. */
-      return fetchJSON(resourceUrl(a.url, 'stream', type, id), { scope: 'streams', base: a.url, maxAge: 15000 })
+      return fetchJSON(resourceUrl(a.url, 'stream', type, id), {
+        scope: 'streams', base: a.url, maxAge: 15000, quiet: !!opts.quiet,
+        onfail: function (err) { if (err && err.transient) streamOut.set(a.url, now()); }
+      })
         .then(function (payload) {
+          if (payload) streamOut.delete(a.url);
           var raw = (payload && Array.isArray(payload.streams)) ? payload.streams : [];
           return raw.filter(isPlayableStream).map(function (s) {
             s.addonId = a.id;
@@ -811,7 +853,8 @@
 
     // plumbing
     onerror: onerror,
-    clearCache: function () { cache.clear(); unhealthy.clear(); },
+    clearCache: function () { cache.clear(); unhealthy.clear(); streamOut.clear(); },
+    streamsDown: streamsDown,
     supports: supports,
 
     /* url normalisation, exported so EVERY entry point that accepts a

@@ -1080,7 +1080,9 @@ function resolvePreview(item) {
                poster: liveThumbOf(item) || (m && (m.poster || m.logo)) || "",
                title: (m && (m.name || m.title)) || "", source: "resolver", meta: addonMeta(item, m) };
     }
-    return call(window.Addons, "streams", type, id).then(function (streams) {
+    /* quiet: a hover preview is speculative and a cam click falls through to the detail
+       view, which explains a dead stream route inline — neither may toast per room */
+    return call(window.Addons, "streams", type, id, { quiet: true }).then(function (streams) {
       var s = pickPreviewable(streams);
       if (!s) return null;
       return { url: s.url, hls: isHlsUrl(s.url), live: isLiveStream(s, m),
@@ -2163,7 +2165,7 @@ function renderSeasons(videos) {
 
 /* ------------------------------------------------------------- streams */
 var streamSeq = 0;
-function loadStreams(type, id, video) {
+function loadStreams(type, id, video, force) {
   if (!D.d_streams_body) return;
   var seq = ++streamSeq;
   S.detail.streamId = id;
@@ -2180,7 +2182,9 @@ function loadStreams(type, id, video) {
   load.appendChild(document.createTextNode("  Asking every installed addon for streams…"));
   D.d_streams_body.appendChild(load);
 
-  call(window.Addons, "streams", type, id).then(function (res) {
+  /* quiet: an empty/failed answer is explained in THIS panel (renderStreams), not a toast;
+     force (Refresh) re-asks an addon whose stream route is benched as down */
+  call(window.Addons, "streams", type, id, { quiet: true, force: !!force }).then(function (res) {
     if (seq !== streamSeq) return;
     renderStreams(arr(res), type, id, video);
   });
@@ -2191,6 +2195,27 @@ function renderStreams(list, type, id, video) {
 
   if (!list.length) {
     var n = el("div", "note");
+    /* an installed addon that SHOULD answer but whose stream route is down (Addons'
+       outage breaker) gets named — "add one in Settings" would blame the user. A live
+       cam also gets the honest hand-off: the room itself, on its own site. */
+    var down = (window.Addons && Addons.streamsDown) ? arr(Addons.streamsDown(type, id)) : [];
+    var room = (/^chaturbate:(.+)$/i.exec(txt(id)) || [])[1];
+    if (down.length || room) {
+      n.appendChild(el("b", null, down.length ? "Stream service not answering." : "Room not streaming."));
+      n.appendChild(document.createTextNode(down.length
+        ? " " + down.join(", ") + " is up but its stream lookup is failing right now (timed out / server error). " +
+          "Nothing to fix on your side — Refresh asks again now; otherwise the next open after ~90s re-checks it."
+        : " The addon returned no playable source — the room is probably offline, private or away."));
+      if (room) {
+        var a = el("a", "linkish", "Open the room on chaturbate.com ↗");
+        a.href = "https://chaturbate.com/" + enc(room) + "/";
+        a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.style.cssText = "display:inline-block;margin-top:8px";
+        n.appendChild(el("br")); n.appendChild(a);
+      }
+      D.d_streams_body.appendChild(n);
+      return;
+    }
     n.appendChild(el("b", null, "No streams found."));
     n.appendChild(document.createTextNode(
       " No installed addon returned a source for this title. Stream addons (the ones that serve " +
@@ -2970,7 +2995,7 @@ function bindDetail() {
   });
   if (D.d_streams_reload) D.d_streams_reload.addEventListener("click", function () {
     if (!S.detail) return;
-    loadStreams(S.detail.type, S.detail.streamId || S.detail.id, S.detail.video);
+    loadStreams(S.detail.type, S.detail.streamId || S.detail.id, S.detail.video, true);   /* force past the outage bench */
   });
 }
 
