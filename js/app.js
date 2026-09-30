@@ -32,6 +32,8 @@ var PREVIEW_DEBOUNCE = 180;  /* ms of steady hover before a preview starts */
 var PREVIEW_TTL      = 12000;/* re-resolve a live token this often (resolver grace is 30s+,
                                 but tokens are single-shot — keep well under it) */
 var RESOLVER_BASE    = "http://127.0.0.1:11471";  /* hp-resolver service (optional) */
+var CB_LOCAL_OPTIN   = "hp.cb.localResolver";     /* https: may this page reach the local resolver? */
+var CB_CLICK_WAIT    = 6000;  /* ms a cam click waits for a minted master before CB's embed player */
 
 /* ----------------------------------------------------------------- state */
 var S = {
@@ -662,9 +664,15 @@ function onWallSelect(a) {
     /* the tile may ALREADY be playing this feed as a pinned preview — adopt that media
        into the player: instant, and the feed is never refetched */
     var tKey = txt(it.id), tr = (window.Player && Player.adoptPreview) ? Player.adoptPreview(tKey) : null;
-    if (tr && tr.url) { watchResolved({ url: tr.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, tr); return; }
-    resolveLiveShared(it).then(function (res) {   /* reuses the hover-time resolve when <8s old */
-      if (res && res.url) { watchResolved(res); }
+    if (tr && tr.url) { watchResolved({ url: tr.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, tr, it); return; }
+    /* the dedicated resolvers answer in ~0.3-2s; only the addon leg can hang (its dead
+       route costs 2x8s before the breaker trips) — so a click waits at most CB_CLICK_WAIT
+       before handing the room to CB's own player instead of a spinner */
+    var slow = new Promise(function (r) { setTimeout(function () { r("slow"); }, CB_CLICK_WAIT); });
+    Promise.race([resolveLiveShared(it), slow]).then(function (res) {   /* reuses the hover-time resolve when <8s old */
+      if (res && res !== "slow" && res.url) { watchResolved(res, null, it); }
+      /* nothing minted a master but nobody said the room is down -> CB's own player */
+      else if (!cbDefinitive(cbRoom(it)) && watchEmbed(it)) {}
       else if (id) { location.hash = "#detail/" + enc(type) + "/" + enc(id); }
     });
     return;
@@ -685,13 +693,13 @@ function onWallExpand(a) {
   var id = it.mid || (it.meta && it.meta.id) || it.id;
   var type = it.type || (it.meta && it.meta.type) || S.type || "movie";
   resolveLiveShared(it).then(function (res) {   /* reuses the hover-time resolve when <8s old */
-    if (!window.Player || typeof Player.expand !== "function") { if (res && res.url) watchResolved(res); return; }
+    if (!window.Player || typeof Player.expand !== "function") { if (res && res.url) watchResolved(res, null, it); return; }
     if (res && res.url) {
       Player.expand({ key: tKey, stream: { url: res.url, live: res.live, hls: res.hls },
                       live: res.live, poster: res.poster || "", title: res.title || "",
-                      onWatch: function (t) { watchResolved(res, t); } });
+                      onWatch: function (t) { watchResolved(res, t, it); } });
     } else if (window.Player.previewHas && Player.previewHas(tKey)) {
-      Player.expand({ key: tKey, live: true, onWatch: function (t) { watchResolved({ url: t.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, t); } });
+      Player.expand({ key: tKey, live: true, onWatch: function (t) { watchResolved({ url: t.url, hls: true, live: true, meta: addonMeta(it, it.meta) }, t, it); } });
     } else if (id) { location.hash = "#detail/" + enc(type) + "/" + enc(id); }
   });
 }
@@ -976,12 +984,18 @@ function fetchJSONT(url, ms) {
     return r.json();
   }, function (e) { clearTimeout(timer); throw e; });
 }
+/* https -> http://127.0.0.1 is NOT mixed content (loopback is potentially trustworthy);
+   what gates it is Chrome's Local Network Access permission — a one-time "wants to
+   access apps on this device" prompt per origin (proven 2026-09-30, Chrome 153: denied ->
+   "Permission was denied … loopback address space"; granted -> 200). So on https we
+   probe ONLY when this device opted in (Settings -> Playback), never for a random
+   visitor (the probe itself would raise the prompt). http/localhost: always allowed. */
+function localResolverAllowed() {
+  if (!(location.protocol === 'https:' && RESOLVER_BASE.indexOf('http://127.') === 0)) return true;
+  try { return localStorage.getItem(CB_LOCAL_OPTIN) === "1"; } catch (e) { return false; }
+}
 function resolverUp() {
-  /* On an https origin a fetch to http://127.0.0.1 can NEVER succeed (mixed content +
-     private-network blocking) — Chrome just spams "CORS error" to the console on every
-     probe. Skip probing entirely there; the resolver is a localhost-app feature. */
-  if (location.protocol === 'https:' && RESOLVER_BASE.indexOf('http://127.') === 0)
-    return Promise.resolve(false);
+  if (!localResolverAllowed()) return Promise.resolve(false);
   var now = Date.now();
   if (now - resolverHealth.at < 8000) return Promise.resolve(resolverHealth.up);
   return fetchJSONT(RESOLVER_BASE + "/health", 800).then(function (j) {
@@ -1000,24 +1014,92 @@ function setLiveThumb(item, url) {
   if (!item || !url) return;
   try { if (item.meta) item.meta.liveThumb = url; item.liveThumb = url; } catch (e) {}
 }
-/* Ask the resolver for a fresh live master (tokens expire — never cached long). */
-function resolveViaResolver(item) {
+/* ---- live-cam resolve chain (Chaturbate) ----------------------------------------
+   CB's resolve API has no ACAO, so the token hop needs a server; the edge master it
+   returns IS cors-clean and its token is single-use but NOT bound to the minting IP
+   (proven 2026-09-30) — so ANY resolver can mint for the viewer. Order, fastest and
+   least blockable first:
+     1. the local hp-resolver (127.0.0.1:11471) — this device's own residential IP,
+        never Cloudflare-challenged; http origins always, https only when opted in;
+     2. the hosted runner's GET /cb/<room> over its https tunnel — no Mac needed, but
+        a datacenter IP CF may challenge ({reason:'blocked'} -> benched, fall through);
+     3. the stream addon (Addons.streams, behind its outage breaker);
+     4. CB's own embed player in an iframe (viewer's browser, viewer's IP) — the last
+        in-page resort before the external hand-off.
+   A definitive "not public" answer (offline/private/away/…) stops the chain. */
+var CB_STATE = new Map();                 /* room -> {reason, at}: last definitive non-live answer */
+var CB_RUNNER = { benchUntil: 0, why: "" };
+var CB_SOFT = { region: 1, blocked: 1, "resolve-error": 1, "rate-limited": 1, "bad-room": 1 };
+function cbDefinitive(room) {
+  var c = room && CB_STATE.get(room);
+  return (c && Date.now() - c.at < 60000) ? c.reason : "";
+}
+function cbTake(item, j, base) {
+  var room = cbRoom(item);
+  if (j && j.ok && (j.kind === "hls" || j.kind === "mp4") && j.url) {
+    if (room) CB_STATE.delete(room);
+    if (j.thumb) setLiveThumb(item, j.thumb);
+    /* generic sources that aren't CORS-clean come with a proxy path off the
+       resolver; CB masters are always corsSafe so this is a no-op for cams */
+    var url = (j.corsSafe === false && j.proxyUrl && base) ? (base + j.proxyUrl) : j.url;
+    return { url: url, live: j.live !== false, thumb: j.thumb || "", kind: j.kind, via: j.via || "" };
+  }
+  if (j && j.ok === false && j.reason && !CB_SOFT[j.reason] && room)
+    CB_STATE.set(room, { reason: j.reason, at: Date.now() });
+  return null;
+}
+function resolveViaLocal(item) {
   return resolverUp().then(function (up) {
     if (!up) return null;
-    var room = cbRoom(item), q;
-    if (room) q = RESOLVER_BASE + "/resolve?site=chaturbate&room=" + enc(room);
-    else return null;   /* generic ?url= path needs a known page url; none at tile level */
-    return fetchJSONT(q, 2500).then(function (j) {
-      if (j && j.ok && (j.kind === "hls" || j.kind === "mp4") && j.url) {
-        if (j.thumb) setLiveThumb(item, j.thumb);
-        /* generic sources that aren't CORS-clean come with a proxy path off the
-           resolver; CB masters are always corsSafe so this is a no-op for cams */
-        var url = (j.corsSafe === false && j.proxyUrl) ? (RESOLVER_BASE + j.proxyUrl) : j.url;
-        return { url: url, live: j.live !== false, thumb: j.thumb || "", kind: j.kind };
-      }
-      return null;   /* ok:false (offline/private/away) -> fall through to addon/external */
-    }, function () { return null; });
+    var room = cbRoom(item);
+    if (!room) return null;   /* generic ?url= path needs a known page url; none at tile level */
+    return fetchJSONT(RESOLVER_BASE + "/resolve?site=chaturbate&room=" + enc(room), 2500)
+      .then(function (j) { return cbTake(item, j, RESOLVER_BASE); }, function () { return null; });
   });
+}
+function runnerBase() {
+  if (!window.HPRunner) return Promise.resolve("");
+  var b = window.HPRunner.cachedBase();
+  if (b) return Promise.resolve(b);
+  if (!engineOptedIn()) return Promise.resolve("");   /* discovery stays behind the runner opt-in */
+  return window.HPRunner.discover({ timeoutMs: 4000 })["catch"](function () { return ""; });
+}
+function resolveViaRunner(item) {
+  var room = cbRoom(item);
+  if (!room || Date.now() < CB_RUNNER.benchUntil) return Promise.resolve(null);
+  return runnerBase().then(function (base) {
+    if (!base) return null;
+    return fetchJSONT(base + "/cb/" + enc(room), 5000).then(function (j) {
+      /* CF challenged the runner's egress IP: every room would fail the same way —
+         bench the runner for CB (10 min) so hovers don't pay a dead hop each time */
+      if (j && j.reason === "blocked") { CB_RUNNER.benchUntil = Date.now() + 600000; CB_RUNNER.why = "blocked"; }
+      return cbTake(item, j, "");
+    }, function (e) {
+      /* 404 = an older runner without the /cb route; network = tunnel hiccup */
+      CB_RUNNER.benchUntil = Date.now() + (/HTTP 404/.test(String(e)) ? 300000 : 30000);
+      CB_RUNNER.why = String(e && e.message || e).slice(0, 80);
+      return null;
+    });
+  });
+}
+/* Ask the resolvers for a fresh live master (tokens are single-use — never cached long). */
+function resolveViaResolver(item) {
+  if (!cbRoom(item)) return Promise.resolve(null);
+  return resolveViaLocal(item).then(function (r) {
+    if (r || cbDefinitive(cbRoom(item))) return r;
+    return resolveViaRunner(item);
+  });
+}
+/* CB's own embeddable player (no X-Frame-Options / frame-ancestors on /embed/ —
+   verified 2026-09-30, renders live video framed on https://iris.akeyo.io). */
+function cbEmbedUrl(room) { return "https://chaturbate.com/embed/" + enc(room) + "/?bgcolor=black"; }
+function watchEmbed(item) {
+  var room = cbRoom(item);
+  if (!room || !window.Player) return false;
+  bindPlayerClose();
+  window.Player.play({ stream: { embedUrl: cbEmbedUrl(room), live: true, name: "Chaturbate player" },
+                       meta: addonMeta(item, item && item.meta) });
+  return true;
 }
 
 /* ---- stream selection: PREFER a playable in-browser source, external last -- */
@@ -1075,6 +1157,7 @@ function resolvePreview(item) {
   var id = txt(item && (item.mid || (m && m.id) || item.id));
   if (!id) return Promise.resolve(null);
   return resolveViaResolver(item).then(function (r) {
+    if (!r && cbDefinitive(cbRoom(item))) return null;   /* offline/private: no addon hop */
     if (r && r.url) {
       return { url: r.url, hls: r.kind !== "mp4", live: r.live !== false,
                poster: liveThumbOf(item) || (m && (m.poster || m.logo)) || "",
@@ -1204,7 +1287,8 @@ function startPreviewFor(item, idx, token) {
       key: item.id,
       stream: { url: res.url, live: res.live, hls: res.hls },
       rect: r2, poster: res.poster || "", live: res.live, title: res.title,
-      onWatch: function (t) { watchResolved(res, t); }   /* t = the preview's live media, adopted */
+      reResolve: cbRoom(item) ? function () { LIVE_RESOLVE.delete(txt(item.mid || (item.meta && item.meta.id) || item.id)); return resolvePreview(item); } : null,
+      onWatch: function (t) { watchResolved(res, t, item); }   /* t = the preview's live media, adopted */
     });
     reconcilePool();   /* the Player may have evicted the oldest tile — drop it here too */
   });
@@ -1217,10 +1301,16 @@ function reconcilePool() {
   for (var i = 0; i < live.length; i++) set[live[i]] = 1;
   PVM.pool.forEach(function (v, k) { if (!set[k]) PVM.pool["delete"](k); });
 }
-function watchResolved(res, adopt) {
+function watchResolved(res, adopt, item) {
   if (!res || !window.Player) return;
   bindPlayerClose();
-  window.Player.play({ stream: { url: res.url, hls: res.hls, live: res.live }, meta: res.meta, adopt: adopt || null });
+  /* live cam: the player may ask for a FRESH master if the single-use token dies */
+  var reResolve = (item && cbRoom(item)) ? function () {
+    LIVE_RESOLVE.delete(txt(item.mid || (item.meta && item.meta.id) || item.id));
+    return resolvePreview(item);
+  } : null;
+  window.Player.play({ stream: { url: res.url, hls: res.hls, live: res.live }, meta: res.meta, adopt: adopt || null,
+                       reResolve: reResolve });
 }
 function previewClear() {
   PVM.hoverIdx = -1;
@@ -1324,7 +1414,10 @@ window.HP = window.HP || {
   activePreview: function () { return PVM.activeIdx; },
   previewKeys: function () { return (window.Player && window.Player.previewKeys) ? window.Player.previewKeys() : []; },
   previewPool: function () { var o = []; PVM.pool.forEach(function (v, k) { o.push({ key: k, idx: v.idx }); }); return o; },
-  resolverUp: resolverUp
+  resolverUp: resolverUp,
+  /* automation only: exactly what a double-click on tile idx does after the fly-in
+     (onWallSelect) — lets proofs open N rooms without fighting pinned preview overlays */
+  openTile: function (idx) { onWallSelect(idx); }
 };
 
 function buildHomeGroups() {
@@ -2184,9 +2277,15 @@ function loadStreams(type, id, video, force) {
 
   /* quiet: an empty/failed answer is explained in THIS panel (renderStreams), not a toast;
      force (Refresh) re-asks an addon whose stream route is benched as down */
-  call(window.Addons, "streams", type, id, { quiet: true, force: !!force }).then(function (res) {
+  /* a live cam also asks the dedicated resolvers (local / runner) in parallel: a fresh
+     master from them leads the list, so the detail view plays even with the addon down */
+  var camP = /^chaturbate:/i.test(txt(id))
+    ? resolveViaResolver({ id: id })["catch"](function () { return null; }) : Promise.resolve(null);
+  Promise.all([camP, call(window.Addons, "streams", type, id, { quiet: true, force: !!force })]).then(function (both) {
     if (seq !== streamSeq) return;
-    renderStreams(arr(res), type, id, video);
+    var cam = both[0], list = arr(both[1]);
+    if (cam && cam.url) list = [{ url: cam.url, name: "Live", title: "Chaturbate · fresh live master (" + (cam.via || "resolver") + ")" }].concat(list);
+    renderStreams(list, type, id, video);
   });
 }
 
@@ -2205,7 +2304,16 @@ function renderStreams(list, type, id, video) {
       n.appendChild(document.createTextNode(down.length
         ? " " + down.join(", ") + " is up but its stream lookup is failing right now (timed out / server error). " +
           "Nothing to fix on your side — Refresh asks again now; otherwise the next open after ~90s re-checks it."
-        : " The addon returned no playable source — the room is probably offline, private or away."));
+        : (cbDefinitive(room) ? " Chaturbate reports this room as " + cbDefinitive(room) + " right now."
+          : " No resolver minted a live stream — the room is probably offline, private or away.")));
+      if (room && !cbDefinitive(room)) {
+        /* CB's own embeddable player, in-page: plays from the viewer's browser/IP, so no
+           resolver, runner or addon is needed — the last in-app resort before leaving */
+        var w = el("button", "btn btn-sm", "▶ Watch here (Chaturbate player)");
+        w.type = "button"; w.style.cssText = "display:inline-block;margin:8px 8px 0 0";
+        w.addEventListener("click", function () { watchEmbed({ id: "chaturbate:" + room, meta: S.detail && S.detail.meta }); });
+        n.appendChild(el("br")); n.appendChild(w);
+      }
       if (room) {
         var a = el("a", "linkish", "Open the room on chaturbate.com ↗");
         a.href = "https://chaturbate.com/" + enc(room) + "/";
@@ -2669,6 +2777,32 @@ function renderPlaybackSettings() {
   });
   steps.appendChild(main);
   host.appendChild(steps);
+
+  /* live cams: this device's own resolver (python3 server/resolver/resolver.py). On https
+     the first probe raises Chrome's one-time "access apps on this device" prompt — so it is
+     an explicit per-device opt-in, fired from this click (a user gesture). */
+  var lcard = el("div", "addon"), lmain = el("div", "addon-main");
+  var lrow = el("label", "datarow");
+  var lchk = document.createElement("input");
+  lchk.type = "checkbox"; lchk.style.marginLeft = "auto";
+  try { lchk.checked = localStorage.getItem(CB_LOCAL_OPTIN) === "1"; } catch (e) {}
+  lrow.appendChild(el("span", "muted", "Live cams: use this device's resolver (127.0.0.1:11471)"));
+  lrow.appendChild(lchk);
+  lmain.appendChild(lrow);
+  lmain.appendChild(el("div", "addon-desc",
+    "Mints fresh Chaturbate streams from your own connection — fastest and never blocked. " +
+    "Run python3 server/resolver/resolver.py on this machine; Chrome asks once to allow access to apps on this device."));
+  lchk.addEventListener("change", function () {
+    try { localStorage.setItem(CB_LOCAL_OPTIN, lchk.checked ? "1" : "0"); } catch (e) {}
+    resolverHealth = { at: 0, up: false };
+    if (!lchk.checked) { toast("Local resolver off"); return; }
+    resolverUp().then(function (up) {
+      toast(up ? "Local resolver connected — live cams resolve on this device"
+               : "Local resolver not answering — is it running, and was access allowed?");
+    });
+  });
+  lcard.appendChild(lmain);
+  host.appendChild(lcard);
 
   var kcard = el("div", "addon");
   var kmain = el("div", "addon-main");

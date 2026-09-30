@@ -73,6 +73,19 @@ node -e '<join the floor via vendor/hp-floor.mjs, send {t:"who"}, expect {t:"run
 `*.trycloudflare.com` wildcard (e.g. Tailscale MagicDNS returns NXDOMAIN) — the tunnel is
 still live; only the runner's self-check is blocked. Real GHA runners resolve normally.
 
+## Live-cam resolve over the same tunnel (`GET /cb/<room>`, 2026-09-30)
+
+The engine also answers `GET /cb/<room>` with the resolver contract
+(`{ok:true, kind:'hls', url:<llhls ?token=>, …}` / `{ok:false, reason}`): one curl hop to
+Chaturbate's edge-HLS API, because that API sends no ACAO and a browser can't mint the
+token. The token is single-use and not IP-bound, so the runner mints and hands it over —
+**no media flows through the runner** for cams (the mmcdn edge is ACAO:* and plays
+direct). Token-bucket limited (~4/s, burst 20). If Cloudflare challenges the runner's
+datacenter IP the route answers `reason:'blocked'` in ~1 s and the site benches the runner
+for cams (10 min) and falls through (addon → CB's own embed player). Whether GitHub's
+Azure egress passes CF is **unknown until a runner carrying this route is live** — probe:
+`curl -s <RUNNER_URL>/cb/<a live room>`.
+
 ## The pool (`.github/workflows/runner-engine.yml`)
 
 relay-baton's admission-gated pool, adapted: `workflow_dispatch` + `cron */5`, `POOL=2`

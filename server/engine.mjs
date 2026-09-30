@@ -572,6 +572,61 @@ function streamFile(req, res, torrent, file) {
   stream.pipe(res);
 }
 
+/* ---- live-cam resolve (Chaturbate) -------------------------------------------------
+   GET /cb/<room> -> the same JSON contract as server/resolver/resolver.py's /resolve:
+   {ok:true, kind:'hls', url:<llhls master ?token=>, live, room, thumb, corsSafe, lowLatency}
+   or {ok:false, reason:'offline'|'private'|'region'|'blocked'|..., room, thumb}.
+   CB's resolve API sends no ACAO, so a browser can't mint the token itself; this route
+   is that one server-side hop, over the runner's existing https tunnel. The token is
+   SINGLE-USE and NOT bound to the minting IP (proven 2026-09-30) — the runner mints and
+   hands it over, it never GETs the master itself, and no media ever flows through here.
+   reason:'blocked' = Cloudflare challenged THIS egress IP (datacenter/Tor ranges get
+   "Just a moment…"); the client then falls through to its other resolvers. */
+const CB_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36';
+const CB_ROOM = /^[A-Za-z0-9_]{1,64}$/;
+const cbBucket = { tokens: 20, at: Date.now() };
+function cbAllow() {   /* ~4 resolves/s sustained, burst 20 — a hover wall, not a scraper */
+  const now = Date.now();
+  cbBucket.tokens = Math.min(20, cbBucket.tokens + (now - cbBucket.at) / 250);
+  cbBucket.at = now;
+  if (cbBucket.tokens < 1) return false;
+  cbBucket.tokens -= 1; return true;
+}
+function cbCurl(args) {
+  return new Promise((resolve) => {
+    execFile('curl', ['-s', '--max-time', '12', '-A', CB_UA, '-w', '\n%{http_code}', ...args],
+      { timeout: 15000, maxBuffer: 4 << 20 }, (err, out) => {
+        if (err && !out) return resolve({ status: 0, json: null, raw: String(err.message || err) });
+        const s = String(out || ''); const cut = s.lastIndexOf('\n');
+        const body = cut >= 0 ? s.slice(0, cut) : s; const status = Number(s.slice(cut + 1)) || 0;
+        let json = null; try { json = JSON.parse(body); } catch { /* html challenge / empty */ }
+        resolve({ status, json, raw: body });
+      });
+  });
+}
+const cfBlocked = (t) => /just a moment|cf-chl|challenge-platform/i.test(String(t || '').slice(0, 2000));
+async function resolveChaturbate(room) {
+  const base = { via: 'chaturbate', room, thumb: `https://thumb.live.mmcdn.com/riw/${room}.jpg` };
+  const a = await cbCurl(['-X', 'POST', 'https://chaturbate.com/get_edge_hls_url_ajax/',
+    '-H', 'X-Requested-With: XMLHttpRequest', '-H', `Referer: https://chaturbate.com/${room}/`,
+    '--data', `room_slug=${room}&bandwidth=high`]);
+  let url = a.json && a.json.success && a.json.room_status === 'public' ? a.json.url : '';
+  let status = a.json && a.json.room_status;
+  if (!url) {
+    const c = await cbCurl(['-H', `Referer: https://chaturbate.com/${room}/`, `https://chaturbate.com/api/chatvideocontext/${room}/`]);
+    const j = c.json;
+    if (j && j.hls_source && j.room_status === 'public') { url = j.hls_source; status = 'public'; }
+    else if (j && j.code === 'access-denied') return { ok: false, reason: 'region', detail: String(j.detail || '').slice(0, 160), live: false, ...base };
+    else if (j && j.room_status) status = j.room_status;
+    else if (!a.json && !j) {
+      const blocked = cfBlocked(a.raw) || cfBlocked(c.raw);
+      return { ok: false, reason: blocked ? 'blocked' : 'resolve-error', detail: `HTTP ${a.status || c.status}${blocked ? ' cloudflare challenge' : ''}`, live: false, ...base };
+    }
+  }
+  if (url && status === 'public') return { ok: true, kind: 'hls', url, live: true, corsSafe: true, lowLatency: true, ...base };
+  return { ok: false, reason: status && status !== 'public' ? status : 'offline', live: false, ...base };
+}
+
 const summarise = (t) => ({
   infoHash: t.infoHash,
   name: t.name || null,
@@ -618,6 +673,15 @@ const server = http.createServer((req, res) => {
       ul: Math.round(client.uploadSpeed) || 0,
       uptime: Math.round(process.uptime())
     });
+  }
+
+  // GET /cb/<room>  -> fresh Chaturbate live master (see resolveChaturbate above)
+  if (parts[0] === 'cb' && parts.length === 2) {
+    const room = parts[1];
+    if (!CB_ROOM.test(room)) return send(res, 400, { ok: false, reason: 'bad-room', via: 'chaturbate' });
+    if (!cbAllow()) return send(res, 429, { ok: false, reason: 'rate-limited', via: 'chaturbate' });
+    return resolveChaturbate(room).then((j) => send(res, 200, j),
+      (e) => send(res, 200, { ok: false, reason: 'resolve-error', detail: String(e && e.message || e).slice(0, 160), via: 'chaturbate', room }));
   }
 
   // GET /torrents
@@ -772,7 +836,7 @@ server.on('error', (err) => {
 server.listen(PORT, HOST, () => {
   console.log(`CoolStremio engine on http://${HOST}:${PORT}` + (INMEM ? '  [INMEM: RAM store, HLS→' + HLS_DIR + ']' : ''));
   console.log(`  cache: ${INMEM ? '(in-memory — no disk cache)' : CACHE}`);
-  console.log(`  GET /status · GET /torrents · GET /stream/<infoHash>/<fileIdx> · DELETE /torrent/<infoHash>`);
+  console.log(`  GET /status · GET /cb/<room> · GET /torrents · GET /stream/<infoHash>/<fileIdx> · DELETE /torrent/<infoHash>`);
 });
 
 // Durability: a single client's bad request (a codec ffmpeg chokes on, a torrent that

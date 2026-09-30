@@ -137,6 +137,13 @@
     '.plr-hide .plr-top{opacity:0;transform:translateY(-8px);pointer-events:none}',
     '.plr-hide .plr-bot{opacity:0;transform:translateY(8px);pointer-events:none}',
     '.plr-hide{cursor:none}',
+    /* a site's own embeddable player (live cams, last in-page resort): it owns its own
+       controls, and pointer moves inside it never reach us — so our top bar stays pinned
+       (compact, always visible, Close reachable) and the iframe sits below it */
+    '.plr-embed{position:absolute;left:0;right:0;top:58px;bottom:0;width:100%;height:calc(100% - 58px);border:0;background:#000;z-index:1}',
+    '.plr-embedded .plr-bot,.plr-embedded .plr-mid,.plr-embedded .plr-load{display:none!important}',
+    '.plr-embedded .plr-top{padding:10px 18px;min-height:58px;box-sizing:border-box;background:#000;opacity:1!important;transform:none!important;pointer-events:auto!important}',
+    '.plr-embedded{cursor:auto!important}',
 
     /* buttons */
     '.plr-btn,.plr-x{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;',
@@ -592,12 +599,13 @@
     });
   }
 
-  /* -> {kind:'url'|'hls'|'external'|'torrent', url} */
+  /* -> {kind:'url'|'hls'|'embed'|'external'|'torrent', url} */
   function resolve(stream) {
     stream = stream || {};
     if (stream.url && !/^magnet:/i.test(stream.url)) {
       return { kind: isHls(stream.url) ? 'hls' : 'url', url: stream.url };
     }
+    if (stream.embedUrl) return { kind: 'embed', url: stream.embedUrl };
     if (stream.ytId) return { kind: 'external', url: 'https://www.youtube.com/watch?v=' + encodeURIComponent(stream.ytId) };
     if (stream.externalUrl) return { kind: 'external', url: stream.externalUrl };
     if (stream.infoHash || /^magnet:/i.test(stream.url || '')) return { kind: 'torrent', url: '' };
@@ -1873,6 +1881,26 @@
     var r = resolve(S.stream);
     spin(true);
 
+    if (r.kind === 'embed') {
+      /* The site's OWN embeddable player (Chaturbate /embed/<room>/ — frameable, verified
+         2026-09-30). It plays from the viewer's browser and IP, so it needs no resolver,
+         runner or addon: the in-page resort when none of those minted a stream. Our media
+         pipeline (hls, seek, subs) stays idle; the site player owns playback. */
+      spin(false);
+      var fr = document.createElement('iframe');
+      fr.className = 'plr-embed';
+      fr.src = r.url;
+      fr.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+      fr.setAttribute('allowfullscreen', '');
+      fr.title = hostLabel(r.url) + ' player';
+      try { S.el.video.pause(); S.el.video.style.display = 'none'; } catch (e) {}
+      S.el.root.classList.add('plr-embedded');
+      S.el.root.appendChild(fr);
+      S.embed = fr;
+      toast(hostLabel(r.url) + '\u2019s own player \u2014 live from your browser', 3200);
+      return;
+    }
+
     if (r.kind === 'external') {
       /* An honest hand-off, not an error. This item has no in-app stream to
          embed (a genuinely external-only link — for a live cam the resolver/addon
@@ -2258,6 +2286,23 @@
              fix a dead origin, so re-resolve straight away. */
           var manifestGone = /manifestLoad|manifestParsing/i.test(det);
           if (S && S.viaEngine && manifestGone) { healStream('hls:' + det); return; }
+          /* a LIVE CAM master is a single-use token: once its first GET is spent (a dropped
+             request, a retry, the room hopping edges) the same URL answers 403 forever and
+             startLoad() only replays it. Mint a fresh one (the app's resolve chain) and
+             re-route — at most twice per open. */
+          if (S && (S.live || (S.stream && S.stream.live)) && manifestGone && S.opts && typeof S.opts.reResolve === 'function' && (S.reTries || 0) < 2) {
+            S.reTries = (S.reTries || 0) + 1;
+            try { hls.destroy(); } catch (e) {}
+            S.hls = null;
+            toast('Refreshing the live stream…', 1800);
+            var mine = S;
+            Promise.resolve(S.opts.reResolve()).then(function (r) {
+              if (S !== mine || S.destroyed) return;
+              if (r && r.url) { S.stream = Object.assign({}, S.stream, { url: r.url }); route(); }
+              else fail('The live stream ended (the room may have gone offline or private).');
+            }, function () { if (S === mine && !S.destroyed) fail('The live stream could not be refreshed.'); });
+            return;
+          }
           /* an engine decode hiccup recovers in place — no need to touch the origin */
           if (S && S.viaEngine && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             try { hls.recoverMediaError(); toast('Recovering the video stream…', 2000); return; } catch (e) {}
@@ -3361,6 +3406,16 @@
         p.hls = hls;
         hls.on(Hls.Events.ERROR, function (evt, data) {
           if (!data || !data.fatal) return;
+          /* spent single-use live token (403 on the master): startLoad would replay it —
+             mint a fresh master once via the app's resolve chain instead */
+          if (/manifestLoad|manifestParsing/i.test(data.details || '') && typeof opts.reResolve === 'function' && !p.reTried) {
+            p.reTried = true;
+            Promise.resolve(opts.reResolve()).then(function (r) {
+              if (p.destroyed || p.hls !== hls || !r || !r.url) return;
+              try { hls.loadSource(r.url); } catch (e) {}
+            }, function () {});
+            return;
+          }
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { try { hls.startLoad(); return; } catch (e) {} }
           else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { try { hls.recoverMediaError(); return; } catch (e) {} }
           try { hls.destroy(); } catch (e) {} if (!p.destroyed) p.hls = null;   /* give up quietly */

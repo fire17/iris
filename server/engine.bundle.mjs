@@ -46161,6 +46161,71 @@ function streamFile(req, res, torrent, file) {
   });
   stream.pipe(res);
 }
+var CB_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
+var CB_ROOM = /^[A-Za-z0-9_]{1,64}$/;
+var cbBucket = { tokens: 20, at: Date.now() };
+function cbAllow() {
+  const now = Date.now();
+  cbBucket.tokens = Math.min(20, cbBucket.tokens + (now - cbBucket.at) / 250);
+  cbBucket.at = now;
+  if (cbBucket.tokens < 1) return false;
+  cbBucket.tokens -= 1;
+  return true;
+}
+function cbCurl(args) {
+  return new Promise((resolve2) => {
+    execFile(
+      "curl",
+      ["-s", "--max-time", "12", "-A", CB_UA, "-w", "\n%{http_code}", ...args],
+      { timeout: 15e3, maxBuffer: 4 << 20 },
+      (err, out) => {
+        if (err && !out) return resolve2({ status: 0, json: null, raw: String(err.message || err) });
+        const s2 = String(out || "");
+        const cut = s2.lastIndexOf("\n");
+        const body = cut >= 0 ? s2.slice(0, cut) : s2;
+        const status = Number(s2.slice(cut + 1)) || 0;
+        let json = null;
+        try {
+          json = JSON.parse(body);
+        } catch {
+        }
+        resolve2({ status, json, raw: body });
+      }
+    );
+  });
+}
+var cfBlocked = (t2) => /just a moment|cf-chl|challenge-platform/i.test(String(t2 || "").slice(0, 2e3));
+async function resolveChaturbate(room) {
+  const base = { via: "chaturbate", room, thumb: `https://thumb.live.mmcdn.com/riw/${room}.jpg` };
+  const a = await cbCurl([
+    "-X",
+    "POST",
+    "https://chaturbate.com/get_edge_hls_url_ajax/",
+    "-H",
+    "X-Requested-With: XMLHttpRequest",
+    "-H",
+    `Referer: https://chaturbate.com/${room}/`,
+    "--data",
+    `room_slug=${room}&bandwidth=high`
+  ]);
+  let url = a.json && a.json.success && a.json.room_status === "public" ? a.json.url : "";
+  let status = a.json && a.json.room_status;
+  if (!url) {
+    const c = await cbCurl(["-H", `Referer: https://chaturbate.com/${room}/`, `https://chaturbate.com/api/chatvideocontext/${room}/`]);
+    const j = c.json;
+    if (j && j.hls_source && j.room_status === "public") {
+      url = j.hls_source;
+      status = "public";
+    } else if (j && j.code === "access-denied") return { ok: false, reason: "region", detail: String(j.detail || "").slice(0, 160), live: false, ...base };
+    else if (j && j.room_status) status = j.room_status;
+    else if (!a.json && !j) {
+      const blocked = cfBlocked(a.raw) || cfBlocked(c.raw);
+      return { ok: false, reason: blocked ? "blocked" : "resolve-error", detail: `HTTP ${a.status || c.status}${blocked ? " cloudflare challenge" : ""}`, live: false, ...base };
+    }
+  }
+  if (url && status === "public") return { ok: true, kind: "hls", url, live: true, corsSafe: true, lowLatency: true, ...base };
+  return { ok: false, reason: status && status !== "public" ? status : "offline", live: false, ...base };
+}
 var summarise = (t2) => ({
   infoHash: t2.infoHash,
   name: t2.name || null,
@@ -46207,6 +46272,15 @@ var server = http5.createServer((req, res) => {
       ul: Math.round(client.uploadSpeed) || 0,
       uptime: Math.round(process.uptime())
     });
+  }
+  if (parts[0] === "cb" && parts.length === 2) {
+    const room = parts[1];
+    if (!CB_ROOM.test(room)) return send(res, 400, { ok: false, reason: "bad-room", via: "chaturbate" });
+    if (!cbAllow()) return send(res, 429, { ok: false, reason: "rate-limited", via: "chaturbate" });
+    return resolveChaturbate(room).then(
+      (j) => send(res, 200, j),
+      (e2) => send(res, 200, { ok: false, reason: "resolve-error", detail: String(e2 && e2.message || e2).slice(0, 160), via: "chaturbate", room })
+    );
   }
   if (parts[0] === "torrents" && parts.length === 1) {
     return send(res, 200, client.torrents.map(summarise));
@@ -46357,7 +46431,7 @@ server.on("error", (err) => {
 server.listen(PORT, HOST, () => {
   console.log(`CoolStremio engine on http://${HOST}:${PORT}` + (INMEM ? "  [INMEM: RAM store, HLS\u2192" + HLS_DIR + "]" : ""));
   console.log(`  cache: ${INMEM ? "(in-memory \u2014 no disk cache)" : CACHE}`);
-  console.log(`  GET /status \xB7 GET /torrents \xB7 GET /stream/<infoHash>/<fileIdx> \xB7 DELETE /torrent/<infoHash>`);
+  console.log(`  GET /status \xB7 GET /cb/<room> \xB7 GET /torrents \xB7 GET /stream/<infoHash>/<fileIdx> \xB7 DELETE /torrent/<infoHash>`);
 });
 process.on("uncaughtException", (e2) => console.error("[uncaught]", e2?.stack || e2?.message || e2));
 process.on("unhandledRejection", (e2) => console.error("[unhandled]", e2?.stack || e2?.message || e2));
