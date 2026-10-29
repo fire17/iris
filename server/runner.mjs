@@ -162,8 +162,11 @@ async function main() {
   pollJson(url + '/status', PUBLIC_BUDGET_MS).then((ok) => {
     if (ok) { log('public health-check passed'); return; }
     if (SKIP_PUB) { log('WARNING: public health-check failed but SKIP_PUBLIC_HEALTHCHECK=1 (local-sim / broken resolver)'); return; }
+    // a planned retire, not a failure: exit 0 so the Actions run stays green (a red run
+    // here was pure noise — the pool admits a replacement on the next cron tick anyway)
     log('public url never health-checked — retiring so the pool replaces this runner');
-    shutdown(1);
+    console.log('::warning::runner retired: public tunnel URL never health-checked');
+    shutdown(0);
   });
 
   // 5) lifetime: baton-pool compatible.

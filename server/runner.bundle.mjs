@@ -369,7 +369,8 @@ async function main() {
       return;
     }
     log("public url never health-checked \u2014 retiring so the pool replaces this runner");
-    shutdown(1);
+    console.log("::warning::runner retired: public tunnel URL never health-checked");
+    shutdown(0);
   });
   if (HANDOFF_AT > 0) setTimeout(() => {
     log("handoff: stop announcing");

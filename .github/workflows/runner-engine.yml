@@ -8,7 +8,7 @@
 # at rest), and short-lived. It is a knowing tradeoff, not a solved problem. See
 # server/RUNNER.md. Do NOT enable this on a repo/account you are not willing to risk.
 #
-# Liveness by REDUNDANCY (relay-baton pattern): each run lives ~55 min; an admission gate
+# Liveness by REDUNDANCY (relay-baton pattern): each run lives ~2h; an admission gate
 # keeps ~POOL runs alive at once, staggered ~STAGGER apart, so a fresh runner overlaps the
 # old one and the discovery floor always has a live URL to announce. cron fires often;
 # the gate turns noisy cron into a smooth bounded pool. Tokenless: the gate uses only the
@@ -24,7 +24,7 @@ on:
   # 24/7 always-warm pool: cron admits through the gate below, which keeps ~POOL runners
   # overlapping so the discovery floor always has a live URL (no "no runner" gaps).
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/15 * * * *'   # was */5: 288 mostly-skip runs/day; STAGGER is 1h, so 15 min is plenty
 
 permissions:
   contents: read
@@ -32,11 +32,11 @@ permissions:
 
 env:
   POOL: '2'         # target overlapping live runs (lower than baton's 3 — ToS-conservative)
-  STAGGER: '9600'   # seconds; admit a replacement once the youngest run is this old (≈ RUN_SECONDS / POOL = 19200/2)
+  STAGGER: '3600'   # seconds; admit a replacement once the youngest run is this old (≈ RUN_SECONDS / POOL = 7200/2)
 
 jobs:
   admit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 3
     outputs:
       go: ${{ steps.gate.outputs.go }}
@@ -68,13 +68,13 @@ jobs:
 
   # Primes the ffmpeg cache in PARALLEL with the runner (JS deps need no cache — they
   # ship bundled in the repo): the long-lived runner job only saves its cache when it
-  # completes 5h20m later, and a cancelled run never does, so this ~30s job makes even a
+  # completes ~2h later, and a cancelled run never does, so this ~30s job makes even a
   # brand-new fork's SECOND run instant. No-op once the cache exists.
   warmcache:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         id: ff
         with:
           path: /tmp/ffbin
@@ -89,10 +89,10 @@ jobs:
   runner:
     needs: admit
     if: ${{ needs.admit.outputs.go == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 350   # must exceed RUN_SECONDS (5h20m); GitHub hard-caps a job at 6h
+    runs-on: ubuntu-24.04
+    timeout-minutes: 135   # must exceed RUN_SECONDS (2h). Was 5h20m: GitHub killed those runs mid-way ("shutdown signal") on Oct 1/2/19
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # FIRST-RUN-EVER SPEED (fire17: "pre-prepared even before cache; after first
       # contact run EVERYTHING CONCURRENTLY"):
@@ -104,7 +104,7 @@ jobs:
       #     only at the moment it opens the tunnel, and ffmpeg only at the first
       #     transcode (/status reports ffmpeg:false so the site shows "warming")
       #   - the ffmpeg static build is cached per-repo (tokenless) for later runs
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: /tmp/ffbin
           key: ffmpeg-static-amd64-v1
@@ -113,9 +113,9 @@ jobs:
         env:
           HP_ROOM:      '${{ inputs.room || '''' }}'
           HP_INMEM:     '1'
-          RUN_SECONDS:  '19200'   # 5h20m per run (long-lived pool members → fewer handoffs)
-          HANDOFF_AT:   '19080'   # stop announcing ~2 min before close
-          HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-latest ~16 GiB RAM)
+          RUN_SECONDS:  '7200'    # 2h per run — long jobs near the 6h cap kept getting killed by the host
+          HANDOFF_AT:   '7080'    # stop announcing ~2 min before close
+          HP_MAX_BYTES: '4294967296'   # 4 GiB per-file cap (ubuntu-24.04 ~16 GiB RAM)
           HP_MAX_TORRENTS: '2'
         run: |
           # EVERYTHING CONCURRENT after first contact: both installs background while the
@@ -140,4 +140,6 @@ jobs:
           ) &
           # insurance only — the committed bundle is the normal path, npm never runs
           [ -f server/runner.bundle.mjs ] || ( cd server && (npm ci --no-audit --no-fund || npm install --no-audit --no-fund) )
-          node server/runner.bundle.mjs || node server/runner.mjs
+          # fallback only when the bundle is absent — `bundle || source` re-ran the whole runner
+          # after any non-zero exit (every retire showed up twice in the logs)
+          if [ -f server/runner.bundle.mjs ]; then node server/runner.bundle.mjs; else node server/runner.mjs; fi
